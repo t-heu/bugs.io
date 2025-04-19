@@ -12,6 +12,39 @@ export default function Game() {
   const [selectedCharacter, setSelectedCharacter] = useState(null)
   const [score, setScore] = useState(0)
 
+  const characters = [
+    {
+      id: "ant",
+      name: "Formiga",
+      description: "Rápida e ágil",
+      stats: {
+        speed: 7,      // Diminui um pouco a velocidade para não ser tão ágil
+        attack: 5,     // Mantém o ataque equilibrado
+        health: 6,     // Aumenta um pouco a resistência para balancear
+      },
+    },
+    {
+      id: "spider",
+      name: "Aranha",
+      description: "Forte e agressiva",
+      stats: {
+        speed: 5,      // Mantém a velocidade média
+        attack: 20,     // Mantém o ataque forte
+        health: 60,     // Diminui um pouco a resistência para não ser muito resistente
+      },
+    },
+    {
+      id: "beetle",
+      name: "Besouro",
+      description: "Resistente e durável",
+      stats: {
+        speed: 4,      // Aumenta um pouco a resistência para ser mais durável
+        attack: 5,     // Mantém o ataque equilibrado
+        health: 8,     // Aumenta a resistência para ser realmente durável
+      },
+    },
+  ];
+
   const handleCharacterSelect = (character: any) => {
     setSelectedCharacter(character)
     setGameState("playing")
@@ -38,11 +71,11 @@ export default function Game() {
               Voltar
             </Button>
           </Link>
-          <CharacterSelection onSelect={handleCharacterSelect} />
+          <CharacterSelection characters={characters} onSelect={handleCharacterSelect} />
         </div>
       )}
 
-      {gameState === "playing" && <GameArena character={selectedCharacter} onGameOver={handleGameOver} />}
+      {gameState === "playing" && <GameArena characters={characters} character={selectedCharacter} onGameOver={handleGameOver} />}
 
       {gameState === "gameOver" && (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">

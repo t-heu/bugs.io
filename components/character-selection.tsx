@@ -4,40 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-const characters = [
-  {
-    id: "ant",
-    name: "Formiga",
-    description: "Rápida e ágil",
-    stats: {
-      speed: 7,      // Diminui um pouco a velocidade para não ser tão ágil
-      attack: 5,     // Mantém o ataque equilibrado
-      health: 6,     // Aumenta um pouco a resistência para balancear
-    },
-  },
-  {
-    id: "spider",
-    name: "Aranha",
-    description: "Forte e agressiva",
-    stats: {
-      speed: 5,      // Mantém a velocidade média
-      attack: 7,     // Mantém o ataque forte
-      health: 6,     // Diminui um pouco a resistência para não ser muito resistente
-    },
-  },
-  {
-    id: "beetle",
-    name: "Besouro",
-    description: "Resistente e durável",
-    stats: {
-      speed: 4,      // Aumenta um pouco a resistência para ser mais durável
-      attack: 5,     // Mantém o ataque equilibrado
-      health: 8,     // Aumenta a resistência para ser realmente durável
-    },
-  },
-];
-
-export default function CharacterSelection({ onSelect }: any) {
+export default function CharacterSelection({ onSelect, characters }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null)
 
   const renderInsectIcon = (type: any, isHovered: any) => {
