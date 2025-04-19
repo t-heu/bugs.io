@@ -1,5 +1,108 @@
 // Tipos possíveis para o tipo de inseto
 type InsectType = "ant" | "spider" | "beetle";
+type ViewportOffset = {
+  x: number;
+  y: number;
+};
+
+const ARENA_SIZE = 2000
+
+// Helpers
+export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
+  const gridSize = 50
+  const offsetX = offset.x % gridSize
+  const offsetY = offset.y % gridSize
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"
+  ctx.lineWidth = 1
+
+  for (let x = -offsetX; x < canvas.width; x += gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, canvas.height)
+    ctx.stroke()
+  }
+
+  for (let y = -offsetY; y < canvas.height; y += gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(canvas.width, y)
+    ctx.stroke()
+  }
+}
+
+export const drawArenaBoundary = (ctx: CanvasRenderingContext2D, offset: { x: number; y: number }) => {
+  ctx.strokeStyle = "rgba(255, 0, 0, 0.5)"
+  ctx.lineWidth = 3
+  ctx.strokeRect(-offset.x, -offset.y, ARENA_SIZE, ARENA_SIZE)
+}
+
+export const isInViewport = (x: number, y: number, size: number, canvas: HTMLCanvasElement) =>
+  x + size > 0 && x - size < canvas.width && y + size > 0 && y - size < canvas.height
+
+export const drawEntities = (
+  ctx: CanvasRenderingContext2D,
+  list: any[],
+  drawFn: (ctx: CanvasRenderingContext2D, item: any) => void
+) => {
+  list.forEach((item) => drawFn(ctx, item))
+}  
+
+export const drawFood = (ctx: CanvasRenderingContext2D, foodItem: any, viewportOffset: ViewportOffset) => {
+  if (!foodItem || typeof foodItem.x !== 'number' || typeof foodItem.y !== 'number') return
+
+  const { x, y, size, color } = foodItem
+  const screenX = x - viewportOffset.x
+  const screenY = y - viewportOffset.y
+
+  if (!isInViewport(screenX, screenY, size, ctx.canvas)) return
+
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.arc(screenX, screenY, size, 0, Math.PI * 2)
+  ctx.fill()
+}  
+
+export const drawBot = (ctx: CanvasRenderingContext2D, bot: any, now: number, viewportOffset: ViewportOffset) => {
+  const { x, y, size, type, health, maxHealth, lastDamageTime } = bot
+  const screenX = x - viewportOffset.x
+  const screenY = y - viewportOffset.y
+
+  if (!isInViewport(screenX, screenY, size, ctx.canvas)) return
+
+  drawInsect(ctx, screenX, screenY, size, type, false)
+
+  // Health bar
+  const healthBarWidth = 40 // largura fixa da barra de vida
+  const healthBarHeight = 4
+  const healthPercent = Math.max(0, Math.min(1, health / maxHealth)) // clamp entre 0 e 1
+
+  const barX = screenX - healthBarWidth / 2
+  const barY = screenY - size / 2 - 10 // aparece acima do personagem
+
+  // Fundo da barra (preta semi-transparente)
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
+  ctx.fillRect(barX, barY, healthBarWidth, healthBarHeight)
+
+  // Cor de acordo com a porcentagem de vida
+  ctx.fillStyle =
+  healthPercent >= 0.5
+    ? "#4CAF50" // verde
+    : healthPercent >= 0.25
+    ? "#FFC107" // amarelo
+    : "#F44336"; // vermelho
+
+  // Barra de vida proporcional à saúde
+  ctx.fillRect(barX, barY, healthBarWidth * healthPercent, healthBarHeight)
+}
+
+export const drawPlayer = (ctx: CanvasRenderingContext2D, player: any, now: number, viewportOffset: ViewportOffset) => {
+  const { x, y, size, type, lastDamageTime } = player
+  const screenX = x - viewportOffset.x
+  const screenY = y - viewportOffset.y
+
+  drawInsect(ctx, screenX, screenY, size, type, true)
+}
 
 // Add this helper function to draw insect SVGs
 export const drawInsect = (

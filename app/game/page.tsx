@@ -18,9 +18,9 @@ export default function Game() {
       name: "Formiga",
       description: "Rápida e ágil",
       stats: {
-        speed: 7,      // Diminui um pouco a velocidade para não ser tão ágil
-        attack: 5,     // Mantém o ataque equilibrado
-        health: 6,     // Aumenta um pouco a resistência para balancear
+        speed: 9,      // Bem rápida
+        attack: 4,     // Fraca ofensivamente
+        health: 30,    // Frágil
       },
     },
     {
@@ -28,9 +28,9 @@ export default function Game() {
       name: "Aranha",
       description: "Forte e agressiva",
       stats: {
-        speed: 5,      // Mantém a velocidade média
-        attack: 20,     // Mantém o ataque forte
-        health: 60,     // Diminui um pouco a resistência para não ser muito resistente
+        speed: 6,      // Velocidade média
+        attack: 15,    // Forte ofensivamente
+        health: 50,    // Mediana em resistência
       },
     },
     {
@@ -38,12 +38,12 @@ export default function Game() {
       name: "Besouro",
       description: "Resistente e durável",
       stats: {
-        speed: 4,      // Aumenta um pouco a resistência para ser mais durável
-        attack: 5,     // Mantém o ataque equilibrado
-        health: 8,     // Aumenta a resistência para ser realmente durável
+        speed: 3,      // Lento
+        attack: 6,     // Ataque ok
+        health: 80,    // Muito resistente
       },
     },
-  ];
+  ];  
 
   const handleCharacterSelect = (character: any) => {
     setSelectedCharacter(character)

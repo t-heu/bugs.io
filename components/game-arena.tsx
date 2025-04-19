@@ -5,18 +5,55 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useMobile } from "@/hooks/use-mobile"
 
-import { drawInsect } from "@/utils/drawInsect"
-import { createBot, generateInitialFood, generateInitialBots } from "@/logic/bots-and-food"
+import { drawBot, drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer } from "@/utils/draw"
+import { createBot, generateInitialFood, generateInitialBots, generateFood } from "@/utils/bots-and-food"
+
+type Bot = {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
+  direction: number;
+  directionChangeTime: number;
+  health: number;
+  maxHealth: number;
+  attack: number;
+  lastMoved: number;
+  lastDamageTime: number;
+};
+
+type FoodItem = {
+  x: number;
+  y: number;
+  size: number;
+};
+
+type Player = {
+  x: number;
+  y: number;
+  size: number;
+  health: number;
+  attack: number;
+};
+
+type UpdateBotsParams = {
+  bots: Bot[];
+  food: FoodItem[];
+  player: Player;
+  newX: number;
+  newY: number;
+  cappedDeltaTime: number;
+  now: number;
+  onBotKilled: (size: number) => void;
+  onPlayerDamaged: (newHealth: number) => void;
+};
 
 // Game constants
 const ARENA_SIZE = 2000
 const VIEWPORT_SIZE = 800
 const FOOD_COUNT = 100
-const BOT_COUNT = 15 // Aumentei o número de bots para garantir visibilidade
+const BOT_COUNT = 20 // Aumentei o número de bots para garantir visibilidade
 const FOOD_VALUE = 10
-const GROWTH_FACTOR = 0.05 // Reduzido para evitar crescimento excessivo
-const MAX_BOT_SIZE = 60 // Tamanho máximo para os bots
-const MAX_PLAYER_SIZE = 80 // Tamanho máximo para o jogador
 const DAMAGE_MULTIPLIER = 5 // Multiplicador de dano para tornar o combate mais impactant
 
 export default function GameArena({ characters, character, onGameOver }: any) {
@@ -38,7 +75,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     lastDamageTime: 0,
   }))
 
-  const [food, setFood] = useState([])
+  const [food, setFood] = useState<any>([])
   const [bots, setBots] = useState([])
 
   const [keys, setKeys] = useState({ up: false, down: false, left: false, right: false })
@@ -217,7 +254,6 @@ export default function GameArena({ characters, character, onGameOver }: any) {
         setPlayer(prev => ({
           ...prev,
           score: prev.score + scoreGain,
-          size: Math.min(prev.size + (GROWTH_FACTOR * scoreGain) / 2, MAX_PLAYER_SIZE)
         }))
       },
       onPlayerDamaged: (newHealth) => {
@@ -230,12 +266,11 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     })
     
     // Agora vamos modificar a lógica de atualização dos bots:
-    
-    setBots((prevBots) => {
-      const botsToUpdate = prevBots.filter((bot) => bot.health > 0) // Remove bots mortos
-      updatedBots.forEach((bot) => {
+    setBots((prevBots: any) => {
+      const botsToUpdate = prevBots.filter((bot: any) => bot.health > 0) // Remove bots mortos
+      updatedBots.forEach((bot: any) => {
         // Se o bot não existir na lista de bots (pela ID), adiciona ele
-        if (!botsToUpdate.some(existingBot => existingBot.id === bot.id)) {
+        if (!botsToUpdate.some((existingBot: any) => existingBot.id === bot.id)) {
           botsToUpdate.push(bot)
         }
       })
@@ -272,17 +307,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
       x: newX,
       y: newY,
     }))
-    
-  }    
-
-  function generateFood() {
-    return {
-      x: Math.random() * ARENA_SIZE,
-      y: Math.random() * ARENA_SIZE,
-      size: 5 + Math.random() * 5,
-      color: `hsl(${Math.random() * 60 + 80}, 70%, 50%)`,
-    }
-  }  
+  } 
 
   function updatePlayerPosition(delta: number) {
     let dx = 0, dy = 0
@@ -321,7 +346,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
             updatedFood.splice(i, 1)
             i--
 
-            updatedFood.push(generateFood())
+            updatedFood.push(generateFood(ARENA_SIZE))
 
             // Restaura a vida do player ao invés de aumentar o tamanho
             const newHealth = Math.min(player.health + FOOD_VALUE, player.maxHealth)  // Garante que a vida não ultrapasse o máximo
@@ -350,7 +375,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     now,
     onBotKilled,
     onPlayerDamaged
-  }) {
+  }: UpdateBotsParams): Bot[] {
     const updatedBots = [...bots]
   
     let botsToSpawn = 0
@@ -384,7 +409,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
         if (distance < bot.size / 2 + f.size / 2) {
           food.splice(j, 1)
           j--
-          food.push(generateFood())
+          food.push(generateFood(ARENA_SIZE))
 
           // Em vez de aumentar o tamanho, restaura a vida do bot
           bot.health = Math.min(bot.health + FOOD_VALUE, bot.maxHealth) // evita passar do máximo
@@ -439,10 +464,10 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     }
   
     return updatedBots
-  }  
+  }
 
   const renderGame = () => {
-    const canvas: HTMLCanvasElement | null = canvasRef.current
+    const canvas: HTMLCanvasElement | any = canvasRef.current
     if (!canvas) return
   
     const ctx = canvas.getContext("2d")
@@ -453,109 +478,9 @@ export default function GameArena({ characters, character, onGameOver }: any) {
   
     drawGrid(ctx, canvas, viewportOffset)
     drawArenaBoundary(ctx, viewportOffset)
-    drawEntities(ctx, food, drawFood)
-    drawEntities(ctx, bots, (ctx, bot) => drawBot(ctx, bot, now))
-    drawPlayer(ctx, player, now)
-  }
-  
-  // Helpers
-  const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
-    const gridSize = 50
-    const offsetX = offset.x % gridSize
-    const offsetY = offset.y % gridSize
-  
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"
-    ctx.lineWidth = 1
-  
-    for (let x = -offsetX; x < canvas.width; x += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.stroke()
-    }
-  
-    for (let y = -offsetY; y < canvas.height; y += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(canvas.width, y)
-      ctx.stroke()
-    }
-  }
-  
-  const drawArenaBoundary = (ctx: CanvasRenderingContext2D, offset: { x: number; y: number }) => {
-    ctx.strokeStyle = "rgba(255, 0, 0, 0.5)"
-    ctx.lineWidth = 3
-    ctx.strokeRect(-offset.x, -offset.y, ARENA_SIZE, ARENA_SIZE)
-  }
-  
-  const isInViewport = (x: number, y: number, size: number, canvas: HTMLCanvasElement) =>
-    x + size > 0 && x - size < canvas.width && y + size > 0 && y - size < canvas.height
-  
-  const drawEntities = (
-    ctx: CanvasRenderingContext2D,
-    list: any[],
-    drawFn: (ctx: CanvasRenderingContext2D, item: any) => void
-  ) => {
-    list.forEach((item) => drawFn(ctx, item))
-  }  
-  
-  const drawFood = (ctx: CanvasRenderingContext2D, foodItem: any) => {
-    if (!foodItem || typeof foodItem.x !== 'number' || typeof foodItem.y !== 'number') return
-  
-    const { x, y, size, color } = foodItem
-    const screenX = x - viewportOffset.x
-    const screenY = y - viewportOffset.y
-  
-    if (!isInViewport(screenX, screenY, size, ctx.canvas)) return
-  
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(screenX, screenY, size, 0, Math.PI * 2)
-    ctx.fill()
-  }  
-  
-  const drawBot = (ctx: CanvasRenderingContext2D, bot: any, now: number) => {
-    const { x, y, size, type, health, maxHealth, lastDamageTime } = bot
-    const screenX = x - viewportOffset.x
-    const screenY = y - viewportOffset.y
-  
-    if (!isInViewport(screenX, screenY, size, ctx.canvas)) return
-  
-    drawInsect(ctx, screenX, screenY, size, type, false)
-  
-    // Health bar
-    const healthBarWidth = 30 // largura fixa da barra de vida
-    const healthBarHeight = 4
-    const healthPercent = Math.max(0, Math.min(1, health / maxHealth)) // clamp entre 0 e 1
-
-    const barX = screenX - healthBarWidth / 2
-    const barY = screenY - size / 2 - 10 // aparece acima do personagem
-
-    // Fundo da barra (preta semi-transparente)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
-    ctx.fillRect(barX, barY, healthBarWidth, healthBarHeight)
-
-    // Cor de acordo com a porcentagem de vida
-    ctx.fillStyle = healthPercent > 0.5 ? "#4CAF50" : healthPercent > 0.25 ? "#FFC107" : "#F44336"
-
-    // Barra de vida proporcional à saúde
-    ctx.fillRect(barX, barY, healthBarWidth * healthPercent, healthBarHeight)
-
-  }
-  
-  const drawPlayer = (ctx: CanvasRenderingContext2D, player: any, now: number) => {
-    const { x, y, size, type, lastDamageTime } = player
-    const screenX = x - viewportOffset.x
-    const screenY = y - viewportOffset.y
-  
-    /*if (now - lastDamageTime < 300) {
-      ctx.fillStyle = "rgba(255, 0, 0, 0.3)"
-      ctx.beginPath()
-      ctx.arc(screenX, screenY, size * 1.2, 0, Math.PI * 2)
-      ctx.fill()
-    }*/
-  
-    drawInsect(ctx, screenX, screenY, size, type, true)
+    drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
+    drawEntities(ctx, bots, (ctx, bot) => drawBot(ctx, bot, now, viewportOffset))
+    drawPlayer(ctx, player, now, viewportOffset)
   }
 
   return (

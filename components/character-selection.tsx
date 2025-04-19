@@ -7,6 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function CharacterSelection({ onSelect, characters }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null)
 
+  function getStatBlocks(value: number, max: number, totalBlocks = 10): number {
+    const ratio = value / max;
+    return Math.round(Math.min(Math.max(ratio, 0), 1) * totalBlocks);
+  }
+
   const renderInsectIcon = (type: any, isHovered: any) => {
     const color = isHovered ? "#4ade80" : "#22c55e"
     const strokeColor = isHovered ? "#ffffff" : "#15803d"
@@ -95,7 +100,7 @@ export default function CharacterSelection({ onSelect, characters }: any) {
                         <div
                           key={i}
                           className={`w-2 h-4 rounded-sm ${
-                            i < character.stats.speed ? "bg-green-500" : "bg-green-900"
+                            i < getStatBlocks(character.stats.speed, 15) ? "bg-green-500" : "bg-green-900"
                           }`}
                         />
                       ))}
@@ -108,7 +113,7 @@ export default function CharacterSelection({ onSelect, characters }: any) {
                         <div
                           key={i}
                           className={`w-2 h-4 rounded-sm ${
-                            i < character.stats.attack ? "bg-green-500" : "bg-green-900"
+                            i < getStatBlocks(character.stats.attack, 40) ? "bg-green-500" : "bg-green-900"
                           }`}
                         />
                       ))}
@@ -121,7 +126,7 @@ export default function CharacterSelection({ onSelect, characters }: any) {
                         <div
                           key={i}
                           className={`w-2 h-4 rounded-sm ${
-                            i < character.stats.health ? "bg-green-500" : "bg-green-900"
+                            i < getStatBlocks(character.stats.health, 100) ? "bg-green-500" : "bg-green-900"
                           }`}
                         />
                       ))}
