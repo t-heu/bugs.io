@@ -4,9 +4,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function CharacterSelection({ onSelect, characters }: any) {
-  const [hoveredCharacter, setHoveredCharacter] = useState(null)
-
+export default function CharacterSelection({ onSelect, name, onName, characters }: any) {
+  const [hoveredCharacter, setHoveredCharacter] = useState(null);
+  
   function getStatBlocks(value: number, max: number, totalBlocks = 10): number {
     const ratio = value / max;
     return Math.round(Math.min(Math.max(ratio, 0), 1) * totalBlocks);
@@ -72,6 +72,12 @@ export default function CharacterSelection({ onSelect, characters }: any) {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Escolha seu Inseto</h1>
+      <input
+        type="text"
+        placeholder="Seu nome"
+        value={name} onChange={(e) => onName(e.target.value)}
+        className="mb-5 w-full p-2 border border-green-500 rounded-md bg-green-950/70 text-green-300"
+      />
 
       <div className="grid md:grid-cols-3 gap-6">
         {characters.map((character: any) => {
