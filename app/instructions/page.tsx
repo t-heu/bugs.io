@@ -2,6 +2,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
+import insects from "../../insects.json";
+
 export default function Instructions() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
@@ -24,33 +26,17 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Insetos</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-green-800/50 p-4 rounded-lg">
-                <h3 className="text-xl font-medium mb-2 text-green-300">Formiga</h3>
-                <p className="mb-2">Rápida e ágil</p>
-                <ul className="list-disc list-inside text-sm">
-                  <li>Alta velocidade</li>
-                  <li>Ataque médio</li>
-                  <li>Vida baixa</li>
-                </ul>
-              </div>
-              <div className="bg-green-800/50 p-4 rounded-lg">
-                <h3 className="text-xl font-medium mb-2 text-green-300">Aranha</h3>
-                <p className="mb-2">Forte e agressiva</p>
-                <ul className="list-disc list-inside text-sm">
-                  <li>Velocidade média</li>
-                  <li>Alto ataque</li>
-                  <li>Vida média</li>
-                </ul>
-              </div>
-              <div className="bg-green-800/50 p-4 rounded-lg">
-                <h3 className="text-xl font-medium mb-2 text-green-300">Besouro</h3>
-                <p className="mb-2">Resistente e durável</p>
-                <ul className="list-disc list-inside text-sm">
-                  <li>Velocidade baixa</li>
-                  <li>Ataque médio</li>
-                  <li>Alta vida</li>
-                </ul>
-              </div>
+              {insects.map((info, i) => (
+                <div key={i} className="bg-green-800/50 p-4 rounded-lg">
+                <h3 className="text-xl font-medium mb-2 text-green-300">{info.name}</h3>
+                <p className="mb-2">{info.description}</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {info.attributes.map((att, i2) => (
+                      <li key={i2}>{att}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -63,10 +49,10 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Dicas</h2>
             <ul className="list-disc list-inside space-y-2">
-              <li>Comece coletando comida para crescer antes de enfrentar outros insetos</li>
+              <li>Colete comidas para recuperar sua vida</li>
               <li>Cada tipo de inseto tem vantagens diferentes - use-as estrategicamente</li>
-              <li>Fuja de insetos maiores até estar forte o suficiente</li>
-              <li>Trabalhe em equipe com outros insetos do mesmo tipo</li>
+              <li>Fuja de insetos fortes até estar forte o suficiente</li>
+              <li>Trabalhe em equipe com outros insetos do mesmo tipo se quiser enfrentar o mais forte</li>
             </ul>
           </section>
         </div>

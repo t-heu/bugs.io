@@ -3,6 +3,7 @@
     "id": "ant",
     "name": "Formiga",
     "description": "Rápida e ágil",
+    "attributes": ["Alta velocidade", "Ataque médio", "Vida baixa"],
     "stats": {
       "speed": 9,
       "attack": 4,
@@ -17,6 +18,7 @@
     "id": "spider",
     "name": "Aranha",
     "description": "Forte e agressiva",
+    "attributes": ["Velocidade média", "Alto ataque", "Vida média"],
     "stats": {
       "speed": 6,
       "attack": 15,
@@ -31,6 +33,7 @@
     "id": "beetle",
     "name": "Besouro",
     "description": "Resistente e durável",
+    "attributes": ["Velocidade baixa", "Ataque médio", "Alta vida"],
     "stats": {
       "speed": 3,
       "attack": 6,
@@ -45,6 +48,7 @@
     "id": "wasp",
     "name": "Vespa",
     "description": "Letal e veloz",
+    "attributes": ["Alta velocidade", "Ataque médio", "Vida média"],
     "stats": {
       "speed": 8,
       "attack": 18,
@@ -59,6 +63,7 @@
     "id": "cockroach",
     "name": "Barata",
     "description": "Sobrevivente implacável",
+    "attributes": ["Alta velocidade", "Ataque baixo", "Alta vida"],
     "stats": {
       "speed": 7,
       "attack": 5,
@@ -73,6 +78,7 @@
     "id": "ladybug",
     "name": "Joaninha",
     "description": "Graciosa, mas resistente",
+    "attributes": ["Velocidade média", "Ataque baixo", "Alta vida"],
     "stats": {
       "speed": 5,
       "attack": 7,

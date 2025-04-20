@@ -37,11 +37,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
   // 🔁 Inicializa o jogo uma única vez
   useEffect(() => {
-    console.log(roomKey, player)
     if (gameInitializedRef.current) return
     gameInitializedRef.current = true
-  
-    console.log("Inicializando jogo...")
   
     // Gera comida e salva localmente
     const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
@@ -347,7 +344,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     const dist = Math.hypot(player2.x - player1.x, player2.y - player1.y);
     
     // Debug: Mostrando a distância
-    console.log(`Distância entre Jogador 1 e Jogador 2: ${dist}`);
+    //console.log(`Distância entre Jogador 1 e Jogador 2: ${dist}`);
     
     // Raio de colisão (metade do tamanho de cada jogador)
     const player1Radius = player1.size / 2;
@@ -355,7 +352,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     
     // Verificar se a colisão ocorreu
     if (dist < player1Radius + player2Radius) {
-      console.log("Colisão detectada entre os jogadores!");
+      //console.log("Colisão detectada entre os jogadores!");
   
       // Calcular o dano do Jogador 1 para o Jogador 2
       const player1Attack = player1.attack * (player1.size / 30);
