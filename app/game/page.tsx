@@ -12,7 +12,6 @@ import generateRandomWord from "@/utils/generateRandomWord"
 
 export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOver
-  const [selectedCharacter, setSelectedCharacter] = useState(null)
   const [score, setScore] = useState(0)
   const [roomKey, setRoomKey] = useState('')
   const [player, setPlayer] = useState<any>()
@@ -59,7 +58,6 @@ export default function Game() {
 
     joinOrCreateRoom(name, character)
 
-    setSelectedCharacter(character)
     setGameState("playing")
   }
 
@@ -70,7 +68,6 @@ export default function Game() {
 
   const restartGame = () => {
     setGameState("selection")
-    setSelectedCharacter(null)
     setScore(0)
   }
 
@@ -179,10 +176,7 @@ export default function Game() {
         </div>
       )}
 
-      {gameState === "playing" && player && roomKey && <GameArena 
-      characters={characters} 
-      onGameOver={handleGameOver} 
-      roomKey={roomKey} player={player} setPlayer={setPlayer} />}
+      {gameState === "playing" && player && roomKey && <GameArena onGameOver={handleGameOver} roomKey={roomKey} player={player} setPlayer={setPlayer} />}
 
       {gameState === "gameOver" && (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">

@@ -5,68 +5,24 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useMobile } from "@/hooks/use-mobile"
 
-import { drawBot, drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer } from "@/utils/draw"
-import { createBot, generateInitialFood, generateInitialBots, generateFood } from "@/utils/bots-and-food"
-import { database, set, ref, update, get, off, onValue } from "@/api/firebase"
+import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer } from "@/utils/draw"
+import {  generateInitialFood, generateFood } from "@/utils/food"
+import { database, set, ref, update, off, onValue } from "@/api/firebase"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
-/*
-type Bot = {
-  x: number;
-  y: number;
-  size: number;
-  speed: number;
-  direction: number;
-  directionChangeTime: number;
-  health: number;
-  maxHealth: number;
-  attack: number;
-  lastMoved: number;
-  lastDamageTime: number;
-};
-
-type FoodItem = {
-  x: number;
-  y: number;
-  size: number;
-};
-
-type Player = {
-  x: number;
-  y: number;
-  size: number;
-  health: number;
-  attack: number;
-};
-
-type UpdateBotsParams = {
-  bots: Bot[];
-  food: FoodItem[];
-  player: Player;
-  newX: number;
-  newY: number;
-  cappedDeltaTime: number;
-  now: number;
-  onBotKilled: (size: number) => void;
-  onPlayerDamaged: (newHealth: number) => void;
-};*/
 
 // Game constants
 const ARENA_SIZE = 2000
 const VIEWPORT_SIZE = 800
 const FOOD_COUNT = 100
 const FOOD_VALUE = 10
-//const BOT_COUNT = 2
-//const DAMAGE_MULTIPLIER = 5 // Multiplicador de dano para tornar o combate mais impactant
 
-export default function GameArena({ characters, onGameOver, roomKey, player, setPlayer }: any) {
+export default function GameArena({ onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
   const gameInitializedRef = useRef(false)
   const frameCountRef = useRef(0)
   const joystickRef = useRef(null)
 
   const [food, setFood] = useState<any>([])
-  //const [bots, setBots] = useState([])
-
   const [keys, setKeys] = useState({ up: false, down: false, left: false, right: false })
   const [gameRunning, setGameRunning] = useState(true)
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 })
@@ -93,7 +49,6 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
   
     // 🔁 Salva comida no Firebase
     set(ref(database, `bugsio/rooms/${roomKey}/food`), initialFood)
-    //setBots(generateInitialBots(BOT_COUNT, ARENA_SIZE, characters))
   }, [])
 
   useEffect(() => {
@@ -184,22 +139,24 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [gameRunning, player, food, /*bots,*/ keys, joystickActive, joystickAngle, joystickDistance])
+  }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
 
   // teclado
   useEffect(() => {
     const handleKeyDown = (e: any) => {
-      if (e.key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: true }));
-      if (e.key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: true }));
-      if (e.key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: true }));
-      if (e.key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: true }));
+      const key = e.key.toLowerCase();
+      if (key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: true }));
+      if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: true }));
+      if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: true }));
+      if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: true }));
     };
     
     const handleKeyUp = (e: any) => {
-      if (e.key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: false }));
-      if (e.key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: false }));
-      if (e.key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: false }));
-      if (e.key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: false }));
+      const key = e.key.toLowerCase();
+      if (key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: false }));
+      if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: false }));
+      if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: false }));
+      if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: false }));
     };
     
     // Adicionando os event listeners para as teclas pressionadas
@@ -273,11 +230,8 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
   const updateGame = (deltaTime: number) => {
     if (!canvasRef.current) return
   
-    const cappedDeltaTime = Math.min(deltaTime, 0.1)
-    const now = Date.now()
-  
     // Atualiza posição do player
-    const { newX, newY, dx, dy } = updatePlayerPosition(cappedDeltaTime)
+    const { newX, newY } = updatePlayerPosition()
   
     // Atualiza offset da câmera
     setViewportOffset({
@@ -291,64 +245,12 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
     if (foodEaten) {
       setFood(updatedFood)
     }
-  
-    /*const updatedBots = updateBots({
-      bots,
-      food: updatedFood,
-      player,
-      newX,
-      newY,
-      cappedDeltaTime,
-      now,
-      onBotKilled: (scoreGain) => {
-        setPlayer(prev => ({
-          ...prev,
-          score: prev.score + scoreGain,
-        }))
-      },
-      onPlayerDamaged: (newHealth) => {
-        setPlayer(prev => ({
-          ...prev,
-          health: newHealth,
-          lastDamageTime: now
-        }))
-      }
-    })
-    
-    // Agora vamos modificar a lógica de atualização dos bots:
-    setBots((prevBots: any) => {
-      const botsToUpdate = prevBots.filter((bot: any) => bot.health > 0) // Remove bots mortos
-      updatedBots.forEach((bot: any) => {
-        // Se o bot não existir na lista de bots (pela ID), adiciona ele
-        if (!botsToUpdate.some((existingBot: any) => existingBot.id === bot.id)) {
-          botsToUpdate.push(bot)
-        }
-      })
-    
-      // Verifica se o número de bots é menor que 1, se sim, adiciona um novo bot
-      if (botsToUpdate.length < BOT_COUNT) {
-        const angle = Math.random() * Math.PI * 2
-        const dist = 300 + Math.random() * 200
-        const x = newX + Math.cos(angle) * dist
-        const y = newY + Math.sin(angle) * dist
-    
-        const newBot = createBot(
-          Math.max(0, Math.min(ARENA_SIZE, x)),
-          Math.max(0, Math.min(ARENA_SIZE, y)),
-          characters
-        )
-    
-        botsToUpdate.push(newBot) // Adiciona o novo bot
-      }
-    
-      return botsToUpdate // Atualiza o estado com os bots existentes e o novo bot, se necessário
-    })*/
 
     // Verifica colisões entre o player e outros jogadores
     otherPlayers.forEach((otherPlayer) => {
-      handlePlayerVsPlayerCollision(player, otherPlayer, (newHealthPlayer1) => {
-        setPlayer((prev) => ({ ...prev, health: newHealthPlayer1 }));
-      }, (newHealthPlayer2) => {
+      handlePlayerVsPlayerCollision(player, otherPlayer, (newHealthPlayer1: any) => {
+        setPlayer((prev: any) => ({ ...prev, health: newHealthPlayer1 }));
+      }, (newHealthPlayer2: any) => {
         // Atualiza a saúde do outro jogador no estado
         const updatedOtherPlayers = otherPlayers.map((p) =>
           p.uid === otherPlayer.uid ? { ...p, health: newHealthPlayer2 } : p
@@ -360,14 +262,14 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
     // Verifica se o player morreu
     if (player.health <= 0) {
       exitPlayer(roomKey,  player.uid)
+      setPlayer(null)
       setGameRunning(false)
       onGameOver(player.score)
       return
     }
     
-    // Atualiza a posição do player
-    // Atualiza a posição localmente
-    setPlayer(prev => {
+    // Atualiza a posição do player e localmente
+    setPlayer((prev: any) => {
       const updatedPlayer = {
         ...prev,
         x: newX,
@@ -424,7 +326,7 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
         const newHealth = Math.min(player.health + FOOD_VALUE, player.maxHealth)  // Garante que a vida não ultrapasse o máximo
         const newScore = player.score + FOOD_VALUE
 
-        setPlayer(prev => ({
+        setPlayer((prev: any) => ({
           ...prev,
           health: newHealth,
           score: newScore
@@ -440,108 +342,7 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
     return { updatedFood, foodEaten }
   }
 
-  /*function updateBots({
-    bots,
-    food,
-    player,
-    newX,
-    newY,
-    cappedDeltaTime,
-    now,
-    onBotKilled,
-    onPlayerDamaged
-  }: UpdateBotsParams): Bot[] {
-    const updatedBots = [...bots]
-  
-    let botsToSpawn = 0
-    for (let i = 0; i < updatedBots.length; i++) {
-      const bot = updatedBots[i]
-  
-      if (bot.directionChangeTime <= 0) {
-        bot.direction = Math.random() * Math.PI * 2
-        bot.directionChangeTime = 3 + Math.random() * 2
-      } else {
-        bot.directionChangeTime -= cappedDeltaTime
-      }
-  
-      const moveSpeed = bot.speed
-      const botDx = Math.cos(bot.direction) * moveSpeed
-      const botDy = Math.sin(bot.direction) * moveSpeed
-  
-      bot.x = Math.max(0, Math.min(ARENA_SIZE, bot.x + botDx))
-      bot.y = Math.max(0, Math.min(ARENA_SIZE, bot.y + botDy))
-      bot.lastMoved = now
-  
-      if (bot.x <= 0 || bot.x >= ARENA_SIZE || bot.y <= 0 || bot.y >= ARENA_SIZE) {
-        bot.direction = Math.random() * Math.PI * 2
-      }
-  
-      // Bot colide com comida
-      for (let j = 0; j < food.length; j++) {
-        const f = food[j]
-        const distance = Math.hypot(bot.x - f.x, bot.y - f.y)
-
-        if (distance < bot.size / 2 + f.size / 2) {
-          food.splice(j, 1)
-          j--
-          food.push(generateFood(ARENA_SIZE))
-
-          // Em vez de aumentar o tamanho, restaura a vida do bot
-          bot.health = Math.min(bot.health + FOOD_VALUE, bot.maxHealth) // evita passar do máximo
-        }
-      }
-  
-      // Colisão com player
-      const dist = Math.hypot(newX - bot.x, newY - bot.y)
-  
-      if (dist < player.size / 2 + bot.size / 2) {
-        const playerAttack = player.attack * (player.size / 30)
-        const botAttack = bot.attack * (bot.size / 30)
-
-        // Dano no bot: proporcional ao ataque do player
-        bot.health -= playerAttack * DAMAGE_MULTIPLIER
-        bot.lastDamageTime = now
-
-        // Dano no player: escalado com o tamanho do bot, e dividido pela vida do player
-        const rawDamage = botAttack * DAMAGE_MULTIPLIER
-        const scaledDamage = rawDamage * (bot.size / player.size) // reduz dano de bots pequenos em players grandes
-        const newPlayerHealth = Math.max(0, player.health - scaledDamage)
-
-        onPlayerDamaged(newPlayerHealth)
-
-        const angle = Math.atan2(bot.y - newY, bot.x - newX)
-        const push = (player.size / 2 + bot.size / 2 - dist) / 2
-        bot.x += Math.cos(angle) * push
-        bot.y += Math.sin(angle) * push
-
-        if (bot.health <= 0) {
-          updatedBots.splice(i, 1)
-          i--
-          onBotKilled(Math.floor(bot.size))
-          botsToSpawn++ // marca que precisa repor
-        }
-      }
-    }
-
-    for (let i = 0; i < botsToSpawn; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const dist = 300 + Math.random() * 200
-      const x = newX + Math.cos(angle) * dist
-      const y = newY + Math.sin(angle) * dist
-    
-      const newBot = createBot(
-        Math.max(0, Math.min(ARENA_SIZE, x)),
-        Math.max(0, Math.min(ARENA_SIZE, y)),
-        characters
-      )
-    
-      updatedBots.push(newBot)
-    }
-  
-    return updatedBots
-  }*/
-
-  function handlePlayerVsPlayerCollision(player1, player2, onPlayer1Damaged, onPlayer2Damaged) {
+  function handlePlayerVsPlayerCollision(player1: any, player2: any, onPlayer1Damaged: any, onPlayer2Damaged: any) {
     // Calcular a distância entre os dois jogadores
     const dist = Math.hypot(player2.x - player1.x, player2.y - player1.y);
     
@@ -582,9 +383,6 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
   
       player2.x += Math.cos(angle) * pushDistance;
       player2.y += Math.sin(angle) * pushDistance;
-  
-      console.log(`Jogador 1 empurrado para: (${player1.x}, ${player1.y})`);
-      console.log(`Jogador 2 empurrado para: (${player2.x}, ${player2.y})`);
     }
   }
 
@@ -601,11 +399,10 @@ export default function GameArena({ characters, onGameOver, roomKey, player, set
     drawGrid(ctx, canvas, viewportOffset)
     drawArenaBoundary(ctx, viewportOffset)
     drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
-    //drawEntities(ctx, bots, (ctx, bot) => drawBot(ctx, bot, now, viewportOffset))
     otherPlayers.forEach(p => {
-      drawPlayer(ctx, p, now, viewportOffset)
+      drawPlayer(ctx, p, now, viewportOffset, false)
     })
-    drawPlayer(ctx, player, now, viewportOffset)
+    drawPlayer(ctx, player, now, viewportOffset, true)
   }
 
   useEffect(() => {
