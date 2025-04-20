@@ -1,14 +1,11 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
 
-export default nextConfig
+const nextConfig = {
+  reactStrictMode: true, // Modo estrito do React
+  output: 'export',
+  images: {
+    unoptimized: true, // Disable image optimization
+  }
+};
+
+export default nextConfig;
