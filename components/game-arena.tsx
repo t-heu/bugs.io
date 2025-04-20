@@ -7,7 +7,9 @@ import { useMobile } from "@/hooks/use-mobile"
 
 import { drawBot, drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer } from "@/utils/draw"
 import { createBot, generateInitialFood, generateInitialBots, generateFood } from "@/utils/bots-and-food"
-
+import { database, set, ref, update, get, off, onValue } from "@/api/firebase"
+import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
+/*
 type Bot = {
   x: number;
   y: number;
@@ -46,37 +48,24 @@ type UpdateBotsParams = {
   now: number;
   onBotKilled: (size: number) => void;
   onPlayerDamaged: (newHealth: number) => void;
-};
+};*/
 
 // Game constants
 const ARENA_SIZE = 2000
 const VIEWPORT_SIZE = 800
 const FOOD_COUNT = 100
-const BOT_COUNT = 20 // Aumentei o número de bots para garantir visibilidade
 const FOOD_VALUE = 10
-const DAMAGE_MULTIPLIER = 5 // Multiplicador de dano para tornar o combate mais impactant
+//const BOT_COUNT = 2
+//const DAMAGE_MULTIPLIER = 5 // Multiplicador de dano para tornar o combate mais impactant
 
-export default function GameArena({ characters, character, onGameOver }: any) {
+export default function GameArena({ characters, onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
   const gameInitializedRef = useRef(false)
   const frameCountRef = useRef(0)
   const joystickRef = useRef(null)
 
-  const [player, setPlayer] = useState(() => ({
-    x: ARENA_SIZE / 2,
-    y: ARENA_SIZE / 2,
-    size: 30,
-    speed: character.stats.speed * 0.5,
-    attack: character.stats.attack,
-    health: character.stats.health * 10,
-    maxHealth: character.stats.health * 10,
-    score: 0,
-    type: character.id,
-    lastDamageTime: 0,
-  }))
-
   const [food, setFood] = useState<any>([])
-  const [bots, setBots] = useState([])
+  //const [bots, setBots] = useState([])
 
   const [keys, setKeys] = useState({ up: false, down: false, left: false, right: false })
   const [gameRunning, setGameRunning] = useState(true)
@@ -87,18 +76,78 @@ export default function GameArena({ characters, character, onGameOver }: any) {
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
   const [joystickAngle, setJoystickAngle] = useState(0)
   const [joystickDistance, setJoystickDistance] = useState(0)
-  const [debugInfo, setDebugInfo] = useState({ botCount: 0, frameCount: 0, playerHealth: 0 })
+  const [debugInfo, setDebugInfo] = useState({ botCount: 0, frameCount: 0, playerHealth: 0, playersCount: 0 })
+  const [otherPlayers, setOtherPlayers] = useState<any[]>([])
 
   // 🔁 Inicializa o jogo uma única vez
   useEffect(() => {
+    console.log(roomKey, player)
     if (gameInitializedRef.current) return
     gameInitializedRef.current = true
-
+  
     console.log("Inicializando jogo...")
-
-    setFood(generateInitialFood(FOOD_COUNT, ARENA_SIZE))
-    setBots(generateInitialBots(BOT_COUNT, ARENA_SIZE, characters))
+  
+    // Gera comida e salva localmente
+    const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
+    setFood(initialFood)
+  
+    // 🔁 Salva comida no Firebase
+    set(ref(database, `bugsio/rooms/${roomKey}/food`), initialFood)
+    //setBots(generateInitialBots(BOT_COUNT, ARENA_SIZE, characters))
   }, [])
+
+  useEffect(() => {
+    if (!roomKey || !player.uid) return
+  
+    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)
+  
+    update(playerRef, {
+      x: player.x,
+      y: player.y,
+      health: player.health,
+      score: player.score,
+      lastDamageTime: player.lastDamageTime,
+    })
+  }, [player, roomKey])
+  
+  useEffect(() => {
+    if (!roomKey) return;
+  
+    const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
+  
+    const unsubscribe = onValue(playersRef, (snapshot) => {
+      const playersData = snapshot.val() || {};
+      const otherPlayers = Object.values(playersData).filter(
+        (p: any) => p.uid !== player.uid
+      );
+  
+      // Adia o setState para o final do ciclo de render
+      setTimeout(() => {
+        setOtherPlayers((prevState) => {
+          if (JSON.stringify(prevState) !== JSON.stringify(otherPlayers)) {
+            return otherPlayers;
+          }
+          return prevState;
+        });
+      }, 0);
+    });
+  
+    return () => {
+      off(playersRef, "value", unsubscribe);
+    };
+  }, [roomKey, player.uid]);
+
+  useEffect(() => {
+    if (!roomKey) return
+  
+    const foodRef = ref(database, `bugsio/rooms/${roomKey}/food`)
+    const unsubscribe = onValue(foodRef, (snapshot) => {
+      const foodData = snapshot.val() || []
+      setFood(foodData)
+    })
+  
+    return () => off(foodRef, 'value', unsubscribe)
+  }, [roomKey]) 
 
   // Game loop
   useEffect(() => {
@@ -118,7 +167,8 @@ export default function GameArena({ characters, character, onGameOver }: any) {
         setDebugInfo((prev) => ({
           ...prev,
           frameCount: frameCountRef.current,
-          botCount: bots.length,
+          botCount: 0,//bots.length,
+          playersCount: otherPlayers.length,
           playerHealth: Math.floor(player.health),
         }))
       }
@@ -134,7 +184,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [gameRunning, player, food, bots, keys, joystickActive, joystickAngle, joystickDistance])
+  }, [gameRunning, player, food, /*bots,*/ keys, joystickActive, joystickAngle, joystickDistance])
 
   // teclado
   useEffect(() => {
@@ -242,7 +292,7 @@ export default function GameArena({ characters, character, onGameOver }: any) {
       setFood(updatedFood)
     }
   
-    const updatedBots = updateBots({
+    /*const updatedBots = updateBots({
       bots,
       food: updatedFood,
       player,
@@ -292,24 +342,46 @@ export default function GameArena({ characters, character, onGameOver }: any) {
       }
     
       return botsToUpdate // Atualiza o estado com os bots existentes e o novo bot, se necessário
-    })
+    })*/
+
+    // Verifica colisões entre o player e outros jogadores
+    otherPlayers.forEach((otherPlayer) => {
+      handlePlayerVsPlayerCollision(player, otherPlayer, (newHealthPlayer1) => {
+        setPlayer((prev) => ({ ...prev, health: newHealthPlayer1 }));
+      }, (newHealthPlayer2) => {
+        // Atualiza a saúde do outro jogador no estado
+        const updatedOtherPlayers = otherPlayers.map((p) =>
+          p.uid === otherPlayer.uid ? { ...p, health: newHealthPlayer2 } : p
+        );
+        setOtherPlayers(updatedOtherPlayers);
+      });
+    });
     
     // Verifica se o player morreu
     if (player.health <= 0) {
+      exitPlayer(roomKey,  player.uid)
       setGameRunning(false)
       onGameOver(player.score)
       return
     }
     
     // Atualiza a posição do player
-    setPlayer(prev => ({
-      ...prev,
-      x: newX,
-      y: newY,
-    }))
-  } 
+    // Atualiza a posição localmente
+    setPlayer(prev => {
+      const updatedPlayer = {
+        ...prev,
+        x: newX,
+        y: newY,
+      }
 
-  function updatePlayerPosition(delta: number) {
+      // Atualiza no banco também
+      set(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), updatedPlayer)
+
+      return updatedPlayer
+    })
+  }
+
+  function updatePlayerPosition() {
     let dx = 0, dy = 0
   
     if (isMobile && joystickActive) {
@@ -339,33 +411,36 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     let foodEaten = false
 
     for (let i = 0; i < updatedFood.length; i++) {
-        const f = updatedFood[i]
-        const dist = Math.hypot(x - f.x, y - f.y)
+      const f = updatedFood[i]
+      const dist = Math.hypot(x - f.x, y - f.y)
 
-        if (dist < player.size / 2 + f.size / 2) {
-            updatedFood.splice(i, 1)
-            i--
+      if (dist < player.size / 2 + f.size / 2) {
+        updatedFood.splice(i, 1)
+        i--
 
-            updatedFood.push(generateFood(ARENA_SIZE))
+        updatedFood.push(generateFood(ARENA_SIZE))
 
-            // Restaura a vida do player ao invés de aumentar o tamanho
-            const newHealth = Math.min(player.health + FOOD_VALUE, player.maxHealth)  // Garante que a vida não ultrapasse o máximo
-            const newScore = player.score + FOOD_VALUE
+        // Restaura a vida do player ao invés de aumentar o tamanho
+        const newHealth = Math.min(player.health + FOOD_VALUE, player.maxHealth)  // Garante que a vida não ultrapasse o máximo
+        const newScore = player.score + FOOD_VALUE
 
-            setPlayer(prev => ({
-                ...prev,
-                health: newHealth,
-                score: newScore
-            }))
+        setPlayer(prev => ({
+          ...prev,
+          health: newHealth,
+          score: newScore
+        }))
 
-            foodEaten = true
-        }
+        foodEaten = true
+
+        // 🔁 Atualiza a comida no Realtime Database
+        set(ref(database, `bugsio/rooms/${roomKey}/food`), updatedFood)
+      }
     }
 
     return { updatedFood, foodEaten }
   }
 
-  function updateBots({
+  /*function updateBots({
     bots,
     food,
     player,
@@ -464,6 +539,53 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     }
   
     return updatedBots
+  }*/
+
+  function handlePlayerVsPlayerCollision(player1, player2, onPlayer1Damaged, onPlayer2Damaged) {
+    // Calcular a distância entre os dois jogadores
+    const dist = Math.hypot(player2.x - player1.x, player2.y - player1.y);
+    
+    // Debug: Mostrando a distância
+    console.log(`Distância entre Jogador 1 e Jogador 2: ${dist}`);
+    
+    // Raio de colisão (metade do tamanho de cada jogador)
+    const player1Radius = player1.size / 2;
+    const player2Radius = player2.size / 2;
+    
+    // Verificar se a colisão ocorreu
+    if (dist < player1Radius + player2Radius) {
+      console.log("Colisão detectada entre os jogadores!");
+  
+      // Calcular o dano do Jogador 1 para o Jogador 2
+      const player1Attack = player1.attack * (player1.size / 30);
+      const damageToPlayer2 = player1Attack * 1.5; // Dano do jogador 1 no jogador 2
+  
+      // Atualizar saúde do Jogador 2
+      const newHealthPlayer2 = Math.max(0, player2.health - damageToPlayer2);
+      onPlayer2Damaged(newHealthPlayer2);
+      
+      // Calcular o dano do Jogador 2 para o Jogador 1
+      const player2Attack = player2.attack * (player2.size / 30);
+      const damageToPlayer1 = player2Attack * 1.5; // Dano do jogador 2 no jogador 1
+  
+      // Atualizar saúde do Jogador 1
+      const newHealthPlayer1 = Math.max(0, player1.health - damageToPlayer1);
+      onPlayer1Damaged(newHealthPlayer1);
+  
+      // Empurrar os jogadores para longe um do outro para evitar sobreposição
+      const angle = Math.atan2(player2.y - player1.y, player2.x - player1.x);
+      const pushDistance = (player1Radius + player2Radius - dist) / 2;
+      
+      // Empurrando os jogadores
+      player1.x -= Math.cos(angle) * pushDistance;
+      player1.y -= Math.sin(angle) * pushDistance;
+  
+      player2.x += Math.cos(angle) * pushDistance;
+      player2.y += Math.sin(angle) * pushDistance;
+  
+      console.log(`Jogador 1 empurrado para: (${player1.x}, ${player1.y})`);
+      console.log(`Jogador 2 empurrado para: (${player2.x}, ${player2.y})`);
+    }
   }
 
   const renderGame = () => {
@@ -479,9 +601,16 @@ export default function GameArena({ characters, character, onGameOver }: any) {
     drawGrid(ctx, canvas, viewportOffset)
     drawArenaBoundary(ctx, viewportOffset)
     drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
-    drawEntities(ctx, bots, (ctx, bot) => drawBot(ctx, bot, now, viewportOffset))
+    //drawEntities(ctx, bots, (ctx, bot) => drawBot(ctx, bot, now, viewportOffset))
+    otherPlayers.forEach(p => {
+      drawPlayer(ctx, p, now, viewportOffset)
+    })
     drawPlayer(ctx, player, now, viewportOffset)
   }
+
+  useEffect(() => {
+    monitorConnectionStatus(roomKey, player.uid)
+  }, [player]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
@@ -497,9 +626,8 @@ export default function GameArena({ characters, character, onGameOver }: any) {
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
         <div className="bg-green-900/70 p-2 rounded-lg">
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
-          <div className="text-sm text-green-300">Tamanho: {Math.floor(player.size)}</div>
           <div className="text-sm text-green-300">Bots: {debugInfo.botCount}</div>
-          <div className="text-sm text-green-300">Vida: {debugInfo.playerHealth}</div>
+          <div className="text-sm text-green-300">Players: {debugInfo.playersCount}</div>
         </div>
 
         <div className="w-1/3">

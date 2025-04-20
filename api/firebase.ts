@@ -12,7 +12,8 @@ import {
   push, 
   query, 
   orderByChild, 
-  equalTo 
+  equalTo,
+  off
 } from "firebase/database";
 import { getAuth } from "firebase/auth"
 
@@ -42,5 +43,6 @@ export {
   query, 
   orderByChild, 
   equalTo,
-  auth
+  auth,
+  off
 };

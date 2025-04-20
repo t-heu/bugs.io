@@ -14,7 +14,9 @@ export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOver
   const [selectedCharacter, setSelectedCharacter] = useState(null)
   const [score, setScore] = useState(0)
-
+  const [roomKey, setRoomKey] = useState('')
+  const [player, setPlayer] = useState<any>()
+  
   const characters = [
     {
       id: "ant",
@@ -49,7 +51,13 @@ export default function Game() {
   ];  
 
   const handleCharacterSelect = (character: any) => {
-    if (!name) return alert('Error: Insira seu nome!')
+    if (!name) return alert('Erro: Nome não fornecido');
+  
+    if (!(/^[a-zA-Z\s]*$/.test(name))) {
+      return alert('Erro: Nome inválido');
+    }
+
+    joinOrCreateRoom(name, character)
 
     setSelectedCharacter(character)
     setGameState("playing")
@@ -68,14 +76,16 @@ export default function Game() {
 
   const [name, setName] = useState('');
 
-  function createPlayer(roomKey: string, owner: boolean, name: string) {
+  function createPlayer(roomKey: string, owner: boolean, name: string, character: any) {
+    const ARENA_SIZE = 2000;
+    
     try {
       const updates: any = {};
       const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
       const newPlayerRef = push(playersRef);
       const nextPlayer = newPlayerRef.key;
-
-      updates[`bugsio/rooms/${roomKey}/players/p${nextPlayer}`] = {
+  
+      const playerData = {
         name,
         gameover: false,
         victory: false,
@@ -83,79 +93,77 @@ export default function Game() {
         active: true,
         ready: false,
         owner,
+        x: ARENA_SIZE / 2,
+        y: ARENA_SIZE / 2,
+        size: 30,
+        speed: character.stats.speed * 0.5,
+        attack: character.stats.attack,
+        health: character.stats.health * 10,
+        maxHealth: character.stats.health * 10,
+        score: 0,
+        type: character.id,
+        lastDamageTime: 0,
       };
 
+      setRoomKey(roomKey)
+      setPlayer(playerData)
+  
       if (nextPlayer) {
+        sessionStorage.setItem('uid', nextPlayer)
+        updates[`bugsio/rooms/${roomKey}/players/p${nextPlayer}`] = playerData;
         update(ref(database), updates);
       }
     } catch (error) {
       console.error('Erro ao criar jogador:', error);
     }
   }
-
-  async function createGame(stauts: boolean) {
+  
+  async function createGame(status: boolean, name: string, character: any) {
     try {
-      if (stauts) {
-        if (!name) {
-          console.error('Erro ao criar jogo: Nome do jogador não fornecido');
-          return alert('Erro ao criar jogo: Nome do jogador não fornecido');
-        }
-
-        if (!(/^[a-zA-Z\s]*$/.test(name))) {
-          console.error('Erro ao criar jogo: Nome do jogador inválido');
-          return alert('Erro ao criar jogo: Nome do jogador inválido');
-        }
-
+      if (status) {
         const roomKey = generateRandomWord(6);
-
+  
         await set(ref(database, 'bugsio/rooms/' + roomKey), {
-          turn: 'p1',
           gameInProgress: false,
-          selectedLetters: Array('-'),
-          wordArray: Array('-'),
-          selectedWord: { name: '', dica: '' }
+          createdAt: Date.now(),
         });
-
-        console.info('Jogo criado com sucesso', { roomKey, playerName: name });
-        createPlayer(roomKey, true, name);
-      } else {
-        console.log('Jogo criado com sucesso');
+  
+        console.info('Jogo criado:', { roomKey });
+        createPlayer(roomKey, true, name, character);
       }
     } catch (e) {
       console.error('Erro ao criar jogo:', e);
-      console.log(e);
     }
   }
-
-  function joinRoom() {
+  
+  function joinOrCreateRoom(name: string, character: any) {
     get(child(ref(database), 'bugsio/rooms')).then((snapshot: any) => {
       if (snapshot.exists()) {
         const rooms = snapshot.val();
         let foundRoom = false;
-
+  
         Object.keys(rooms).some((roomKey) => {
           const room = rooms[roomKey];
           const playersObject = room.players || {};
           const numPlayers = Object.keys(playersObject).length;
-
+  
           if (!room.gameInProgress && numPlayers < 8) {
-            createPlayer(roomKey, false, name);
+            createPlayer(roomKey, false, name, character);
             foundRoom = true;
             return true;
           }
         });
-
+  
         if (!foundRoom) {
-          createGame(true);
+          createGame(true, name, character);
         }
       } else {
-        createGame(true);
-        return true;
+        createGame(true, name, character);
       }
     }).catch((error: any) => {
-      console.error(`Erro ao verificar as salas: ${error.message}`);
+      console.error(`Erro ao buscar salas: ${error.message}`);
     });
-  }
+  }  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white">
@@ -171,7 +179,10 @@ export default function Game() {
         </div>
       )}
 
-      {gameState === "playing" && <GameArena characters={characters} character={selectedCharacter} onGameOver={handleGameOver} />}
+      {gameState === "playing" && player && roomKey && <GameArena 
+      characters={characters} 
+      onGameOver={handleGameOver} 
+      roomKey={roomKey} player={player} setPlayer={setPlayer} />}
 
       {gameState === "gameOver" && (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
