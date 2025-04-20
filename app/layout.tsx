@@ -6,7 +6,9 @@ export const metadata = {
   description: "Um jogo de batalha de insetos online"
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body>

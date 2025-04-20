@@ -10,44 +10,15 @@ import GameArena from "@/components/game-arena"
 import { database, set, ref, update, get, child, push } from "@/api/firebase"
 import generateRandomWord from "@/utils/generateRandomWord"
 
+import insects from "../../insects.json"
+
 export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOver
   const [score, setScore] = useState(0)
   const [roomKey, setRoomKey] = useState('')
   const [player, setPlayer] = useState<any>()
   
-  const characters = [
-    {
-      id: "ant",
-      name: "Formiga",
-      description: "Rápida e ágil",
-      stats: {
-        speed: 9,      // Bem rápida
-        attack: 4,     // Fraca ofensivamente
-        health: 30,    // Frágil
-      },
-    },
-    {
-      id: "spider",
-      name: "Aranha",
-      description: "Forte e agressiva",
-      stats: {
-        speed: 6,      // Velocidade média
-        attack: 15,    // Forte ofensivamente
-        health: 50,    // Mediana em resistência
-      },
-    },
-    {
-      id: "beetle",
-      name: "Besouro",
-      description: "Resistente e durável",
-      stats: {
-        speed: 3,      // Lento
-        attack: 6,     // Ataque ok
-        health: 80,    // Muito resistente
-      },
-    },
-  ];  
+  const characters = insects; 
 
   const handleCharacterSelect = (character: any) => {
     if (!name) return alert('Erro: Nome não fornecido');

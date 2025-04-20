@@ -1,0 +1,86 @@
+[
+  {
+    "id": "ant",
+    "name": "Formiga",
+    "description": "Rápida e ágil",
+    "stats": {
+      "speed": 9,
+      "attack": 4,
+      "health": 30
+    },
+    "colors": {
+      "fill": "#FF5722",
+      "stroke": "#D84315"
+    }
+  },
+  {
+    "id": "spider",
+    "name": "Aranha",
+    "description": "Forte e agressiva",
+    "stats": {
+      "speed": 6,
+      "attack": 15,
+      "health": 50
+    },
+    "colors": {
+      "fill": "#9C27B0",
+      "stroke": "#6A1B9A"
+    }
+  },
+  {
+    "id": "beetle",
+    "name": "Besouro",
+    "description": "Resistente e durável",
+    "stats": {
+      "speed": 3,
+      "attack": 6,
+      "health": 80
+    },
+    "colors": {
+      "fill": "#3F51B5",
+      "stroke": "#283593"
+    }
+  },
+  {
+    "id": "wasp",
+    "name": "Vespa",
+    "description": "Letal e veloz",
+    "stats": {
+      "speed": 8,
+      "attack": 18,
+      "health": 35
+    },
+    "colors": {
+      "fill": "#FFC107",
+      "stroke": "#FFA000"
+    }
+  },
+  {
+    "id": "cockroach",
+    "name": "Barata",
+    "description": "Sobrevivente implacável",
+    "stats": {
+      "speed": 7,
+      "attack": 5,
+      "health": 60
+    },
+    "colors": {
+      "fill": "#795548",
+      "stroke": "#4E342E"
+    }
+  },
+  {
+    "id": "ladybug",
+    "name": "Joaninha",
+    "description": "Graciosa, mas resistente",
+    "stats": {
+      "speed": 5,
+      "attack": 7,
+      "health": 55
+    },
+    "colors": {
+      "fill": "#F44336",
+      "stroke": "#B71C1C"
+    }
+  }
+]

@@ -1,8 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
+import {AntDrawing} from "@/app/insects/ant";
+import {BeetleDrawing} from "@/app/insects/beetle"
+import {CockroachDrawing} from "@/app/insects/cockroach"
+import {LadybugDrawing} from "@/app/insects/ladybug"
+import {SpiderDrawing} from "@/app/insects/spider"
+import {WaspDrawing} from "@/app/insects/wasp"
 
 export default function CharacterSelection({ onSelect, name, onName, characters }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -18,55 +25,29 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
 
     if (type === "ant") {
       return (
-        <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="50" cy="60" rx="8" ry="12" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <ellipse cx="50" cy="45" rx="6" ry="8" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <ellipse cx="50" cy="30" rx="10" ry="12" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <path d="M46 65 Q35 80 40 85" stroke={strokeColor} strokeWidth="2" />
-          <path d="M54 65 Q65 80 60 85" stroke={strokeColor} strokeWidth="2" />
-          <path d="M42 60 L25 65" stroke={strokeColor} strokeWidth="2" />
-          <path d="M44 50 L25 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M40 35 L25 25" stroke={strokeColor} strokeWidth="2" />
-          <path d="M58 60 L75 65" stroke={strokeColor} strokeWidth="2" />
-          <path d="M56 50 L75 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M60 35 L75 25" stroke={strokeColor} strokeWidth="2" />
-        </svg>
+        <AntDrawing fillColor={color} strokeColor={strokeColor} />
       )
     } else if (type === "spider") {
       return (
-        <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="50" cy="50" rx="12" ry="12" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <ellipse cx="50" cy="70" rx="8" ry="8" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <circle cx="47" cy="68" r="2" fill="white" />
-          <circle cx="53" cy="68" r="2" fill="white" />
-          <path d="M40 50 Q25 35 15 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M38 55 Q20 55 10 60" stroke={strokeColor} strokeWidth="2" />
-          <path d="M38 60 Q20 70 10 75" stroke={strokeColor} strokeWidth="2" />
-          <path d="M40 65 Q25 80 15 90" stroke={strokeColor} strokeWidth="2" />
-          <path d="M60 50 Q75 35 85 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M62 55 Q80 55 90 60" stroke={strokeColor} strokeWidth="2" />
-          <path d="M62 60 Q80 70 90 75" stroke={strokeColor} strokeWidth="2" />
-          <path d="M60 65 Q75 80 85 90" stroke={strokeColor} strokeWidth="2" />
-        </svg>
+        <SpiderDrawing fillColor={color} strokeColor={strokeColor} />
       )
     } else if (type === "beetle") {
       return (
-        <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="50" cy="50" rx="20" ry="25" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <ellipse cx="50" cy="70" rx="8" ry="8" fill={color} stroke={strokeColor} strokeWidth="2" />
-          <line x1="40" y1="50" x2="60" y2="50" stroke={strokeColor} strokeWidth="2" />
-          <line x1="50" y1="30" x2="50" y2="65" stroke={strokeColor} strokeWidth="2" />
-          <path d="M45 75 L35 85" stroke={strokeColor} strokeWidth="2" />
-          <path d="M55 75 L65 85" stroke={strokeColor} strokeWidth="2" />
-          <path d="M32 60 L20 65" stroke={strokeColor} strokeWidth="2" />
-          <path d="M30 50 L15 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M32 40 L20 30" stroke={strokeColor} strokeWidth="2" />
-          <path d="M68 60 L80 65" stroke={strokeColor} strokeWidth="2" />
-          <path d="M70 50 L85 45" stroke={strokeColor} strokeWidth="2" />
-          <path d="M68 40 L80 30" stroke={strokeColor} strokeWidth="2" />
-        </svg>
+        <BeetleDrawing fillColor={color} strokeColor={strokeColor} />
       )
-    }
+    } else if (type === "ladybug") {
+      return (
+        <LadybugDrawing fillColor={color} strokeColor={strokeColor} />
+      )
+    } else if (type === "wasp") {
+      return (
+        <WaspDrawing fillColor={color} strokeColor={strokeColor} />
+      )
+    } else if (type === "cockroach") {
+      return (
+        <CockroachDrawing fillColor={color} strokeColor={strokeColor} />
+      )
+    }      
   }
 
   return (
