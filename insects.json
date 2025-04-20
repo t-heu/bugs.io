@@ -3,11 +3,11 @@
     "id": "ant",
     "name": "Formiga",
     "description": "Rápida e ágil",
-    "attributes": ["Alta velocidade", "Ataque médio", "Vida baixa"],
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 9,
       "attack": 4,
-      "health": 30
+      "health": 25
     },
     "colors": {
       "fill": "#FF5722",
@@ -18,11 +18,11 @@
     "id": "spider",
     "name": "Aranha",
     "description": "Forte e agressiva",
-    "attributes": ["Velocidade média", "Alto ataque", "Vida média"],
+    "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
     "stats": {
       "speed": 6,
-      "attack": 15,
-      "health": 50
+      "attack": 24,
+      "health": 40
     },
     "colors": {
       "fill": "#9C27B0",
@@ -33,11 +33,11 @@
     "id": "beetle",
     "name": "Besouro",
     "description": "Resistente e durável",
-    "attributes": ["Velocidade baixa", "Ataque médio", "Alta vida"],
+    "attributes": ["Velocidade baixa", "Ataque médio", "Vida alta"],
     "stats": {
       "speed": 3,
-      "attack": 6,
-      "health": 80
+      "attack": 14,
+      "health": 85
     },
     "colors": {
       "fill": "#3F51B5",
@@ -48,11 +48,11 @@
     "id": "wasp",
     "name": "Vespa",
     "description": "Letal e veloz",
-    "attributes": ["Alta velocidade", "Ataque médio", "Vida média"],
+    "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
     "stats": {
       "speed": 8,
       "attack": 18,
-      "health": 35
+      "health": 40
     },
     "colors": {
       "fill": "#FFC107",
@@ -63,11 +63,11 @@
     "id": "cockroach",
     "name": "Barata",
     "description": "Sobrevivente implacável",
-    "attributes": ["Alta velocidade", "Ataque baixo", "Alta vida"],
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida altíssima"],
     "stats": {
-      "speed": 7,
+      "speed": 9,
       "attack": 5,
-      "health": 60
+      "health": 95
     },
     "colors": {
       "fill": "#795548",
@@ -77,12 +77,12 @@
   {
     "id": "ladybug",
     "name": "Joaninha",
-    "description": "Graciosa, mas resistente",
-    "attributes": ["Velocidade média", "Ataque baixo", "Alta vida"],
+    "description": "Graciosa e equilibrada",
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 5,
       "attack": 7,
-      "health": 55
+      "health": 35
     },
     "colors": {
       "fill": "#F44336",
