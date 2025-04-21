@@ -433,7 +433,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
         console.log(updatedFood)
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-          health: newHealth
+          health: newHealth,
+          score: newScore
         });
 
         foodEaten = true
