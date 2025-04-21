@@ -98,7 +98,10 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       // Normalize distance to 0-1 range
       const normalizedDistance = distance / maxDistance
 
-      setJoystickPos({ x, y })
+      setJoystickPos({
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance
+      })      
       setJoystickAngle(angle)
       setJoystickDistance(normalizedDistance)
     }
@@ -262,6 +265,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     
     // Verifica se o player morreu
     if (player.health <= 0) {
+      sessionStorage.setItem("score", player.score)
       exitPlayer(roomKey,  player.uid)
       setPlayer(null)
       setGameRunning(false)
@@ -448,9 +452,12 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
             variant="ghost"
             className="text-green-300 hover:text-white hover:bg-green-800"
             onClick={() => {
-              setGameRunning(false)
-              onGameOver(player.score)
-            }}
+              const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
+              if (confirmExit) {
+                setGameRunning(false)
+                onGameOver(player.score)
+              }
+            }}            
           >
             Sair
           </Button>

@@ -12,7 +12,8 @@
     "colors": {
       "fill": "#FF5722",
       "stroke": "#D84315"
-    }
+    },
+    "requiredScore": 0
   },
   {
     "id": "spider",
@@ -27,7 +28,8 @@
     "colors": {
       "fill": "#9C27B0",
       "stroke": "#6A1B9A"
-    }
+    },
+    "requiredScore": 1400
   },
   {
     "id": "beetle",
@@ -42,7 +44,8 @@
     "colors": {
       "fill": "#3F51B5",
       "stroke": "#283593"
-    }
+    },
+    "requiredScore": 2000
   },
   {
     "id": "wasp",
@@ -57,7 +60,8 @@
     "colors": {
       "fill": "#FFC107",
       "stroke": "#FFA000"
-    }
+    },
+    "requiredScore": 1300
   },
   {
     "id": "cockroach",
@@ -72,7 +76,8 @@
     "colors": {
       "fill": "#795548",
       "stroke": "#4E342E"
-    }
+    },
+    "requiredScore": 2200
   },
   {
     "id": "ladybug",
@@ -87,7 +92,8 @@
     "colors": {
       "fill": "#F44336",
       "stroke": "#B71C1C"
-    }
+    },
+    "requiredScore": 1000
   },
   {
     "id": "scorpion",
@@ -102,7 +108,8 @@
     "colors": {
       "fill": "#6D4C41",
       "stroke": "#3E2723"
-    }
+    },
+    "requiredScore": 2600
   },
   {
     "id": "worm",
@@ -117,7 +124,8 @@
     "colors": {
       "fill": "#A1887F",
       "stroke": "#5D4037"
-    }
+    },
+    "requiredScore": 0
   },
   {
     "id": "bee",
@@ -132,7 +140,8 @@
     "colors": {
       "fill": "#FFEB3B",
       "stroke": "#F57F17"
-    }
+    },
+    "requiredScore": 1200
   },
   {
     "id": "centipede",
@@ -147,7 +156,8 @@
     "colors": {
       "fill": "#8D6E63",
       "stroke": "#4E342E"
-    }
+    },
+    "requiredScore": 1700
   },
   {
     "id": "water_bug",
@@ -162,7 +172,8 @@
     "colors": {
       "fill": "#607D8B",
       "stroke": "#37474F"
-    }
+    },
+    "requiredScore": 1700
   },
   {
     "id": "mantis",
@@ -177,7 +188,8 @@
     "colors": {
       "fill": "#4CAF50",
       "stroke": "#2E7D32"
-    }
+    },
+    "requiredScore": 1800
   },
   {
     "id": "cricket",
@@ -192,7 +204,8 @@
     "colors": {
       "fill": "#81C784",
       "stroke": "#388E3C"
-    }
+    },
+    "requiredScore": 1000
   },
   {
     "id": "grasshopper",
@@ -207,7 +220,8 @@
     "colors": {
       "fill": "#AED581",
       "stroke": "#689F38"
-    }
+    },
+    "requiredScore": 1200
   },
   {
     "id": "cicada",
@@ -222,7 +236,8 @@
     "colors": {
       "fill": "#B0BEC5",
       "stroke": "#455A64"
-    }
+    },
+    "requiredScore": 1400
   },
   {
     "id": "stick_bug",
@@ -237,7 +252,8 @@
     "colors": {
       "fill": "#A5D6A7",
       "stroke": "#33691E"
-    }
+    },
+    "requiredScore": 1400
   },
   {
     "id": "mosquito",
@@ -252,7 +268,8 @@
     "colors": {
       "fill": "#E0E0E0",
       "stroke": "#757575"
-    }
+    },
+    "requiredScore": 0
   },
   {
     "id": "dragonfly",
@@ -267,7 +284,8 @@
     "colors": {
       "fill": "#00BCD4",
       "stroke": "#00838F"
-    }
+    },
+    "requiredScore": 1600
   },
   {
     "id": "butterfly",
@@ -282,7 +300,8 @@
     "colors": {
       "fill": "#E91E63",
       "stroke": "#AD1457"
-    }
+    },
+    "requiredScore": 0
   },
   {
     "id": "moth",
@@ -297,7 +316,8 @@
     "colors": {
       "fill": "#CE93D8",
       "stroke": "#6A1B9A"
-    }
+    },
+    "requiredScore": 700
   },
   {
     "id": "fly",
@@ -312,6 +332,7 @@
     "colors": {
       "fill": "#607D8B",
       "stroke": "#455A64"
-    }
-  }    
+    },
+    "requiredScore": 0
+  }
 ]
