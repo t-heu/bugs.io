@@ -88,5 +88,230 @@
       "fill": "#F44336",
       "stroke": "#B71C1C"
     }
-  }
+  },
+  {
+    "id": "scorpion",
+    "name": "Escorpião",
+    "description": "Perigoso e resistente",
+    "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
+    "stats": {
+      "speed": 4,
+      "attack": 40,
+      "health": 85
+    },
+    "colors": {
+      "fill": "#6D4C41",
+      "stroke": "#3E2723"
+    }
+  },
+  {
+    "id": "worm",
+    "name": "Minhoca",
+    "description": "Lenta e escorregadia",
+    "attributes": ["Velocidade baixa", "Ataque baixíssimo", "Vida baixa"],
+    "stats": {
+      "speed": 2,
+      "attack": 2,
+      "health": 30
+    },
+    "colors": {
+      "fill": "#A1887F",
+      "stroke": "#5D4037"
+    }
+  },
+  {
+    "id": "bee",
+    "name": "Abelha",
+    "description": "Rápida e protetora",
+    "attributes": ["Alta velocidade", "Ataque médio", "Vida baixa"],
+    "stats": {
+      "speed": 13,
+      "attack": 16,
+      "health": 30
+    },
+    "colors": {
+      "fill": "#FFEB3B",
+      "stroke": "#F57F17"
+    }
+  },
+  {
+    "id": "centipede",
+    "name": "Centopéia",
+    "description": "Ágil e venenosa",
+    "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
+    "stats": {
+      "speed": 12,
+      "attack": 28,
+      "health": 45
+    },
+    "colors": {
+      "fill": "#8D6E63",
+      "stroke": "#4E342E"
+    }
+  },
+  {
+    "id": "water_bug",
+    "name": "Barata d'água",
+    "description": "Silenciosa e letal",
+    "attributes": ["Velocidade média", "Ataque alto", "Vida média"],
+    "stats": {
+      "speed": 7,
+      "attack": 30,
+      "health": 50
+    },
+    "colors": {
+      "fill": "#607D8B",
+      "stroke": "#37474F"
+    }
+  },
+  {
+    "id": "mantis",
+    "name": "Louva-a-deus",
+    "description": "Ágil e caçador preciso",
+    "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
+    "stats": {
+      "speed": 12,
+      "attack": 28,
+      "health": 50
+    },
+    "colors": {
+      "fill": "#4CAF50",
+      "stroke": "#2E7D32"
+    }
+  },
+  {
+    "id": "cricket",
+    "name": "Grilo",
+    "description": "Saltador veloz",
+    "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
+    "stats": {
+      "speed": 14,
+      "attack": 6,
+      "health": 30
+    },
+    "colors": {
+      "fill": "#81C784",
+      "stroke": "#388E3C"
+    }
+  },
+  {
+    "id": "grasshopper",
+    "name": "Gafanhoto",
+    "description": "Veloz e evasivo",
+    "attributes": ["Velocidade altíssima", "Ataque médio", "Vida baixa"],
+    "stats": {
+      "speed": 15,
+      "attack": 15,
+      "health": 30
+    },
+    "colors": {
+      "fill": "#AED581",
+      "stroke": "#689F38"
+    }
+  },
+  {
+    "id": "cicada",
+    "name": "Cigarra",
+    "description": "Barulhenta e resistente",
+    "attributes": ["Velocidade baixa", "Ataque médio", "Vida média"],
+    "stats": {
+      "speed": 4,
+      "attack": 12,
+      "health": 55
+    },
+    "colors": {
+      "fill": "#B0BEC5",
+      "stroke": "#455A64"
+    }
+  },
+  {
+    "id": "stick_bug",
+    "name": "Bicho-pau",
+    "description": "Mestre da camuflagem",
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida média"],
+    "stats": {
+      "speed": 5,
+      "attack": 6,
+      "health": 60
+    },
+    "colors": {
+      "fill": "#A5D6A7",
+      "stroke": "#33691E"
+    }
+  },
+  {
+    "id": "mosquito",
+    "name": "Mosquito",
+    "description": "Irritante e rápido",
+    "attributes": ["Velocidade altíssima", "Ataque baixo", "Vida baixíssima"],
+    "stats": {
+      "speed": 15,
+      "attack": 5,
+      "health": 20
+    },
+    "colors": {
+      "fill": "#E0E0E0",
+      "stroke": "#757575"
+    }
+  },
+  {
+    "id": "dragonfly",
+    "name": "Libélula",
+    "description": "Ágil e predadora aérea",
+    "attributes": ["Velocidade altíssima", "Ataque médio", "Vida média"],
+    "stats": {
+      "speed": 15,
+      "attack": 20,
+      "health": 45
+    },
+    "colors": {
+      "fill": "#00BCD4",
+      "stroke": "#00838F"
+    }
+  },
+  {
+    "id": "butterfly",
+    "name": "Borboleta",
+    "description": "Bela e evasiva",
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "stats": {
+      "speed": 7,
+      "attack": 4,
+      "health": 25
+    },
+    "colors": {
+      "fill": "#E91E63",
+      "stroke": "#AD1457"
+    }
+  },
+  {
+    "id": "moth",
+    "name": "Mariposa",
+    "description": "Noturna e delicada",
+    "attributes": ["Velocidade baixa", "Ataque baixo", "Vida baixa"],
+    "stats": {
+      "speed": 4,
+      "attack": 5,
+      "health": 25
+    },
+    "colors": {
+      "fill": "#CE93D8",
+      "stroke": "#6A1B9A"
+    }
+  },
+  {
+    "id": "fly",
+    "name": "Mosca",
+    "description": "Ágil e persistente",
+    "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "stats": {
+      "speed": 8,
+      "attack": 3,
+      "health": 20
+    },
+    "colors": {
+      "fill": "#607D8B",
+      "stroke": "#455A64"
+    }
+  }    
 ]

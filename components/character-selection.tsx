@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
+import { InsectType } from "@/utils/draw"
 
 import {AntDrawing} from "@/app/insects/ant";
 import {BeetleDrawing} from "@/app/insects/beetle"
@@ -10,6 +12,45 @@ import {CockroachDrawing} from "@/app/insects/cockroach"
 import {LadybugDrawing} from "@/app/insects/ladybug"
 import {SpiderDrawing} from "@/app/insects/spider"
 import {WaspDrawing} from "@/app/insects/wasp"
+import {ScorpionDrawing} from "@/app/insects/scorpion"
+import {ButterflyDrawing} from "@/app/insects/butterfly"
+import {MosquitoDrawing} from "@/app/insects/mosquito"
+import {MantisDrawing} from "@/app/insects/mantis"
+import {StickBugDrawing} from "@/app/insects/stickBug"
+import {CentipedeDrawing} from "@/app/insects/centipede"
+import {CricketDrawing} from "@/app/insects/cricket"
+import {DragonflyDrawing} from "@/app/insects/dragonfly"
+import {CicadaDrawing} from "@/app/insects/cicada"
+import {BeeDrawing} from "@/app/insects/bee"
+import {WaterBugDrawing} from "@/app/insects/waterBug"
+import {WormDrawing} from "@/app/insects/worm"
+import {GrasshopperDrawing} from "@/app/insects/grasshopper"
+import {MothDrawing} from "@/app/insects/moth"
+import {FlyDrawing} from "@/app/insects/fly"
+
+const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, strokeColor: string }>> = {
+  ant: AntDrawing,
+  spider: SpiderDrawing,
+  beetle: BeetleDrawing,
+  ladybug: LadybugDrawing,
+  wasp: WaspDrawing,
+  cockroach: CockroachDrawing,
+  scorpion: ScorpionDrawing,
+  butterfly: ButterflyDrawing,
+  mosquito: MosquitoDrawing,
+  mantis: MantisDrawing,
+  stick_bug: StickBugDrawing,
+  centipede: CentipedeDrawing,
+  cricket: CricketDrawing,
+  dragonfly: DragonflyDrawing,
+  worm: WormDrawing,
+  cicada: CicadaDrawing,
+  bee: BeeDrawing,
+  grasshopper: GrasshopperDrawing,
+  water_bug: WaterBugDrawing,
+  moth: MothDrawing,
+  fly: FlyDrawing
+};
 
 export default function CharacterSelection({ onSelect, name, onName, characters }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -19,35 +60,17 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
     return Math.round(Math.min(Math.max(ratio, 0), 1) * totalBlocks);
   }
 
-  const renderInsectIcon = (type: any, isHovered: any) => {
+  const renderInsectIcon = (type: InsectType, isHovered: any) => {
     const color = isHovered ? "#4ade80" : "#22c55e"
     const strokeColor = isHovered ? "#ffffff" : "#15803d"
 
-    if (type === "ant") {
-      return (
-        <AntDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    } else if (type === "spider") {
-      return (
-        <SpiderDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    } else if (type === "beetle") {
-      return (
-        <BeetleDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    } else if (type === "ladybug") {
-      return (
-        <LadybugDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    } else if (type === "wasp") {
-      return (
-        <WaspDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    } else if (type === "cockroach") {
-      return (
-        <CockroachDrawing fillColor={color} strokeColor={strokeColor} />
-      )
-    }      
+    const InsectComponent = insectDrawingComponents[type];
+  
+    if (InsectComponent) {
+      return <InsectComponent fillColor={color} strokeColor={strokeColor} />;
+    } else {
+      return null; // Ou um componente de fallback, caso não seja encontrado
+    }
   }
 
   return (

@@ -1,9 +1,33 @@
 // Tipos possíveis para o tipo de inseto
-type InsectType = "ant" | "spider" | "beetle" | "cockroach" | "ladybug" | "wasp";
+export type InsectType = 
+  | "ant" 
+  | "spider" 
+  | "beetle" 
+  | "cockroach" 
+  | "ladybug" 
+  | "wasp"
+  | "scorpion"
+  | "butterfly"
+  | "mosquito"
+  | "mantis"
+  | "stick_bug"
+  | "centipede"
+  | "cricket"
+  | "dragonfly"
+  | "cicada"
+  | "bee"
+  | "water_bug"
+  | "worm"
+  | "grasshopper"
+  | "moth"
+  | "fly";
+
 type ViewportOffset = {
   x: number;
   y: number;
 };
+
+import insects from "../insects.json"
 
 import {Ant} from "@/app/insects/ant";
 import {Beetle} from "@/app/insects/beetle"
@@ -11,6 +35,21 @@ import {Cockroach} from "@/app/insects/cockroach"
 import {Ladybug} from "@/app/insects/ladybug"
 import {Spider} from "@/app/insects/spider"
 import {Wasp} from "@/app/insects/wasp"
+import {Scorpion} from "@/app/insects/scorpion"
+import {Butterfly} from "@/app/insects/butterfly"
+import {Mosquito} from "@/app/insects/mosquito"
+import {Mantis} from "@/app/insects/mantis"
+import {StickBug} from "@/app/insects/stickBug"
+import {Centipede} from "@/app/insects/centipede"
+import {Cricket} from "@/app/insects/cricket"
+import {Dragonfly} from "@/app/insects/dragonfly"
+import {Cicada} from "@/app/insects/cicada"
+import {Bee} from "@/app/insects/bee"
+import {WaterBug} from "@/app/insects/waterBug"
+import {Worm} from "@/app/insects/worm"
+import {Grasshopper} from "@/app/insects/grasshopper"
+import {Moth} from "@/app/insects/moth"
+import {Fly} from "@/app/insects/fly"
 
 const ARENA_SIZE = 2000
 
@@ -132,24 +171,12 @@ export const drawInsect = (
   let fillColor: string = ''
   let strokeColor: string = ''
 
-  if (type === "ant") {
-    fillColor = "#FF5722"
-    strokeColor = "#D84315"
-  } else if (type === "spider") {
-    fillColor = "#9C27B0"
-    strokeColor = "#6A1B9A"
-  } else if (type === "beetle") {
-    fillColor = "#3F51B5"
-    strokeColor = "#283593"
-  } else if (type === "wasp") {
-    fillColor = "#FFC107"
-    strokeColor = "#FFA000"
-  } else if (type === "cockroach") {
-    fillColor = "#795548"
-    strokeColor = "#4E342E"
-  } else if (type === "ladybug") {
-    fillColor = "#F44336"
-    strokeColor = "#B71C1C"
+  const insectsArray = Object.fromEntries(insects.map(i => [i.id, i]));
+
+  // Atribui cores baseado no tipo
+  if (insectsArray[type]) {
+    fillColor = insectsArray[type].colors.fill;
+    strokeColor = insectsArray[type].colors.stroke;
   }
 
   // Add glow effect for player
@@ -159,19 +186,32 @@ export const drawInsect = (
     strokeColor = "#FFFFFF"
   }
 
-  // Draw the insect based on type
-  if (type === "ant") {
-    Ant(ctx, fillColor, strokeColor)
-  } else if (type === "spider") {
-    Spider(ctx, fillColor, strokeColor)
-  } else if (type === "beetle") {
-    Beetle(ctx, fillColor, strokeColor)
-  } else if (type === "wasp") {
-    Wasp(ctx, fillColor, strokeColor)
-  } else if (type === "cockroach") {
-    Cockroach(ctx, fillColor, strokeColor)
-  } else if (type === "ladybug") {
-    Ladybug(ctx, fillColor, strokeColor)
+  const insectDrawFunctions = {
+    ant: Ant,
+    spider: Spider,
+    beetle: Beetle,
+    wasp: Wasp,
+    cockroach: Cockroach,
+    ladybug: Ladybug,
+    scorpion: Scorpion,
+    butterfly: Butterfly,
+    mosquito: Mosquito,
+    mantis: Mantis,
+    "stick_bug": StickBug,
+    centipede: Centipede,
+    cricket: Cricket,
+    dragonfly: Dragonfly,
+    cicada: Cicada,
+    bee: Bee,
+    "water_bug": WaterBug,
+    worm: Worm,
+    grasshopper: Grasshopper,
+    moth: Moth,
+    fly: Fly,
+  };
+  
+  if (insectDrawFunctions[type]) {
+    insectDrawFunctions[type](ctx, fillColor, strokeColor);
   }  
 
   // Restore the context
