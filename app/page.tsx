@@ -24,6 +24,7 @@ export default function Home() {
             </Button>
           </Link>
         </div>
+        <p className="text-xl md:text-1xl text-green-200">Version: 1.0.0</p>
       </div>
     </div>
   )

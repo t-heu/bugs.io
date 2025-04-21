@@ -1,11 +1,17 @@
-/** @type {import('next').NextConfig} */
+import withPWA from 'next-pwa'
 
 const nextConfig = {
-  reactStrictMode: true, // Modo estrito do React
-  output: 'export',
+  reactStrictMode: true,
+  output: 'export', // exportação estática
   images: {
-    unoptimized: true, // Disable image optimization
-  }
-};
+    unoptimized: true, // desativa otimização automática
+  },
+}
 
-export default nextConfig;
+export default withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+  buildExcludes: [/middleware-manifest\.json$/],
+})(nextConfig)
