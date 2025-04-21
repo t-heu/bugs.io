@@ -209,10 +209,13 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   
     const unsubscribe = onValue(playersRef, (snapshot) => {
       const playersData = snapshot.val() || {};
-      const otherPlayers = Object.values(playersData).filter(
+      let otherPlayers = Object.values(playersData).filter(
         (p: any) => p.uid !== player.uid
       );
-
+  
+      // Remove jogadores com saúde 0
+      otherPlayers = otherPlayers.filter((p: any) => p.health > 0);
+  
       // Adia o setState para o final do ciclo de render
       setTimeout(() => {
         setOtherPlayers((prevState) => {
@@ -227,7 +230,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     return () => {
       off(playersRef, "value", unsubscribe);
     };
-  }, [roomKey, player.uid]);
+  }, [roomKey, player.uid]);  
 
   useEffect(() => {
     if (!roomKey) return
@@ -309,7 +312,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
           });
 
           // Atualiza localmente
-          setOtherPlayers((prev) =>
+          setOtherPlayers((prev) => 
             prev.map((p) => (p.uid === targetUID ? { ...p, health: newHealth } : p))
           );
         },
@@ -330,7 +333,6 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     // ☠️ Verifica morte
     if (player.health <= 0) {
       sessionStorage.setItem("score", player.score);
-      exitPlayer(roomKey, player.uid);
       setPlayer(null);
       setGameRunning(false);
       onGameOver(player.score);
@@ -372,11 +374,14 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   
       const playerAttack = player.attack * (player.size / 30);
       const damageToTarget = playerAttack * 1.5;
-  
+
       const newHealthTarget = Math.max(0, targetPlayer.health - damageToTarget);
       onPlayerDamaged(targetPlayer.uid, newHealthTarget);
-  
-      if (newHealthTarget === 0) {
+
+      if (targetPlayer.name && newHealthTarget === 0) {
+        update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}`), {
+          killer: player.name,
+        });
         const newScore = player.score + 5;
         onPlayerKills(player.uid, newScore);
       }
@@ -501,7 +506,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
               const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
               if (confirmExit) {
                 setGameRunning(false)
-                onGameOver(player.score)
+                onGameOver(0)
               }
             }}            
           >

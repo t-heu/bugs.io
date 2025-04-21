@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import CharacterSelection from "@/components/character-selection"
 import GameArena from "@/components/game-arena"
 
-import { database, set, ref, update, get, child, push } from "@/api/firebase"
+import { database, set, ref, update, get, child, push, onValue } from "@/api/firebase"
 import generateRandomWord from "@/utils/generateRandomWord"
 
 import insects from "../../insects.json"
@@ -17,6 +17,7 @@ export default function Game() {
   const [score, setScore] = useState(0)
   const [roomKey, setRoomKey] = useState('')
   const [player, setPlayer] = useState<any>()
+  const [assassin, setAssassin] = useState('')
   
   const characters = insects; 
 
@@ -34,6 +35,16 @@ export default function Game() {
 
   const handleGameOver = (finalScore: number) => {
     setScore(finalScore)
+    const killedByRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/killer`);
+    onValue(killedByRef, (snapshot) => {
+      const killerName = snapshot.val();
+      
+      // Agora você pode usar essa informação em setAssassin
+      if (killerName) {
+        setAssassin(killerName);
+        
+      }
+    }, { onlyOnce: true });
     setGameState("gameOver")
   }
 
@@ -55,11 +66,10 @@ export default function Game() {
   
       const playerData = {
         name,
-        gameover: false,
-        victory: false,
         uid: nextPlayer,
         active: true,
         ready: false,
+        killer: '',
         owner,
         x: ARENA_SIZE / 2,
         y: ARENA_SIZE / 2,
@@ -153,6 +163,7 @@ export default function Game() {
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="bg-green-900/70 p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-3xl font-bold mb-4">Fim de Jogo</h2>
+            <p className="text-xl mb-6">Você foi eliminado por {assassin}!</p>
             <p className="text-xl mb-6">Sua pontuação: {score}</p>
 
             <div className="space-y-4">
