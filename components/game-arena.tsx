@@ -36,6 +36,11 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const [debugInfo, setDebugInfo] = useState({ botCount: 0, frameCount: 0, playerHealth: 0, playersCount: 0 })
   const [otherPlayers, setOtherPlayers] = useState<any[]>([])
 
+  const attackButtonRef = useRef<HTMLDivElement | null>(null)
+
+  const attackPressedRef = useRef(false);
+  const lastAttackTimeRef = useRef<number>(0);
+
   // teclado
   useEffect(() => {
     const handleKeyDown = (e: any) => {
@@ -44,6 +49,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: true }));
       if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: true }));
       if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: true }));
+
+      if (e.code === "Space") attackPressedRef.current = true;
     };
     
     const handleKeyUp = (e: any) => {
@@ -52,6 +59,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: false }));
       if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: false }));
       if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: false }));
+
+      if (e.code === "Space") attackPressedRef.current = false
     };
     
     // Adicionando os event listeners para as teclas pressionadas
@@ -125,6 +134,30 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     }
   }, [isMobile, joystickActive])
 
+  useEffect(() => {
+    if (!isMobile || !attackButtonRef.current) return
+  
+    const btn = attackButtonRef.current
+  
+    const handleTouchStart = (e: any) => {
+      e.preventDefault()
+      attackPressedRef.current = true
+    }
+  
+    const handleTouchEnd = (e: any) => {
+      e.preventDefault()
+      attackPressedRef.current = false
+    }
+  
+    btn.addEventListener("touchstart", handleTouchStart)
+    btn.addEventListener("touchend", handleTouchEnd)
+  
+    return () => {
+      btn.removeEventListener("touchstart", handleTouchStart)
+      btn.removeEventListener("touchend", handleTouchEnd)
+    }
+  }, [isMobile])   
+  
   // 🔁 Inicializa o jogo uma única vez
   useEffect(() => {
     if (gameInitializedRef.current) return
@@ -139,18 +172,35 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   }, [])
 
   useEffect(() => {
-    if (!roomKey || !player.uid) return
+    if (!roomKey || !player.uid) return;
   
-    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)
+    // Referência para o jogador atual
+    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`);
   
-    update(playerRef, {
-      x: player.x,
-      y: player.y,
-      health: player.health,
-      score: player.score,
-      lastDamageTime: player.lastDamageTime,
-    })
-  }, [player, roomKey])
+    // Função para escutar as mudanças no próprio jogador
+    const unsubscribe = onValue(playerRef, (snapshot) => {
+      const playerData = snapshot.val();
+  
+      // Se o jogador mudou (saúde, posição, etc.), atualize o estado do jogador local
+      if (playerData) {
+        setPlayer((prevPlayer: any) => {
+          // Atualiza os dados do jogador com os dados do Firebase
+          return {
+            ...prevPlayer,
+            x: playerData.x,
+            y: playerData.y,
+            health: playerData.health,
+            lastDamageTime: playerData.lastDamageTime,
+            score: playerData.score,
+          };
+        });
+      }
+    });
+  
+    return () => {
+      off(playerRef, "value", unsubscribe); // Limpa o ouvinte quando o componente for desmontado
+    };
+  }, [roomKey, player.uid]);  
   
   useEffect(() => {
     if (!roomKey) return;
@@ -162,7 +212,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       const otherPlayers = Object.values(playersData).filter(
         (p: any) => p.uid !== player.uid
       );
-  
+
       // Adia o setState para o final do ciclo de render
       setTimeout(() => {
         setOtherPlayers((prevState) => {
@@ -229,64 +279,109 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
 
   const updateGame = (deltaTime: number) => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current) return;
   
-    // Atualiza posição do player
-    const { newX, newY } = updatePlayerPosition()
+    const { newX, newY } = updatePlayerPosition();
   
-    // Atualiza offset da câmera
     setViewportOffset({
       x: newX - VIEWPORT_SIZE / 2,
       y: newY - VIEWPORT_SIZE / 2,
-    })
+    });
   
-    // Verifica colisão com comida
-    const { updatedFood, foodEaten } = handleFoodCollision(newX, newY, food, player)
+    // Colisão com comida
+    const { updatedFood, foodEaten } = handleFoodCollision(newX, newY, food, player);
   
     if (foodEaten) {
-      setFood(updatedFood)
+      setFood(updatedFood);
     }
+  
+    // ⚔️ Ataque com cooldown
+    const now = Date.now();
+    if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
+      lastAttackTimeRef.current = now;
+  
+      handlePlayerAttack(player, otherPlayers,
+        // ✅ onPlayerDamaged
+        (targetUID, newHealth) => {
+          // Atualiza Firebase antes
+          update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetUID}`), {
+            health: newHealth,
+          });
 
-    // Verifica colisões entre o player e outros jogadores
-    otherPlayers.forEach((otherPlayer) => {
-      handlePlayerVsPlayerCollision(player, otherPlayer, (newHealthPlayer1: any) => {
-        setPlayer((prev: any) => ({ ...prev, health: newHealthPlayer1 }));
-      }, (newHealthPlayer2: any) => {
-        // Atualiza a saúde do outro jogador no estado
-        const updatedOtherPlayers = otherPlayers.map((p) =>
-          p.uid === otherPlayer.uid ? { ...p, health: newHealthPlayer2 } : p
-        );
-        setOtherPlayers(updatedOtherPlayers);
-      },
-      (newScore: number) => {
-        setPlayer((prev: any) => ({ ...prev, score: newScore }));
-      });
-    });
-    
-    // Verifica se o player morreu
-    if (player.health <= 0) {
-      sessionStorage.setItem("score", player.score)
-      exitPlayer(roomKey,  player.uid)
-      setPlayer(null)
-      setGameRunning(false)
-      onGameOver(player.score)
-      return
+          // Atualiza localmente
+          setOtherPlayers((prev) =>
+            prev.map((p) => (p.uid === targetUID ? { ...p, health: newHealth } : p))
+          );
+        },
+  
+        // ✅ onPlayerKills
+        (playerUID, newScore) => {
+          setPlayer((prev: any) => {
+            const updated = { ...prev, score: newScore };
+            update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+              score: newScore,
+            });
+            return updated;
+          });
+        }
+      );
     }
-    
-    // Atualiza a posição do player e localmente
+  
+    // ☠️ Verifica morte
+    if (player.health <= 0) {
+      sessionStorage.setItem("score", player.score);
+      exitPlayer(roomKey, player.uid);
+      setPlayer(null);
+      setGameRunning(false);
+      onGameOver(player.score);
+      return;
+    }
+  
+    // 🧭 Atualiza posição do player
     setPlayer((prev: any) => {
       const updatedPlayer = {
         ...prev,
         x: newX,
         y: newY,
+      };
+  
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+        x: newX,
+        y: newY,
+      });      
+  
+      return updatedPlayer;
+    });
+  };
+  
+  function handlePlayerAttack(
+    player: any,
+    otherPlayers: any[],
+    onPlayerDamaged: (uid: string, newHealth: number) => void,
+    onPlayerKills: (uid: string, newScore: number) => void
+  ) {
+    const attackRange = 50;
+    const damagedUIDs = new Set();
+  
+    otherPlayers.forEach((targetPlayer) => {
+      const dist = Math.hypot(targetPlayer.x - player.x, targetPlayer.y - player.y);
+      if (dist > attackRange) return;
+  
+      if (damagedUIDs.has(targetPlayer.uid)) return;
+      damagedUIDs.add(targetPlayer.uid);
+  
+      const playerAttack = player.attack * (player.size / 30);
+      const damageToTarget = playerAttack * 1.5;
+  
+      const newHealthTarget = Math.max(0, targetPlayer.health - damageToTarget);
+      onPlayerDamaged(targetPlayer.uid, newHealthTarget);
+  
+      if (newHealthTarget === 0) {
+        const newScore = player.score + 5;
+        onPlayerKills(player.uid, newScore);
       }
-
-      // Atualiza no banco também
-      set(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), updatedPlayer)
-
-      return updatedPlayer
-    })
-  }
+    });
+  }  
 
   function updatePlayerPosition() {
     let dx = 0, dy = 0
@@ -309,7 +404,6 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   
     const newX = Math.max(0, Math.min(ARENA_SIZE, player.x + dx))
     const newY = Math.max(0, Math.min(ARENA_SIZE, player.y + dy))
-  
     return { newX, newY, dx, dy }
   }
 
@@ -337,6 +431,11 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
           score: newScore
         }))
 
+        console.log(updatedFood)
+        update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+          health: newHealth
+        });
+
         foodEaten = true
 
         // 🔁 Atualiza a comida no Realtime Database
@@ -345,60 +444,6 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     }
 
     return { updatedFood, foodEaten }
-  }
-
-  function handlePlayerVsPlayerCollision(player1: any, player2: any, onPlayer1Damaged: any, onPlayer2Damaged: any, onPlayer1Kills: any) {
-    // Verificar se algum dos jogadores está na área de spawn (x: 0, y: 0)
-    const isPlayer1InSpawnArea = player1.x === 1000 && player1.y === 1000;
-    const isPlayer2InSpawnArea = player2.x === 1000 && player2.y === 1000;
-    
-    // Se um dos jogadores estiver na área de spawn, não processa colisões
-    if (isPlayer1InSpawnArea || isPlayer2InSpawnArea) {
-      return;
-    }
-    
-    const dist = Math.hypot(player2.x - player1.x, player2.y - player1.y);
-
-    const player1Radius = player1.size / 2;
-    const player2Radius = player2.size / 2;
-    
-    // Verifica se houve colisão
-    if (dist < player1Radius + player2Radius) {
-      // Calcular dano para o player 2
-      const player1Attack = player1.attack * (player1.size / 30);
-      const damageToPlayer2 = player1Attack * 1.5; // Dano do player1 no player2
-      //console.log(`Dano de Player1 para Player2: ${damageToPlayer2}`);
-      //console.log(`Saúde do Player2 antes do dano: ${player2.health}`);
-      
-      const newHealthPlayer2 = Math.max(0, player2.health - damageToPlayer2);
-      //console.log(`Saúde do Player2 depois do dano: ${newHealthPlayer2}`);
-      onPlayer2Damaged(newHealthPlayer2);
-
-      // ponto por dano
-      if (newHealthPlayer2 != player2.health) {
-        onPlayer1Kills(player1.score + 5);
-      }
-      
-      // Calcular dano para o player 1
-      const player2Attack = player2.attack * (player2.size / 30);
-      const damageToPlayer1 = player2Attack * 1.5; // Dano do player2 no player1
-      //console.log(`Dano de Player2 para Player1: ${damageToPlayer1}`);
-      //console.log(`Saúde do Player1 antes do dano: ${player1.health}`);
-
-      const newHealthPlayer1 = Math.max(0, player1.health - damageToPlayer1);
-      //console.log(`Saúde do Player1 depois do dano: ${newHealthPlayer1}`);
-      onPlayer1Damaged(newHealthPlayer1);
-
-      // Empurrar os jogadores
-      const angle = Math.atan2(player2.y - player1.y, player2.x - player1.x);
-      const pushDistance = (player1Radius + player2Radius - dist) / 2;
-
-      player1.x -= Math.cos(angle) * pushDistance;
-      player1.y -= Math.sin(angle) * pushDistance;
-
-      player2.x += Math.cos(angle) * pushDistance;
-      player2.y += Math.sin(angle) * pushDistance;
-    }
   }
 
   const renderGame = () => {
@@ -479,6 +524,32 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
             }}
           />
         </div>
+      )}
+
+      {isMobile && (
+        <div
+          ref={attackButtonRef}
+          style={{
+            position: "absolute",
+            bottom: 60,
+            right: 60,
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            backgroundColor: "#ff5555",
+            boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: 18,
+            color: "#fff",
+            userSelect: "none",
+            touchAction: "none",
+            zIndex: 20,
+          }}
+        >
+          ⚔️
+        </div>      
       )}
     </div>
   )
