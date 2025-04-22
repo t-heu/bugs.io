@@ -3,11 +3,15 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { useMobile } from "@/hooks/use-mobile"
 
+import { useMobile } from "@/hooks/use-mobile"
+import { useKeyboardControls } from "@/hooks/useKeyboardControls"
+import { useMobileAttackButton } from "@/hooks/useMobileAttackButton"
+import { useMobileJoystick } from "@/hooks/useMobileJoystick"
+
+import { database, set, ref, update, off, onValue, onChildChanged } from "@/api/firebase"
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
 import { generateFood } from "@/utils/food"
-import { database, set, ref, update, off, onValue } from "@/api/firebase"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
 import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/gameConstants"
 
@@ -16,6 +20,9 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const gameInitializedRef = useRef(false)
   const frameCountRef = useRef(0)
   const joystickRef = useRef(null)
+  const attackButtonRef = useRef<HTMLDivElement | null>(null)
+  const attackPressedRef = useRef(false);
+  const lastAttackTimeRef = useRef<number>(0);
 
   const [food, setFood] = useState<any>([])
   const [cactus, setCactus] = useState<any>([])
@@ -24,134 +31,24 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 })
 
   const isMobile = useMobile()
+  
   const [joystickActive, setJoystickActive] = useState(false)
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
   const [joystickAngle, setJoystickAngle] = useState(0)
   const [joystickDistance, setJoystickDistance] = useState(0)
-  const [debugInfo, setDebugInfo] = useState({ botCount: 0, frameCount: 0, playerHealth: 0, playersCount: 0 })
+  const [debugInfo, setDebugInfo] = useState({ frameCount: 0, playersCount: 0 })
   const [otherPlayers, setOtherPlayers] = useState<any[]>([])
 
-  const attackButtonRef = useRef<HTMLDivElement | null>(null)
-
-  const attackPressedRef = useRef(false);
-  const lastAttackTimeRef = useRef<number>(0);
-
-  // teclado
-  useEffect(() => {
-    const handleKeyDown = (e: any) => {
-      const key = e.key.toLowerCase();
-      if (key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: true }));
-      if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: true }));
-      if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: true }));
-      if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: true }));
-
-      if (e.code === "Space") attackPressedRef.current = true;
-    };
-    
-    const handleKeyUp = (e: any) => {
-      const key = e.key.toLowerCase();
-      if (key === "w" || e.key === "ArrowUp") setKeys((prev) => ({ ...prev, up: false }));
-      if (key === "s" || e.key === "ArrowDown") setKeys((prev) => ({ ...prev, down: false }));
-      if (key === "a" || e.key === "ArrowLeft") setKeys((prev) => ({ ...prev, left: false }));
-      if (key === "d" || e.key === "ArrowRight") setKeys((prev) => ({ ...prev, right: false }));
-
-      if (e.code === "Space") attackPressedRef.current = false
-    };
-    
-    // Adicionando os event listeners para as teclas pressionadas
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    
-    // Cleanup: Removendo os event listeners quando o componente for desmontado
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-  
-  // Mobile joystick controls
-  useEffect(() => {
-    if (!isMobile || !joystickRef.current) return
-
-    const joystickElement: any = joystickRef.current
-    const joystickRect = joystickElement.getBoundingClientRect()
-    const centerX = joystickRect.width / 2
-    const centerY = joystickRect.height / 2
-    const maxDistance = joystickRect.width / 2
-
-    const handleTouchStart = (e: any) => {
-      e.preventDefault()
-      setJoystickActive(true)
-    }
-
-    const handleTouchMove = (e: any) => {
-      if (!joystickActive) return
-      e.preventDefault()
-
-      const touch = e.touches[0]
-      const rect = joystickElement.getBoundingClientRect()
-
-      // Calculate joystick position relative to center
-      const x = touch.clientX - rect.left - centerX
-      const y = touch.clientY - rect.top - centerY
-
-      // Calculate distance and angle
-      const distance = Math.min(Math.sqrt(x * x + y * y), maxDistance)
-      const angle = Math.atan2(y, x)
-
-      // Normalize distance to 0-1 range
-      const normalizedDistance = distance / maxDistance
-
-      setJoystickPos({
-        x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance
-      })      
-      setJoystickAngle(angle)
-      setJoystickDistance(normalizedDistance)
-    }
-
-    const handleTouchEnd = (e: any) => {
-      e.preventDefault()
-      setJoystickActive(false)
-      setJoystickPos({ x: 0, y: 0 })
-      setJoystickAngle(0)
-      setJoystickDistance(0)
-    }
-
-    joystickElement.addEventListener("touchstart", handleTouchStart)
-    joystickElement.addEventListener("touchmove", handleTouchMove)
-    joystickElement.addEventListener("touchend", handleTouchEnd)
-
-    return () => {
-      joystickElement.removeEventListener("touchstart", handleTouchStart)
-      joystickElement.removeEventListener("touchmove", handleTouchMove)
-      joystickElement.removeEventListener("touchend", handleTouchEnd)
-    }
-  }, [isMobile, joystickActive])
-
-  useEffect(() => {
-    if (!isMobile || !attackButtonRef.current) return
-  
-    const btn = attackButtonRef.current
-  
-    const handleTouchStart = (e: any) => {
-      e.preventDefault()
-      attackPressedRef.current = true
-    }
-  
-    const handleTouchEnd = (e: any) => {
-      e.preventDefault()
-      attackPressedRef.current = false
-    }
-  
-    btn.addEventListener("touchstart", handleTouchStart)
-    btn.addEventListener("touchend", handleTouchEnd)
-  
-    return () => {
-      btn.removeEventListener("touchstart", handleTouchStart)
-      btn.removeEventListener("touchend", handleTouchEnd)
-    }
-  }, [isMobile])   
+  useKeyboardControls(setKeys, attackPressedRef)
+  useMobileAttackButton(isMobile, attackButtonRef, attackPressedRef)
+  useMobileJoystick(isMobile,
+    joystickRef,
+    joystickActive,
+    setJoystickActive,
+    setJoystickPos,
+    setJoystickAngle,
+    setJoystickDistance
+  );
   
   // 🔁 Inicializa o jogo uma única vez
   useEffect(() => {
@@ -167,39 +64,32 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     return () => off(cactusRef, 'value', unsubscribe)
   }, [])  
 
-  // update player
+  // 🔁 Escuta tudo do jogador (atualiza todo objeto sempre que algo muda)
   useEffect(() => {
-    if (!roomKey || !player.uid) return;
-  
-    // Referência para o jogador atual
+    if (!roomKey || !player?.uid) return;
+
     const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`);
-  
-    // Função para escutar as mudanças no próprio jogador
-    const unsubscribe = onValue(playerRef, (snapshot) => {
-      const playerData = snapshot.val();
-  
-      // Se o jogador mudou (saúde, posição, etc.), atualize o estado do jogador local
-      if (playerData) {
-        setPlayer((prevPlayer: any) => {
-          // Atualiza os dados do jogador com os dados do Firebase
-          return {
-            ...prevPlayer,
-            x: playerData.x,
-            y: playerData.y,
-            health: playerData.health,
-            lastDamageTime: playerData.lastDamageTime,
-            score: playerData.score,
-          };
-        });
-      }
+
+    // 🔁 Escuta mudanças individuais nos campos
+    const unsubscribe = onChildChanged(playerRef, (snapshot) => {
+      const key = snapshot.key;
+      const value = snapshot.val();
+
+      if (!key) return;
+
+      // Atualiza só o campo alterado
+      setPlayer((prevPlayer: any) => ({
+        ...prevPlayer,
+        [key]: value,
+      }));
     });
-  
+
     return () => {
-      off(playerRef, "value", unsubscribe); // Limpa o ouvinte quando o componente for desmontado
+      off(playerRef, "child_changed", unsubscribe);
     };
-  }, [roomKey, player.uid]);  
+  }, [roomKey, player?.uid]); 
   
-  // update players
+  // Escuta outros jogadores
   useEffect(() => {
     if (!roomKey) return;
   
@@ -252,7 +142,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
     const gameLoop = (timestamp: number) => {
       if (!lastTime) lastTime = timestamp
-      const deltaTime = (timestamp - lastTime) / 1000
+      //const deltaTime = (timestamp - lastTime) / 1000
       lastTime = timestamp
 
       frameCountRef.current += 1
@@ -261,13 +151,11 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
         setDebugInfo((prev) => ({
           ...prev,
           frameCount: frameCountRef.current,
-          botCount: 0,//bots.length,
-          playersCount: otherPlayers.length,
-          playerHealth: Math.floor(player.health),
+          playersCount: otherPlayers.length
         }))
       }
 
-      updateGame(deltaTime)
+      updateGame()
       renderGame()
 
       animationFrameId = requestAnimationFrame(gameLoop)
@@ -280,7 +168,27 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     }
   }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
 
-  const updateGame = (deltaTime: number) => {
+  const renderGame = () => {
+    const canvas: HTMLCanvasElement | any = canvasRef.current
+    if (!canvas) return
+  
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+  
+    const now = Date.now()
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  
+    drawGrid(ctx, canvas, viewportOffset)
+    drawArenaBoundary(ctx, viewportOffset)
+    drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
+    drawEntities(ctx, cactus, (ctx, item) => drawCactus(ctx, item, viewportOffset));
+    otherPlayers.forEach(p => {
+      drawPlayer(ctx, p, now, viewportOffset, false)
+    })
+    drawPlayer(ctx, player, now, viewportOffset, true)
+  }
+
+  const updateGame = () => {
     if (!canvasRef.current) return;
   
     const { newX, newY } = updatePlayerPosition();
@@ -485,29 +393,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
     return { updatedFood, foodEaten }
   }
-
-  const renderGame = () => {
-    const canvas: HTMLCanvasElement | any = canvasRef.current
-    if (!canvas) return
   
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-  
-    const now = Date.now()
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-  
-    drawGrid(ctx, canvas, viewportOffset)
-    drawArenaBoundary(ctx, viewportOffset)
-    drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
-    drawEntities(ctx, cactus, (ctx, item) => drawCactus(ctx, item, viewportOffset));
-    otherPlayers.forEach(p => {
-      drawPlayer(ctx, p, now, viewportOffset, false)
-    })
-    drawPlayer(ctx, player, now, viewportOffset, true)
-  }
-
-  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
-
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
     if (confirmExit) {
@@ -517,6 +403,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       onGameOver(0)
     }
   }
+
+  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
@@ -532,8 +420,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
         <div className="bg-green-900/70 p-2 rounded-lg">
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
-          <div className="text-sm text-green-300">Bots: {debugInfo.botCount}</div>
-          <div className="text-sm text-green-300">Players: {debugInfo.playersCount}</div>
+          <div className="text-sm text-green-300">Players On: {debugInfo.playersCount}</div>
         </div>
 
         <div className="w-1/3">

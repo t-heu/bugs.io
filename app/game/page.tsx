@@ -68,7 +68,6 @@ export default function Game() {
       const playerData = {
         name,
         uid: nextPlayer,
-        active: true,
         ready: false,
         killer: '',
         owner,
@@ -81,7 +80,6 @@ export default function Game() {
         maxHealth: character.stats.health,// * 10,
         score: 0,
         type: character.id,
-        lastDamageTime: 0,
       };
 
       setRoomKey(roomKey)
