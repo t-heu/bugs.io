@@ -5,17 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useMobile } from "@/hooks/use-mobile"
 
-import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer } from "@/utils/draw"
-import { generateInitialFood, generateFood } from "@/utils/food"
+import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
+import { generateFood } from "@/utils/food"
 import { database, set, ref, update, off, onValue } from "@/api/firebase"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
-
-// Game constants
-const ARENA_SIZE = 2000
-const VIEWPORT_SIZE = 800
-const FOOD_COUNT = 100
-const FOOD_VALUE_HEATH = 10
-const FOOD_VALUE_SCORE = 3
+import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/gameConstants"
 
 export default function GameArena({ onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
@@ -24,6 +18,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const joystickRef = useRef(null)
 
   const [food, setFood] = useState<any>([])
+  const [cactus, setCactus] = useState<any>([])
   const [keys, setKeys] = useState({ up: false, down: false, left: false, right: false })
   const [gameRunning, setGameRunning] = useState(true)
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 })
@@ -163,14 +158,16 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     if (gameInitializedRef.current) return
     gameInitializedRef.current = true
   
-    // Gera comida e salva localmente
-    const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
-    setFood(initialFood)
+    const cactusRef = ref(database, `bugsio/rooms/${roomKey}/cactus`)
+    const unsubscribe = onValue(cactusRef, (snapshot) => {
+      const cactusData = snapshot.val() || []
+      setCactus(cactusData)
+    })
   
-    // 🔁 Salva comida no Firebase
-    set(ref(database, `bugsio/rooms/${roomKey}/food`), initialFood)
-  }, [])
+    return () => off(cactusRef, 'value', unsubscribe)
+  }, [])  
 
+  // update player
   useEffect(() => {
     if (!roomKey || !player.uid) return;
   
@@ -202,6 +199,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     };
   }, [roomKey, player.uid]);  
   
+  // update players
   useEffect(() => {
     if (!roomKey) return;
   
@@ -232,6 +230,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     };
   }, [roomKey, player.uid]);  
 
+  // update food
   useEffect(() => {
     if (!roomKey) return
   
@@ -296,6 +295,17 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   
     if (foodEaten) {
       setFood(updatedFood);
+    }
+
+    const tookDamage = handleCactusCollision(newX, newY, cactus, player)
+    if (tookDamage) {
+      setPlayer((prev: any) => {
+        const updated = { ...prev, health: player.health }
+        update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+          health: updated.health
+        })
+        return updated
+      })
     }
   
     // ⚔️ Ataque com cooldown
@@ -412,6 +422,31 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     return { newX, newY, dx, dy }
   }
 
+  function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
+    let tookDamage = false
+    const now = Date.now()
+  
+    for (const cactus of cactusList) {
+      // Calcular a distância entre o jogador e o cacto
+      const dist = Math.hypot(x - cactus.x, y - cactus.y)
+  
+      //console.log(`Distância entre jogador e cacto: ${dist}`)  // Log de depuração
+      //console.log(`Raio do jogador: ${player.size / 2}, Raio do cacto: ${cactus.size / 2}`)  // Log de depuração
+  
+      // Verifique se a distância entre o jogador e o cacto é menor que a soma dos raios
+      if (dist < (player.size / 2 + cactus.size / 2)) {
+        //console.log("Colisão detectada!")  // Log de depuração
+        if (!cactus.lastHit || now - cactus.lastHit > 500) { // 500ms de intervalo para dano
+          cactus.lastHit = now  // Atualize o tempo da última colisão
+          player.health = Math.max(0, player.health - 5)  // Aplica o dano de 5 ao jogador
+          tookDamage = true
+        }
+      }
+    }
+  
+    return tookDamage
+  }    
+
   function handleFoodCollision(x: number, y: number, foodList: any[], player: any) {
     const updatedFood = [...foodList]
     let foodEaten = false
@@ -464,6 +499,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     drawGrid(ctx, canvas, viewportOffset)
     drawArenaBoundary(ctx, viewportOffset)
     drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
+    drawEntities(ctx, cactus, (ctx, item) => drawCactus(ctx, item, viewportOffset));
     otherPlayers.forEach(p => {
       drawPlayer(ctx, p, now, viewportOffset, false)
     })
@@ -547,24 +583,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       {isMobile && (
         <div
           ref={attackButtonRef}
-          style={{
-            position: "absolute",
-            bottom: 60,
-            right: 60,
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
-            backgroundColor: "#ff5555",
-            boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: 18,
-            color: "#fff",
-            userSelect: "none",
-            touchAction: "none",
-            zIndex: 20,
-          }}
+          className="floating-button"
         >
           ⚔️
         </div>      

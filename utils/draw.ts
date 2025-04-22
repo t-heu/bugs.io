@@ -28,6 +28,7 @@ type ViewportOffset = {
 };
 
 import insects from "../insects.json"
+import { ARENA_SIZE } from "@/utils/gameConstants"
 
 import {Ant} from "@/app/insects/ant";
 import {Beetle} from "@/app/insects/beetle"
@@ -50,8 +51,6 @@ import {Worm} from "@/app/insects/worm"
 import {Grasshopper} from "@/app/insects/grasshopper"
 import {Moth} from "@/app/insects/moth"
 import {Fly} from "@/app/insects/fly"
-
-const ARENA_SIZE = 2000
 
 // Helpers
 export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
@@ -216,4 +215,25 @@ export const drawInsect = (
 
   // Restore the context
   ctx.restore()
+}
+
+export const drawCactus = (
+  ctx: CanvasRenderingContext2D,
+  cactus: any,
+  viewportOffset: { x: number; y: number }
+) => {
+  if (!cactus || typeof cactus.x !== 'number' || typeof cactus.y !== 'number') return
+
+  const { x, y, width, height, color } = cactus
+  const screenX = x - viewportOffset.x
+  const screenY = y - viewportOffset.y
+
+  ctx.fillStyle = color
+
+  // Corpo principal (tronco)
+  ctx.fillRect(screenX - width / 2, screenY - height, width, height)
+
+  // Braços (estilo cartoon simples)
+  ctx.fillRect(screenX - width * 0.8, screenY - height * 0.7, width * 0.3, height * 0.4)
+  ctx.fillRect(screenX + width * 0.5, screenY - height * 0.5, width * 0.3, height * 0.4)
 }

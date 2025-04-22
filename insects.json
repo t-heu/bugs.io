@@ -6,8 +6,8 @@
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 9,
-      "attack": 4,
-      "health": 25
+      "attack": 6,
+      "health": 30
     },
     "colors": {
       "fill": "#FF5722",
@@ -21,9 +21,9 @@
     "description": "Forte e agressiva",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
     "stats": {
-      "speed": 6,
+      "speed": 7,
       "attack": 24,
-      "health": 40
+      "health": 50
     },
     "colors": {
       "fill": "#9C27B0",
@@ -37,8 +37,8 @@
     "description": "Resistente e durável",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida alta"],
     "stats": {
-      "speed": 3,
-      "attack": 14,
+      "speed": 4,
+      "attack": 15,
       "health": 85
     },
     "colors": {
@@ -53,7 +53,7 @@
     "description": "Letal e veloz",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
     "stats": {
-      "speed": 8,
+      "speed": 9,
       "attack": 18,
       "health": 40
     },
@@ -70,7 +70,7 @@
     "attributes": ["Velocidade média", "Ataque baixo", "Vida altíssima"],
     "stats": {
       "speed": 9,
-      "attack": 5,
+      "attack": 6,
       "health": 95
     },
     "colors": {
@@ -86,8 +86,8 @@
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 5,
-      "attack": 7,
-      "health": 35
+      "attack": 6,
+      "health": 40
     },
     "colors": {
       "fill": "#F44336",
@@ -103,7 +103,7 @@
     "stats": {
       "speed": 4,
       "attack": 40,
-      "health": 85
+      "health": 70
     },
     "colors": {
       "fill": "#6D4C41",
@@ -135,7 +135,7 @@
     "stats": {
       "speed": 13,
       "attack": 16,
-      "health": 30
+      "health": 35
     },
     "colors": {
       "fill": "#FFEB3B",
@@ -166,8 +166,8 @@
     "attributes": ["Velocidade média", "Ataque alto", "Vida média"],
     "stats": {
       "speed": 7,
-      "attack": 30,
-      "health": 50
+      "attack": 28,
+      "health": 55
     },
     "colors": {
       "fill": "#607D8B",
@@ -214,7 +214,7 @@
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida baixa"],
     "stats": {
       "speed": 15,
-      "attack": 15,
+      "attack": 10,
       "health": 30
     },
     "colors": {
@@ -229,8 +229,8 @@
     "description": "Barulhenta e resistente",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida média"],
     "stats": {
-      "speed": 4,
-      "attack": 12,
+      "speed": 5,
+      "attack": 13,
       "health": 55
     },
     "colors": {
@@ -245,7 +245,7 @@
     "description": "Mestre da camuflagem",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida média"],
     "stats": {
-      "speed": 5,
+      "speed": 6,
       "attack": 6,
       "health": 60
     },
@@ -277,7 +277,7 @@
     "description": "Ágil e predadora aérea",
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida média"],
     "stats": {
-      "speed": 15,
+      "speed": 14,
       "attack": 20,
       "health": 45
     },
@@ -294,7 +294,7 @@
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 7,
-      "attack": 4,
+      "attack": 5,
       "health": 25
     },
     "colors": {
@@ -310,8 +310,8 @@
     "attributes": ["Velocidade baixa", "Ataque baixo", "Vida baixa"],
     "stats": {
       "speed": 4,
-      "attack": 5,
-      "health": 25
+      "attack": 6,
+      "health": 30
     },
     "colors": {
       "fill": "#CE93D8",
@@ -325,9 +325,9 @@
     "description": "Ágil e persistente",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "stats": {
-      "speed": 8,
-      "attack": 3,
-      "health": 20
+      "speed": 10,
+      "attack": 4,
+      "health": 25
     },
     "colors": {
       "fill": "#607D8B",
