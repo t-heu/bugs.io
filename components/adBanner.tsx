@@ -31,7 +31,7 @@ export default function AdBanner() {
       <Script
         id="adsbygoogle-init"
         strategy="afterInteractive"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${process.env.NEXT_PUBLIC_CA_PUB}`}
+        async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${process.env.NEXT_PUBLIC_CA_PUB}`}
         crossOrigin="anonymous"
       />
       <ins
