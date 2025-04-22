@@ -436,7 +436,6 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
           score: newScore
         }))
 
-        console.log(updatedFood)
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
           health: newHealth,
           score: newScore
@@ -473,6 +472,16 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
   useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
 
+  const exitGame = () => {
+    const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
+    if (confirmExit) {
+      setGameRunning(false)
+      sessionStorage.setItem("score", "0");
+      exitPlayer(roomKey, player.uid);
+      onGameOver(0)
+    }
+  }
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
       {/* Game canvas */}
@@ -495,20 +504,23 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
           <div className="text-xs text-green-300 mb-1">
             Vida: {Math.floor(player.health)}/{player.maxHealth}
           </div>
-          <Progress value={(player.health / player.maxHealth) * 100} className="h-2" />
+          <Progress
+            value={(player.health / player.maxHealth) * 100}
+            className={`h-2 ${
+              (player.health / player.maxHealth) > 0.6
+                ? "[&>div]:bg-white"
+                : (player.health / player.maxHealth) > 0.3
+                ? "[&>div]:bg-orange-500"
+                : "[&>div]:bg-red-500"
+            }`}
+          />
         </div>
 
         <div className="flex gap-2">
           <Button
             variant="ghost"
             className="text-green-300 hover:text-white hover:bg-green-800"
-            onClick={() => {
-              const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
-              if (confirmExit) {
-                setGameRunning(false)
-                onGameOver(0)
-              }
-            }}            
+            onClick={() => exitGame()}            
           >
             Sair
           </Button>

@@ -76,8 +76,8 @@ export default function Game() {
         size: 30,
         speed: character.stats.speed * 0.5,
         attack: character.stats.attack,
-        health: character.stats.health * 10,
-        maxHealth: character.stats.health * 10,
+        health: character.stats.health,// * 10,
+        maxHealth: character.stats.health,// * 10,
         score: 0,
         type: character.id,
         lastDamageTime: 0,
@@ -106,7 +106,6 @@ export default function Game() {
           createdAt: Date.now(),
         });
   
-        console.info('Jogo criado:', { roomKey });
         createPlayer(roomKey, true, name, character);
       }
     } catch (e) {
@@ -163,7 +162,7 @@ export default function Game() {
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="bg-green-900/70 p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-3xl font-bold mb-4">Fim de Jogo</h2>
-            <p className="text-xl mb-6">Você foi eliminado por {assassin}!</p>
+            <p className="text-xl mb-6">{assassin ? `Você foi eliminado por ${assassin}!` : 'Você saiu!'}</p>
             <p className="text-xl mb-6">Sua pontuação: {score}</p>
 
             <div className="space-y-4">

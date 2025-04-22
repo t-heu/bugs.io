@@ -151,13 +151,13 @@
     "stats": {
       "speed": 12,
       "attack": 28,
-      "health": 45
+      "health": 50
     },
     "colors": {
       "fill": "#8D6E63",
       "stroke": "#4E342E"
     },
-    "requiredScore": 1700
+    "requiredScore": 1500
   },
   {
     "id": "water_bug",
@@ -221,7 +221,7 @@
       "fill": "#AED581",
       "stroke": "#689F38"
     },
-    "requiredScore": 1200
+    "requiredScore": 500
   },
   {
     "id": "cicada",
@@ -237,7 +237,7 @@
       "fill": "#B0BEC5",
       "stroke": "#455A64"
     },
-    "requiredScore": 1400
+    "requiredScore": 100
   },
   {
     "id": "stick_bug",
@@ -253,7 +253,7 @@
       "fill": "#A5D6A7",
       "stroke": "#33691E"
     },
-    "requiredScore": 1400
+    "requiredScore": 400
   },
   {
     "id": "mosquito",
@@ -317,7 +317,7 @@
       "fill": "#CE93D8",
       "stroke": "#6A1B9A"
     },
-    "requiredScore": 700
+    "requiredScore": 200
   },
   {
     "id": "fly",

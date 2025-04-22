@@ -5,6 +5,17 @@ export function Centipede(ctx: any, fillColor: string, strokeColor: string) {
   ctx.strokeStyle = strokeColor;
   ctx.lineWidth = 2;
 
+  // Antenas no fundo, suspensas e viradas para cima
+  ctx.beginPath();
+  ctx.moveTo(-4, -20);  // Ponto inicial da antena esquerda, mais alto
+  ctx.quadraticCurveTo(-3, -30, -22, -50);  // Curva da antena esquerda, mais suspensa
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(4, -20);  // Ponto inicial da antena direita, mais alto
+  ctx.quadraticCurveTo(3, -30, 22, -50);  // Curva da antena direita, mais suspensa
+  ctx.stroke();
+
   // Corpo (vários segmentos)
   for (let i = 0; i < 5; i++) {
     ctx.beginPath();

@@ -13,6 +13,12 @@ export function Bee(ctx: any, fillColor: string, strokeColor: string) {
     ctx.stroke();
   }
 
+  // Ferrão
+  ctx.beginPath();
+  ctx.moveTo(0, 42);   // Base do ferrão (abaixo do último segmento)
+  ctx.lineTo(0, 20);   // Ponta do ferrão
+  ctx.stroke();
+
   // Cabeça
   ctx.beginPath();
   ctx.ellipse(0, 25, 8, 10, 0, 0, Math.PI * 2);

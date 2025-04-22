@@ -42,7 +42,7 @@ export default function Instructions() {
 
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Controles</h2>
-            <p className="mb-4">Use as teclas WASD ou as setas para mover seu inseto pela arena.</p>
+            <p className="mb-2">Use as teclas WASD ou as setas para mover seu inseto pela arena.</p>
             <p>Use a tecla "SPACE" para atacar outros insetos/jogadores.</p>
           </section>
 
@@ -51,7 +51,7 @@ export default function Instructions() {
             <ul className="list-disc list-inside space-y-2">
               <li>Colete comidas para recuperar sua vida</li>
               <li>Cada tipo de inseto tem vantagens diferentes - use-as estrategicamente</li>
-              <li>Fuja de insetos fortes até estar forte o suficiente</li>
+              <li>Fuja de insetos e bole estratégias</li>
               <li>Trabalhe em equipe com outros insetos do mesmo tipo se quiser enfrentar o mais forte</li>
             </ul>
           </section>
