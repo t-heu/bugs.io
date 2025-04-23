@@ -72,8 +72,10 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
   };
 
   useEffect(() => {
-    const NewScore = parseInt(sessionStorage.getItem("score") || "0");
-    setScore(NewScore)
+    const storedScore = sessionStorage.getItem("score");
+    const parsedScore = parseInt(storedScore ?? "0", 10);
+    const NewScore = isNaN(parsedScore) ? 0 : parsedScore;
+    setScore(NewScore);
   },[])
 
   const availableCharacters = characters.filter((char: any) => char.requiredScore <= score);

@@ -15,7 +15,12 @@ import { generateFood } from "@/utils/food"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
 import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/gameConstants"
 
-export default function GameArena({ onGameOver, roomKey, player, setPlayer }: any) {
+type HandleDeathOptions = {
+  playerUid?: string;
+  score?: number;
+};
+
+export default function GameArena({ setAssassin, onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
   const gameInitializedRef = useRef(false)
   const frameCountRef = useRef(0)
@@ -36,7 +41,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
   const [joystickAngle, setJoystickAngle] = useState(0)
   const [joystickDistance, setJoystickDistance] = useState(0)
-  const [debugInfo, setDebugInfo] = useState({ frameCount: 0, playersCount: 0 })
+  const [debugInfo, setDebugInfo] = useState({ frameCount: 0, playersCount: 0, name: '' })
   const [otherPlayers, setOtherPlayers] = useState<any[]>([])
 
   useKeyboardControls(setKeys, attackPressedRef)
@@ -151,7 +156,8 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
         setDebugInfo((prev) => ({
           ...prev,
           frameCount: frameCountRef.current,
-          playersCount: otherPlayers.length
+          playersCount: otherPlayers.length,
+          name: player.name
         }))
       }
 
@@ -167,6 +173,20 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       cancelAnimationFrame(animationFrameId)
     }
   }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
+  
+  const handlePlayerDeath = ({
+    playerUid,
+    score = 0
+  }: HandleDeathOptions) => {
+    if (!playerUid) return;
+
+    sessionStorage.setItem("score", String(score));
+    setPlayer(null);
+    setGameRunning(false);
+    onGameOver?.(score);
+    // 🔥 Remover jogador morto do banco
+    exitPlayer(roomKey, player.uid);
+  };    
 
   const renderGame = () => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
@@ -190,6 +210,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
   const updateGame = () => {
     if (!canvasRef.current) return;
+    if (!player) return; // Proteção básica
   
     const { newX, newY } = updatePlayerPosition();
   
@@ -205,15 +226,31 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       setFood(updatedFood);
     }
 
-    const tookDamage = handleCactusCollision(newX, newY, cactus, player)
+    // ⚔️ Dano de cactu
+    const {tookDamage, newHealth} = handleCactusCollision(newX, newY, cactus, player)
     if (tookDamage) {
       setPlayer((prev: any) => {
-        const updated = { ...prev, health: player.health }
-        update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-          health: updated.health
-        })
+        if (!prev) return prev;
+
+        const updated = { ...prev, health: newHealth }
+
+        if (updated.health > 0) {
+          update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+            health: updated.health,
+          })
+        }
+
         return updated
       })
+
+      if (newHealth === 0) {
+        setAssassin('cactu')
+        handlePlayerDeath({
+          playerUid: player.uid,
+          score: player.score,
+        })
+        return;
+      }
     }
   
     // ⚔️ Ataque com cooldown
@@ -239,7 +276,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
         (playerUID, newScore) => {
           setPlayer((prev: any) => {
             const updated = { ...prev, score: newScore };
-            update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+            update(ref(database, `bugsio/rooms/${roomKey}/players/p${playerUID}`), {
               score: newScore,
             });
             return updated;
@@ -249,11 +286,12 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
     }
   
     // ☠️ Verifica morte
-    if (player.health <= 0) {
-      sessionStorage.setItem("score", player.score);
-      setPlayer(null);
-      setGameRunning(false);
-      onGameOver(player.score);
+    if (player.health === 0) {
+      setAssassin(player.killer)
+      handlePlayerDeath({
+        playerUid: player.uid,
+        score: player.score,
+      })
       return;
     }
   
@@ -332,27 +370,28 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
 
   function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
     let tookDamage = false
+    let newHealth = player.health;
     const now = Date.now()
   
     for (const cactus of cactusList) {
       // Calcular a distância entre o jogador e o cacto
       const dist = Math.hypot(x - cactus.x, y - cactus.y)
   
-      //console.log(`Distância entre jogador e cacto: ${dist}`)  // Log de depuração
-      //console.log(`Raio do jogador: ${player.size / 2}, Raio do cacto: ${cactus.size / 2}`)  // Log de depuração
+      //console.log(`Distância entre jogador e cacto: ${dist}`)
+      //console.log(`Raio do jogador: ${player.size / 2}, Raio do cacto: ${cactus.size / 2}`)
   
       // Verifique se a distância entre o jogador e o cacto é menor que a soma dos raios
       if (dist < (player.size / 2 + cactus.size / 2)) {
-        //console.log("Colisão detectada!")  // Log de depuração
-        if (!cactus.lastHit || now - cactus.lastHit > 500) { // 500ms de intervalo para dano
-          cactus.lastHit = now  // Atualize o tempo da última colisão
-          player.health = Math.max(0, player.health - 5)  // Aplica o dano de 5 ao jogador
+        //console.log("Colisão detectada!")
+        if (!cactus.lastHit || now - cactus.lastHit > 500) {
+          cactus.lastHit = now
+          newHealth = Math.max(0, player.health - 5)
           tookDamage = true
         }
       }
     }
   
-    return tookDamage
+    return {tookDamage, newHealth}
   }    
 
   function handleFoodCollision(x: number, y: number, foodList: any[], player: any) {
@@ -397,10 +436,10 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
     if (confirmExit) {
-      setGameRunning(false)
-      sessionStorage.setItem("score", "0");
-      exitPlayer(roomKey, player.uid);
-      onGameOver(0)
+      handlePlayerDeath({
+        playerUid: player.uid,
+      })
+      setAssassin('')
     }
   }
 
@@ -420,6 +459,7 @@ export default function GameArena({ onGameOver, roomKey, player, setPlayer }: an
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
         <div className="bg-green-900/70 p-2 rounded-lg">
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
+          <div className="text-sm text-green-300">Seu nome: {debugInfo.name}</div>
           <div className="text-sm text-green-300">Players On: {debugInfo.playersCount}</div>
         </div>
 

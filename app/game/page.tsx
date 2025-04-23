@@ -21,6 +21,7 @@ export default function Game() {
   const [roomKey, setRoomKey] = useState('')
   const [player, setPlayer] = useState<any>()
   const [assassin, setAssassin] = useState('')
+  const [name, setName] = useState('');
   
   const characters = insects; 
 
@@ -38,16 +39,6 @@ export default function Game() {
 
   const handleGameOver = (finalScore: number) => {
     setScore(finalScore)
-    const killedByRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/killer`);
-    onValue(killedByRef, (snapshot) => {
-      const killerName = snapshot.val();
-      
-      // Agora você pode usar essa informação em setAssassin
-      if (killerName) {
-        setAssassin(killerName);
-        
-      }
-    }, { onlyOnce: true });
     setGameState("gameOver")
   }
 
@@ -55,8 +46,6 @@ export default function Game() {
     setGameState("selection")
     setScore(0)
   }
-
-  const [name, setName] = useState('');
 
   function createPlayer(roomKey: string, owner: boolean, name: string, character: any) {
     try {
@@ -160,7 +149,7 @@ export default function Game() {
         </div>
       )}
 
-      {gameState === "playing" && player && roomKey && <GameArena onGameOver={handleGameOver} roomKey={roomKey} player={player} setPlayer={setPlayer} />}
+      {gameState === "playing" && player && roomKey && <GameArena setAssassin={setAssassin} onGameOver={handleGameOver} roomKey={roomKey} player={player} setPlayer={setPlayer} />}
 
       {gameState === "gameOver" && (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
