@@ -16,6 +16,22 @@
     "requiredScore": 0
   },
   {
+    "id": "snail",
+    "name": "Caracol",
+    "description": "Blindado, mas devagar",
+    "attributes": ["Velocidade muito baixa", "Ataque baixo", "Vida extremamente alta"],
+    "stats": {
+      "speed": 1,
+      "attack": 5,
+      "health": 110
+    },
+    "colors": {
+      "fill": "#795548",
+      "stroke": "#4E342E"
+    },
+    "requiredScore": 500
+  },   
+  {
     "id": "spider",
     "name": "Aranha",
     "description": "Forte e agressiva",

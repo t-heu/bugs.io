@@ -184,8 +184,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     setPlayer(null);
     setGameRunning(false);
     onGameOver?.(score);
-    // 🔥 Remover jogador morto do banco
-    exitPlayer(roomKey, player.uid);
+    exitPlayer(roomKey, playerUid);
   };    
 
   const renderGame = () => {
@@ -229,28 +228,18 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     // ⚔️ Dano de cactu
     const {tookDamage, newHealth} = handleCactusCollision(newX, newY, cactus, player)
     if (tookDamage) {
-      setPlayer((prev: any) => {
-        if (!prev) return prev;
-
-        const updated = { ...prev, health: newHealth }
-
-        if (updated.health > 0) {
-          update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-            health: updated.health,
-          })
-        }
-
-        return updated
-      })
-
       if (newHealth === 0) {
-        setAssassin('cactu')
-        handlePlayerDeath({
-          playerUid: player.uid,
-          score: player.score,
-        })
+        setAssassin("cactu");
+        handlePlayerDeath({ playerUid: player.uid, score: player.score });
         return;
       }
+  
+      setPlayer((prev: any) => {
+        if (!prev) return prev;
+        const updated = { ...prev, health: newHealth };
+        update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}`), { health: newHealth });
+        return updated;
+      });
     }
   
     // ⚔️ Ataque com cooldown
@@ -286,28 +275,20 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     }
   
     // ☠️ Verifica morte
-    if (player.health === 0) {
-      setAssassin(player.killer)
-      handlePlayerDeath({
-        playerUid: player.uid,
-        score: player.score,
-      })
+    if (player.health <= 0) {
+      setAssassin(player.killer || '');
+      handlePlayerDeath({ playerUid: player.uid, score: player.score });
       return;
     }
   
     // 🧭 Atualiza posição do player
     setPlayer((prev: any) => {
-      const updatedPlayer = {
-        ...prev,
+      if (!prev) return prev;
+      const updatedPlayer = { ...prev, x: newX, y: newY };
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}`), {
         x: newX,
         y: newY,
-      };
-  
-      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-        x: newX,
-        y: newY,
-      });      
-  
+      });
       return updatedPlayer;
     });
   };
@@ -338,7 +319,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}`), {
           killer: player.name,
         });
-        const newScore = player.score + 5;
+        const newScore = player.score + 15;
         onPlayerKills(player.uid, newScore);
       }
     });
@@ -436,9 +417,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
     if (confirmExit) {
-      handlePlayerDeath({
-        playerUid: player.uid,
-      })
+      handlePlayerDeath({ playerUid: player.uid })
       setAssassin('')
     }
   }

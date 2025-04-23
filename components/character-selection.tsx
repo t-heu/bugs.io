@@ -27,6 +27,7 @@ import {WormDrawing} from "@/app/insects/worm"
 import {GrasshopperDrawing} from "@/app/insects/grasshopper"
 import {MothDrawing} from "@/app/insects/moth"
 import {FlyDrawing} from "@/app/insects/fly"
+import {SnailDrawing} from "@/app/insects/snail"
 
 const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, strokeColor: string }>> = {
   ant: AntDrawing,
@@ -49,7 +50,8 @@ const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, 
   grasshopper: GrasshopperDrawing,
   water_bug: WaterBugDrawing,
   moth: MothDrawing,
-  fly: FlyDrawing
+  fly: FlyDrawing,
+  snail: SnailDrawing
 };
 
 export default function CharacterSelection({ onSelect, name, onName, characters }: any) {

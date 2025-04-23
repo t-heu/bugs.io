@@ -20,6 +20,7 @@ export type InsectType =
   | "worm"
   | "grasshopper"
   | "moth"
+  | "snail"
   | "fly";
 
 type ViewportOffset = {
@@ -51,6 +52,7 @@ import {Worm} from "@/app/insects/worm"
 import {Grasshopper} from "@/app/insects/grasshopper"
 import {Moth} from "@/app/insects/moth"
 import {Fly} from "@/app/insects/fly"
+import {Snail} from "@/app/insects/snail"
 
 // Helpers
 export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
@@ -207,6 +209,7 @@ export const drawInsect = (
     grasshopper: Grasshopper,
     moth: Moth,
     fly: Fly,
+    snail: Snail
   };
   
   if (insectDrawFunctions[type]) {
