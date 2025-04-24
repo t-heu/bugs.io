@@ -9,7 +9,7 @@ import { useKeyboardControls } from "@/hooks/useKeyboardControls"
 import { useMobileAttackButton } from "@/hooks/useMobileAttackButton"
 import { useMobileJoystick } from "@/hooks/useMobileJoystick"
 
-import { database, set, ref, update, off, onValue, onChildChanged } from "@/api/firebase"
+import { database, set, ref, update, off, onValue, onChildChanged, get } from "@/api/firebase"
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
 import { generateFood } from "@/utils/food"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
@@ -60,13 +60,14 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     if (gameInitializedRef.current) return
     gameInitializedRef.current = true
   
-    const cactusRef = ref(database, `bugsio/rooms/${roomKey}/cactus`)
-    const unsubscribe = onValue(cactusRef, (snapshot) => {
-      const cactusData = snapshot.val() || []
-      setCactus(cactusData)
-    })
+    const data = ref(database, `bugsio/rooms/${roomKey}`);
+    get(data).then(snapshot => {
+      const snapData = snapshot.val() || [];
+
+      setCactus(snapData.cactus);
+      setFood(snapData.food)
+    });
   
-    return () => off(cactusRef, 'value', unsubscribe)
   }, [])  
 
   // 🔁 Escuta tudo do jogador (atualiza todo objeto sempre que algo muda)
@@ -107,7 +108,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       );
   
       // Remove jogadores com saúde 0
-      otherPlayers = otherPlayers.filter((p: any) => p.health > 0);
+      otherPlayers = otherPlayers.filter((p: any) => p.stats.health > 0);
   
       // Adia o setState para o final do ciclo de render
       setTimeout(() => {
@@ -127,16 +128,25 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
   // update food
   useEffect(() => {
-    if (!roomKey) return
+    if (!roomKey) return;
   
-    const foodRef = ref(database, `bugsio/rooms/${roomKey}/food`)
-    const unsubscribe = onValue(foodRef, (snapshot) => {
-      const foodData = snapshot.val() || []
-      setFood(foodData)
-    })
+    const foodRef = ref(database, `bugsio/rooms/${roomKey}/food`);
+    const unsubscribeChanged = onChildChanged(foodRef, (snapshot) => {
+      const index = snapshot.key;
+      const data = snapshot.val();
   
-    return () => off(foodRef, 'value', unsubscribe)
-  }, [roomKey]) 
+      setFood((prev: any) => {
+        const updated = [...prev];
+        updated[Number(index)] = data;
+        return updated;
+      });
+    });
+  
+    return () => {
+      off(foodRef, 'child_changed', unsubscribeChanged);
+    };
+  }, [roomKey]);
+   
 
   // Game loop
   useEffect(() => {
@@ -219,11 +229,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     });
   
     // Colisão com comida
-    const { updatedFood, foodEaten } = handleFoodCollision(newX, newY, food, player);
-  
-    if (foodEaten) {
-      setFood(updatedFood);
-    }
+    handleFoodCollision(newX, newY, food, player);
 
     // ⚔️ Dano de cactu
     const {tookDamage, newHealth} = handleCactusCollision(newX, newY, cactus, player)
@@ -236,10 +242,22 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   
       setPlayer((prev: any) => {
         if (!prev) return prev;
-        const updated = { ...prev, health: newHealth };
-        update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}`), { health: newHealth });
+      
+        const updated = {
+          ...prev,
+          stats: {
+            ...prev.stats,
+            health: newHealth,
+          },
+        };
+      
+        update(
+          ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}/stats`),
+          { health: newHealth }
+        );
+      
         return updated;
-      });
+      });      
     }
   
     // ⚔️ Ataque com cooldown
@@ -251,14 +269,18 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         // ✅ onPlayerDamaged
         (targetUID, newHealth) => {
           // Atualiza Firebase antes
-          update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetUID}`), {
+          update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetUID}/stats`), {
             health: newHealth,
           });
 
           // Atualiza localmente
-          setOtherPlayers((prev) => 
-            prev.map((p) => (p.uid === targetUID ? { ...p, health: newHealth } : p))
-          );
+          setOtherPlayers((prev) =>
+            prev.map((p) =>
+              p.uid === targetUID
+                ? { ...p, stats: { ...p.stats, health: newHealth } }
+                : p
+            )
+          );          
         },
   
         // ✅ onPlayerKills
@@ -275,7 +297,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     }
   
     // ☠️ Verifica morte
-    if (player.health <= 0) {
+    if (player.stats.health <= 0) {
       setAssassin(player.killer || '');
       handlePlayerDeath({ playerUid: player.uid, score: player.score });
       return;
@@ -284,11 +306,20 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     // 🧭 Atualiza posição do player
     setPlayer((prev: any) => {
       if (!prev) return prev;
-      const updatedPlayer = { ...prev, x: newX, y: newY };
-      update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}`), {
+      const updatedPlayer = {
+        ...prev,
+        position: {
+          ...prev.position,
+          x: newX,
+          y: newY,
+        },
+      };
+    
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}/position`), {
         x: newX,
         y: newY,
       });
+    
       return updatedPlayer;
     });
   };
@@ -303,16 +334,16 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     const damagedUIDs = new Set();
   
     otherPlayers.forEach((targetPlayer) => {
-      const dist = Math.hypot(targetPlayer.x - player.x, targetPlayer.y - player.y);
+      const dist = Math.hypot(targetPlayer.position.x - player.position.x, targetPlayer.position.y - player.position.y);
       if (dist > attackRange) return;
   
       if (damagedUIDs.has(targetPlayer.uid)) return;
       damagedUIDs.add(targetPlayer.uid);
   
-      const playerAttack = player.attack * (player.size / 30);
+      const playerAttack = player.stats.attack * (player.size / 30);
       const damageToTarget = playerAttack * 1.5;
 
-      const newHealthTarget = Math.max(0, targetPlayer.health - damageToTarget);
+      const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
       onPlayerDamaged(targetPlayer.uid, newHealthTarget);
 
       if (targetPlayer.name && newHealthTarget === 0) {
@@ -329,13 +360,13 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     let dx = 0, dy = 0
   
     if (isMobile && joystickActive) {
-      dx = Math.cos(joystickAngle) * joystickDistance * player.speed
-      dy = Math.sin(joystickAngle) * joystickDistance * player.speed
+      dx = Math.cos(joystickAngle) * joystickDistance * player.stats.speed
+      dy = Math.sin(joystickAngle) * joystickDistance * player.stats.speed
     } else {
-      if (keys.up) dy -= player.speed
-      if (keys.down) dy += player.speed
-      if (keys.left) dx -= player.speed
-      if (keys.right) dx += player.speed
+      if (keys.up) dy -= player.stats.speed
+      if (keys.down) dy += player.stats.speed
+      if (keys.left) dx -= player.stats.speed
+      if (keys.right) dx += player.stats.speed
   
       if (dx !== 0 && dy !== 0) {
         const factor = 1 / Math.sqrt(2)
@@ -344,14 +375,14 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       }
     }
   
-    const newX = Math.max(0, Math.min(ARENA_SIZE, player.x + dx))
-    const newY = Math.max(0, Math.min(ARENA_SIZE, player.y + dy))
+    const newX = Math.round(Math.max(0, Math.min(ARENA_SIZE, player.position.x + dx)))
+    const newY = Math.round(Math.max(0, Math.min(ARENA_SIZE, player.position.y + dy)))
     return { newX, newY, dx, dy }
   }
 
   function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
     let tookDamage = false
-    let newHealth = player.health;
+    let newHealth = player.stats.health;
     const now = Date.now()
   
     for (const cactus of cactusList) {
@@ -366,7 +397,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         //console.log("Colisão detectada!")
         if (!cactus.lastHit || now - cactus.lastHit > 500) {
           cactus.lastHit = now
-          newHealth = Math.max(0, player.health - 5)
+          newHealth = Math.max(0, player.stats.health - 5)
           tookDamage = true
         }
       }
@@ -380,38 +411,36 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     let foodEaten = false
 
     for (let i = 0; i < updatedFood.length; i++) {
-      const f = updatedFood[i]
-      const dist = Math.hypot(x - f.x, y - f.y)
-
+      const f = updatedFood[i];
+      const dist = Math.hypot(x - f.x, y - f.y);
+    
       if (dist < player.size / 2 + f.size / 2) {
-        updatedFood.splice(i, 1)
-        i--
-
-        updatedFood.push(generateFood(ARENA_SIZE))
-
-        // Restaura a vida do player ao invés de aumentar o tamanho
-        const newHealth = Math.min(player.health + FOOD_VALUE_HEATH, player.maxHealth)  // Garante que a vida não ultrapasse o máximo
-        const newScore = player.score + FOOD_VALUE_SCORE
-
+        const newFood = generateFood(ARENA_SIZE);
+        updatedFood[i] = newFood; // Substitui localmente
+    
+        // Atualiza só esse item no Firebase
+        update(ref(database, `bugsio/rooms/${roomKey}/food/${i}`), newFood);
+    
+        const newHealth = Math.min(player.stats.health + FOOD_VALUE_HEATH, player.stats.maxHealth);
+        const newScore = player.score + FOOD_VALUE_SCORE;
+    
         setPlayer((prev: any) => ({
           ...prev,
-          health: newHealth,
-          score: newScore
-        }))
-
+          stats: {
+            ...prev.stats,
+            health: newHealth,
+          },
+          score: newScore,
+        }));
+        
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-          health: newHealth,
-          score: newScore
-        });
-
-        foodEaten = true
-
-        // 🔁 Atualiza a comida no Realtime Database
-        set(ref(database, `bugsio/rooms/${roomKey}/food`), updatedFood)
+          'stats/health': newHealth,
+          score: newScore,
+        });        
+    
+        foodEaten = true;
       }
     }
-
-    return { updatedFood, foodEaten }
   }
   
   const exitGame = () => {
@@ -444,14 +473,14 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
         <div className="w-1/3">
           <div className="text-xs text-green-300 mb-1">
-            Vida: {Math.floor(player.health)}/{player.maxHealth}
+            Vida: {Math.floor(player.stats.health)}/{player.stats.maxHealth}
           </div>
           <Progress
-            value={(player.health / player.maxHealth) * 100}
+            value={(player.stats.health / player.stats.maxHealth) * 100}
             className={`h-2 ${
-              (player.health / player.maxHealth) > 0.6
+              (player.stats.health / player.stats.maxHealth) > 0.6
                 ? "[&>div]:bg-white"
-                : (player.health / player.maxHealth) > 0.3
+                : (player.stats.health / player.stats.maxHealth) > 0.3
                 ? "[&>div]:bg-orange-500"
                 : "[&>div]:bg-red-500"
             }`}

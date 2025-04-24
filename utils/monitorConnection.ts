@@ -5,6 +5,7 @@ export function monitorConnectionStatus(roomCode: string, playerKey: string) {
   const connectedRef = ref(database, '.info/connected');
   // Atualizar o status de conexão do jogador quando ele se desconectar
   onDisconnect(playerRef).remove()
+  sessionStorage.setItem("score", String(0));
 
   // Monitorar o status de conexão do jogador
   onValue(connectedRef, () => {

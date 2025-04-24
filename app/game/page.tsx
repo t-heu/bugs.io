@@ -47,7 +47,7 @@ export default function Game() {
     setScore(0)
   }
 
-  function createPlayer(roomKey: string, owner: boolean, name: string, character: any) {
+  function createPlayer(roomKey: string, name: string, character: any) {
     try {
       const updates: any = {};
       const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
@@ -57,16 +57,18 @@ export default function Game() {
       const playerData = {
         name,
         uid: nextPlayer,
-        ready: false,
         killer: '',
-        owner,
-        x: ARENA_SIZE / 2,
-        y: ARENA_SIZE / 2,
+        position: {
+          x: ARENA_SIZE / 2,
+          y: ARENA_SIZE / 2,
+        },
         size: 30,
-        speed: character.stats.speed * 0.5,
-        attack: character.stats.attack,
-        health: character.stats.health,// * 10,
-        maxHealth: character.stats.health,// * 10,
+        stats: {
+          speed: character.stats.speed * 0.5,
+          attack: character.stats.attack,
+          health: character.stats.health,// * 10,
+          maxHealth: character.stats.health,// * 10,
+        },
         score: 0,
         type: character.id,
       };
@@ -99,7 +101,7 @@ export default function Game() {
           cactus: cactusList
         });
   
-        createPlayer(roomKey, true, name, character);
+        createPlayer(roomKey, name, character);
       }
     } catch (e) {
       console.error('Erro ao criar jogo:', e);
@@ -118,7 +120,7 @@ export default function Game() {
           const numPlayers = Object.keys(playersObject).length;
   
           if (!room.gameInProgress && numPlayers < 8) {
-            createPlayer(roomKey, false, name, character);
+            createPlayer(roomKey, name, character);
             foundRoom = true;
             return true;
           }

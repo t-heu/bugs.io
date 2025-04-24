@@ -111,7 +111,8 @@ export const drawFood = (ctx: CanvasRenderingContext2D, foodItem: any, viewportO
 }
 
 export const drawPlayer = (ctx: CanvasRenderingContext2D, player: any, now: number, viewportOffset: ViewportOffset, me: boolean) => {
-  const { x, y, size, type, health, maxHealth, name } = player
+  const { position, size, type, stats, name } = player
+  const { x, y } = position
   const screenX = x - viewportOffset.x
   const screenY = y - viewportOffset.y
 
@@ -120,7 +121,7 @@ export const drawPlayer = (ctx: CanvasRenderingContext2D, player: any, now: numb
   // Health bar
   const healthBarWidth = 40 // largura fixa da barra de vida
   const healthBarHeight = 4
-  const healthPercent = Math.max(0, Math.min(1, health / maxHealth)) // clamp entre 0 e 1
+  const healthPercent = Math.max(0, Math.min(1, stats.health / stats.maxHealth)) // clamp entre 0 e 1
 
   const barX = screenX - healthBarWidth / 2
   const barY = screenY - size / 2 - 10 // aparece acima do personagem

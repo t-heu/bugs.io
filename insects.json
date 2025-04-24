@@ -13,7 +13,7 @@
       "fill": "#FF5722",
       "stroke": "#D84315"
     },
-    "requiredScore": 0
+    "requiredScore": 300
   },
   {
     "id": "snail",
@@ -29,7 +29,7 @@
       "fill": "#795548",
       "stroke": "#4E342E"
     },
-    "requiredScore": 500
+    "requiredScore": 700
   },   
   {
     "id": "spider",
@@ -45,7 +45,7 @@
       "fill": "#9C27B0",
       "stroke": "#6A1B9A"
     },
-    "requiredScore": 1400
+    "requiredScore": 800
   },
   {
     "id": "beetle",
@@ -61,7 +61,7 @@
       "fill": "#3F51B5",
       "stroke": "#283593"
     },
-    "requiredScore": 2000
+    "requiredScore": 1400
   },
   {
     "id": "wasp",
@@ -77,7 +77,7 @@
       "fill": "#FFC107",
       "stroke": "#FFA000"
     },
-    "requiredScore": 1300
+    "requiredScore": 900
   },
   {
     "id": "cockroach",
@@ -93,7 +93,7 @@
       "fill": "#795548",
       "stroke": "#4E342E"
     },
-    "requiredScore": 2200
+    "requiredScore": 700
   },
   {
     "id": "ladybug",
@@ -109,7 +109,7 @@
       "fill": "#F44336",
       "stroke": "#B71C1C"
     },
-    "requiredScore": 1000
+    "requiredScore": 400
   },
   {
     "id": "scorpion",
@@ -125,7 +125,7 @@
       "fill": "#6D4C41",
       "stroke": "#3E2723"
     },
-    "requiredScore": 2600
+    "requiredScore": 1600
   },
   {
     "id": "worm",
@@ -157,7 +157,7 @@
       "fill": "#FFEB3B",
       "stroke": "#F57F17"
     },
-    "requiredScore": 1200
+    "requiredScore": 850
   },
   {
     "id": "centipede",
@@ -173,7 +173,7 @@
       "fill": "#8D6E63",
       "stroke": "#4E342E"
     },
-    "requiredScore": 1500
+    "requiredScore": 1200
   },
   {
     "id": "water_bug",
@@ -189,7 +189,7 @@
       "fill": "#607D8B",
       "stroke": "#37474F"
     },
-    "requiredScore": 1700
+    "requiredScore": 1200
   },
   {
     "id": "mantis",
@@ -205,7 +205,7 @@
       "fill": "#4CAF50",
       "stroke": "#2E7D32"
     },
-    "requiredScore": 1800
+    "requiredScore": 1200
   },
   {
     "id": "cricket",
@@ -221,7 +221,7 @@
       "fill": "#81C784",
       "stroke": "#388E3C"
     },
-    "requiredScore": 1000
+    "requiredScore": 400
   },
   {
     "id": "grasshopper",
@@ -253,7 +253,7 @@
       "fill": "#B0BEC5",
       "stroke": "#455A64"
     },
-    "requiredScore": 100
+    "requiredScore": 800
   },
   {
     "id": "stick_bug",
@@ -269,7 +269,7 @@
       "fill": "#A5D6A7",
       "stroke": "#33691E"
     },
-    "requiredScore": 400
+    "requiredScore": 700
   },
   {
     "id": "mosquito",
@@ -301,7 +301,7 @@
       "fill": "#00BCD4",
       "stroke": "#00838F"
     },
-    "requiredScore": 1600
+    "requiredScore": 1100
   },
   {
     "id": "butterfly",
@@ -333,7 +333,7 @@
       "fill": "#CE93D8",
       "stroke": "#6A1B9A"
     },
-    "requiredScore": 200
+    "requiredScore": 100
   },
   {
     "id": "fly",
@@ -349,6 +349,6 @@
       "fill": "#607D8B",
       "stroke": "#455A64"
     },
-    "requiredScore": 0
+    "requiredScore": 200
   }
 ]

@@ -29,3 +29,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ![Screen 2](docs/image2.png "Screen 2")
 ![Screen 2](docs/image0.png "Screen 2")
 ![Screen 2](docs/image.png "Screen 2")
+
+## Cálculo de "requiredScore"
+
+Fórmula de poder relativa para calc. "requiredScore".
+
+poder = (speed * 0.5) + (attack * 1.2) + (health * 0.3)
+
+Tier 0: até ~25 de poder → requiredScore: 0
+Tier 1: 25–30 → requiredScore: 200–400
+Tier 2: 30–35 → requiredScore: 500–700
+Tier 3: 35–42 → requiredScore: 800–1000
+Tier 4: 42–46 → requiredScore: 1100–1300
+Tier 5: 46+ → requiredScore: 1400+

@@ -20,7 +20,7 @@ export default function Instructions() {
         <div className="space-y-8">
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Objetivo</h2>
-            <p>Colete migalhas e comida para crescer, torne-se o maior e mais forte inseto da arena!</p>
+            <p>Colete migalhas de comida para ganhar pontos e recuperar sua vida e torna-se um outro inseto maior e mais forte da arena!</p>
           </section>
 
           <section className="bg-green-900/50 p-6 rounded-lg">
@@ -49,10 +49,11 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Dicas</h2>
             <ul className="list-disc list-inside space-y-2">
-              <li>Colete comidas para recuperar sua vida</li>
-              <li>Cada tipo de inseto tem vantagens diferentes - use-as estrategicamente</li>
-              <li>Fuja de insetos e bole estratégias</li>
-              <li>Trabalhe em equipe com outros insetos do mesmo tipo se quiser enfrentar o mais forte</li>
+            <li>Coma migalhas para recuperar sua vida durante a partida</li>
+            <li>Cada inseto tem habilidades únicas — escolha e use com estratégia</li>
+            <li>Evite confrontos desvantajosos e trace boas rotas de fuga</li>
+            <li>Colabore com outros do mesmo tipo para derrubar os maiores inimigos</li>
+            <li>Cuidado com os cactus espalhados, eles podem te dar dano</li>
             </ul>
           </section>
         </div>
