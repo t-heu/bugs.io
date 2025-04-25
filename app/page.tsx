@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-import AdBanner from "@/components/adBanner"
-import CookieConsent from "@/components/cookieConsentBanner"
+import AdBanner from "@/components/ad-banner"
+import CookieConsent from "@/components/cookie-consent-banner"
 
 export default function Home() {
   const [hasConsented, setHasConsented] = useState<boolean | null>(null)

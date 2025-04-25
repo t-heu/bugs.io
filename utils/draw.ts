@@ -21,7 +21,14 @@ export type InsectType =
   | "grasshopper"
   | "moth"
   | "snail"
-  | "fly";
+  | "fly"
+  | "caterpillar"
+  | "earwig"
+  | "marimbondo"
+  | "emeraldWasp"
+  | "tanajura"
+  | "termite"
+  | "firefly";
 
 type ViewportOffset = {
   x: number;
@@ -41,7 +48,7 @@ import {Scorpion} from "@/app/insects/scorpion"
 import {Butterfly} from "@/app/insects/butterfly"
 import {Mosquito} from "@/app/insects/mosquito"
 import {Mantis} from "@/app/insects/mantis"
-import {StickBug} from "@/app/insects/stickBug"
+import {StickBug} from "@/app/insects/stick-bug"
 import {Centipede} from "@/app/insects/centipede"
 import {Cricket} from "@/app/insects/cricket"
 import {Dragonfly} from "@/app/insects/dragonfly"
@@ -53,6 +60,13 @@ import {Grasshopper} from "@/app/insects/grasshopper"
 import {Moth} from "@/app/insects/moth"
 import {Fly} from "@/app/insects/fly"
 import {Snail} from "@/app/insects/snail"
+import {Caterpillar} from "@/app/insects/caterpillar"
+import {Earwig} from "@/app/insects/earwig"
+import {Marimbondo} from "@/app/insects/marimbondo"
+import {EmeraldWasp} from "@/app/insects/emerald-wasp"
+import {Tanajura} from "@/app/insects/tanajura"
+import {Termite} from "@/app/insects/termite"
+import {Firefly} from "@/app/insects/firefly"
 
 // Helpers
 export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
@@ -104,9 +118,25 @@ export const drawFood = (ctx: CanvasRenderingContext2D, foodItem: any, viewportO
 
   if (!isInViewport(screenX, screenY, size, ctx.canvas)) return
 
+  const stemHeight = size * 2
+  const leafSize = size * 0.8
+
+  // 🌱 Draw stem
+  ctx.strokeStyle = "#4CAF50"
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(screenX, screenY)
+  ctx.lineTo(screenX, screenY - stemHeight)
+  ctx.stroke()
+
+  // 🍃 Draw leaves
   ctx.fillStyle = color
   ctx.beginPath()
-  ctx.arc(screenX, screenY, size, 0, Math.PI * 2)
+  ctx.ellipse(screenX - leafSize, screenY - stemHeight + 4, leafSize, leafSize / 2, -0.5, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.beginPath()
+  ctx.ellipse(screenX + leafSize, screenY - stemHeight + 4, leafSize, leafSize / 2, 0.5, 0, Math.PI * 2)
   ctx.fill()
 }
 
@@ -210,7 +240,14 @@ export const drawInsect = (
     grasshopper: Grasshopper,
     moth: Moth,
     fly: Fly,
-    snail: Snail
+    snail: Snail,
+    caterpillar: Caterpillar,
+    earwig: Earwig,
+    marimbondo: Marimbondo,
+    emeraldWasp: EmeraldWasp,
+    tanajura: Tanajura,
+    termite: Termite,
+    firefly: Firefly
   };
   
   if (insectDrawFunctions[type]) {

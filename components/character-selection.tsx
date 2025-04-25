@@ -16,7 +16,7 @@ import {ScorpionDrawing} from "@/app/insects/scorpion"
 import {ButterflyDrawing} from "@/app/insects/butterfly"
 import {MosquitoDrawing} from "@/app/insects/mosquito"
 import {MantisDrawing} from "@/app/insects/mantis"
-import {StickBugDrawing} from "@/app/insects/stickBug"
+import {StickBugDrawing} from "@/app/insects/stick-bug"
 import {CentipedeDrawing} from "@/app/insects/centipede"
 import {CricketDrawing} from "@/app/insects/cricket"
 import {DragonflyDrawing} from "@/app/insects/dragonfly"
@@ -28,6 +28,13 @@ import {GrasshopperDrawing} from "@/app/insects/grasshopper"
 import {MothDrawing} from "@/app/insects/moth"
 import {FlyDrawing} from "@/app/insects/fly"
 import {SnailDrawing} from "@/app/insects/snail"
+import {CaterpillarDrawing} from "@/app/insects/caterpillar"
+import {EarwigDrawing} from "@/app/insects/earwig"
+import {MarimbondoDrawing} from "@/app/insects/marimbondo"
+import {EmeraldWaspDrawing} from "@/app/insects/emerald-wasp"
+import {TanajuraDrawing} from "@/app/insects/tanajura"
+import {TermiteDrawing} from "@/app/insects/termite"
+import {FireflyDrawing} from "@/app/insects/firefly"
 
 const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, strokeColor: string }>> = {
   ant: AntDrawing,
@@ -51,7 +58,14 @@ const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, 
   water_bug: WaterBugDrawing,
   moth: MothDrawing,
   fly: FlyDrawing,
-  snail: SnailDrawing
+  snail: SnailDrawing,
+  caterpillar: CaterpillarDrawing,
+  earwig: EarwigDrawing,
+  marimbondo: MarimbondoDrawing,
+  emeraldWasp: EmeraldWaspDrawing,
+  tanajura: TanajuraDrawing,
+  termite: TermiteDrawing,
+  firefly: FireflyDrawing
 };
 
 export default function CharacterSelection({ onSelect, name, onName, characters }: any) {
@@ -80,8 +94,30 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
     setScore(NewScore);
   },[])
 
-  const availableCharacters = characters.filter((char: any) => char.requiredScore <= score);
-  const lockedCharacters = characters.filter((char: any) => char.requiredScore > score);
+  const getPower = (stats: { speed: number; attack: number; health: number }) => {
+    return (stats.speed * 0.5) + (stats.attack * 1.2) + (stats.health * 0.3);
+  };
+  
+  const getRequiredScore = (power: number) => {
+    if (power <= 25) return 0;
+    if (power <= 30) return 200;
+    if (power <= 35) return 500;
+    if (power <= 42) return 800;
+    if (power <= 46) return 1100;
+    return 1400;
+  };
+  
+  const charactersWithScore = characters.map((char: any) => {
+    const power = getPower(char.stats);
+    return {
+      ...char,
+      power,
+      requiredScore: getRequiredScore(power)
+    };
+  });
+
+  const availableCharacters = charactersWithScore.filter((char: any) => char.requiredScore <= score);
+  const lockedCharacters = charactersWithScore.filter((char: any) => char.requiredScore > score); 
 
   const renderCharacterCard = (character: any, isLocked: boolean = false) => {
     const isHovered = hoveredCharacter === character.id;

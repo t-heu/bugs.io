@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import CharacterSelection from "@/components/character-selection"
 import GameArena from "@/components/game-arena"
 
-import { database, set, ref, update, get, child, push, onValue } from "@/api/firebase"
+import { database, set, ref, update, get, child, push } from "@/api/firebase"
 import generateRandomWord from "@/utils/generateRandomWord"
 import { generateInitialFood } from "@/utils/food"
 import { generateInitialCactus } from "@/utils/cactus"
