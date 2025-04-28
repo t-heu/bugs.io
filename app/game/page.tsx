@@ -69,8 +69,17 @@ export default function Game() {
           health: character.stats.health,// * 10,
           maxHealth: character.stats.health,// * 10,
         },
+        effects: {
+          invincible: '',
+          speedBoost: '',
+          poison: '',
+          specialAttack: ''
+        },
+        poisonNextAttack: false,
+        poisonedUntil: '',
         score: 0,
         type: character.id,
+        ability: character.ability ? character.ability : null
       };
 
       setRoomKey(roomKey)

@@ -93,15 +93,25 @@ body {
   }
 }
 
+.special {
+  bottom: 160px;
+  width: 60px;
+  height: 60px;
+  background-color: #4285F4;
+}
+
+.attack {
+  bottom: 60px;
+  width: 80px;
+  height: 80px;
+  background-color: #EA4335;
+}
+
 /* CSS */
 .floating-button {
   position: absolute;
-  bottom: 60px;
-  right: 60px;
-  width: 80px;
-  height: 80px;
+  right: 30px;
   border-radius: 50%;
-  background-color: #ff5555;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;

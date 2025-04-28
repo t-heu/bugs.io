@@ -95,7 +95,7 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
   },[])
 
   const getPower = (stats: { speed: number; attack: number; health: number }) => {
-    return (stats.speed * 0.5) + (stats.attack * 1.2) + (stats.health * 0.3);
+    return 0//(stats.speed * 0.5) + (stats.attack * 1.2) + (stats.health * 0.3);
   };
   
   const getRequiredScore = (power: number) => {
