@@ -184,7 +184,7 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
         </CardContent>
         {!isLocked && (
           <CardFooter>
-            <Button className="w-full bg-green-600 hover:bg-green-500" onClick={() => onSelect(character)}>
+            <Button className="w-full bg-green-600 hover:bg-green-500" onClick={() => onSelect(character, score)}>
               Selecionar
             </Button>
           </CardFooter>

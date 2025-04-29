@@ -26,7 +26,7 @@ export function activateShield(activeEffectsRef: any, roomKey: string, player: a
 export function activateSpeedBoost(activeEffectsRef: any, roomKey: string, player: any) {
   const now = Date.now();
 
-  const speedBoostUntil = now + 4000; // 4 segundos de invencibilidade
+  const speedBoostUntil = now + player.ability.duration; // 4 segundos de invencibilidade
 
   activeEffectsRef.current["speedBoost"] = speedBoostUntil;
 
@@ -53,6 +53,12 @@ export function healPlayer(roomKey: string, player: any, setPlayer: any) {
 }
 
 export function applyPoisonEffect(playerUid: string, roomKey: string) {
+  update(ref(database, `bugsio/rooms/${roomKey}/players/p${playerUid}`), {
+    poisonNextAttack: true,
+  });
+}
+
+export function applySlow(playerUid: string, roomKey: string) {
   update(ref(database, `bugsio/rooms/${roomKey}/players/p${playerUid}`), {
     poisonNextAttack: true,
   });

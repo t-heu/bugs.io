@@ -17,7 +17,7 @@ import { generateFood } from "@/utils/food"
 import { monitorConnectionStatus, exitPlayer } from "@/utils/monitorConnection"
 import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/gameConstants"
 
-import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer } from "@/utils/ability"
+import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
 
 type HandleDeathOptions = {
   playerUid?: string;
@@ -62,8 +62,13 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   );
   useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
+
+  const [cooldownTime, setCooldownTime] = useState(0);
+  const [isCooldown, setIsCooldown] = useState(false);
+
+  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
   
-  // 🔁 Inicializa o jogo uma única vez
+  // Inicializa o jogo uma única vez
   useEffect(() => {
     if (gameInitializedRef.current) return
     gameInitializedRef.current = true
@@ -78,7 +83,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   
   }, [])  
 
-  // 🔁 Escuta tudo do jogador (atualiza todo objeto sempre que algo muda)
+  // Escuta tudo do jogador (atualiza todo objeto sempre que algo muda)
   useEffect(() => {
     if (!roomKey || !player?.uid) return;
 
@@ -190,6 +195,29 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       cancelAnimationFrame(animationFrameId)
     }
   }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
+
+  useEffect(() => {
+    if (!isCooldown || !player?.ability) return;
+  
+    const abilityName = player.ability.name;
+    const lastUsed = abilityCooldownsRef.current[abilityName] || 0;
+  
+    const updateCooldown = () => {
+      const now = Date.now();
+      const cooldownRemaining = Math.max(lastUsed - now, 0);
+      setCooldownTime(cooldownRemaining);
+  
+      if (cooldownRemaining <= 0) {
+        setIsCooldown(false);
+        clearInterval(intervalId);
+      }
+    };
+  
+    updateCooldown(); // Atualiza logo que começa
+    const intervalId = setInterval(updateCooldown, 100); // Atualiza a cada 100ms
+  
+    return () => clearInterval(intervalId); // Limpa o intervalo se o componente desmontar ou cooldown acabar
+  }, [isCooldown, player?.ability?.name]);
   
   const handlePlayerDeath = ({
     playerUid,
@@ -226,9 +254,8 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
   const updateGame = () => {
     if (!canvasRef.current) return;
-    if (!player) return; // Proteção básica
+    if (!player) return;
 
-    // Verificar efeitos temporários
     const nowEffect = Date.now();
     const isInvincible = activeEffectsRef.current["invincible"] && activeEffectsRef.current["invincible"] > nowEffect;
     const hasSpeedBoost = activeEffectsRef.current["speedBoost"] && activeEffectsRef.current["speedBoost"] > nowEffect;
@@ -244,11 +271,9 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       x: newX - VIEWPORT_SIZE / 2,
       y: newY - VIEWPORT_SIZE / 2,
     });
-  
-    // Colisão com comida
+
     handleFoodCollision(newX, newY, food, player);
 
-    // ⚔️ Dano de cactu
     const {tookDamage, newHealth} = handleCactusCollision(newX, newY, cactus, player)
     if (tookDamage && !isInvincible) {
       if (newHealth === 0) {
@@ -276,8 +301,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         return updated;
       });      
     }   
-  
-    // ⚔️ Ataque com cooldown
+
     const now = Date.now();
     if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
       lastAttackTimeRef.current = now;
@@ -315,24 +339,22 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
     // 3. No seu updateGame() (game loop), dar dano de veneno a cada segundo:
     otherPlayers.forEach((target) => {
-      if (target.poisonedUntil && target.poisonedUntil > Date.now()) {
+      if (target.effects.poisonedUntil && target.effects.poisonedUntil > Date.now()) {
         const lastTick = lastPoisonTickRef.current[target.uid] || 0;
         if (Date.now() - lastTick > 1000) {
           let poisonDamage = player.ability.poisonDamage;
 
-          if (target.id === player.ability.specialBonusDamage.target) {
+          if (player.ability.specialBonusDamage && player.ability.specialBonusDamage.target === target.id) {
             const bonusPoisonDamage = player.ability.specialBonusDamage.bonusDamage || 0;
             poisonDamage += bonusPoisonDamage;
           }
 
           const newHealth = Math.max(0, target.stats.health - poisonDamage);
 
-
           update(ref(database, `bugsio/rooms/${roomKey}/players/p${target.uid}/stats`), {
             health: newHealth,
           });
 
-          // Atualiza localmente também se quiser:
           setOtherPlayers((prev) =>
             prev.map((p) =>
               p.uid === target.uid
@@ -352,8 +374,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       handlePlayerDeath({ playerUid: player.uid, score: player.score });
       return;
     }
-  
-    // 🧭 Atualiza posição do player
+
     setPlayer((prev: any) => {
       if (!prev) return prev;
       const updatedPlayer = {
@@ -389,27 +410,27 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   
       if (damagedUIDs.has(targetPlayer.uid)) return;
 
-      // ⬇️⬇️⬇️ NOVO: Verificar se o targetPlayer está invencível
       if (targetPlayer.effects?.invincible && targetPlayer.effects.invincible > Date.now()) {
-        return; // não causa dano se o alvo está invencível
+        return
       }
 
       damagedUIDs.add(targetPlayer.uid);
   
       const playerAttack = player.stats.attack * (player.size / 30);
-      const damageToTarget = player.effects.specialAttack > Date.now() ? playerAttack * player.ability.damageMultiplier : playerAttack * 1.5;
+      const isSpecialAttackActive = player.effects.specialAttack > Date.now();
+      const multiplier = isSpecialAttackActive 
+        ? player.ability.damageMultiplier 
+        : 1.5;
+      const damageToTarget = playerAttack * multiplier;
 
       const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
       onPlayerDamaged(targetPlayer.uid, newHealthTarget);
 
-       // ⚡ AQUI: Se o jogador está com poisonNextAttack, aplica veneno no alvo
       if (player.poisonNextAttack) {
-        // Marca veneno no alvo
-        update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}`), {
-          poisonedUntil: Date.now() + 5000, // 5 segundos de veneno
+        update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}/effects`), {
+          poisonedUntil: Date.now() + player.ability.duration,
         });
 
-        // Cancela o poisonNextAttack para o jogador
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
           poisonNextAttack: false,
         });
@@ -440,61 +461,59 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       if (keys.right) dx += speed
   
       if (dx !== 0 && dy !== 0) {
-        const factor = 1 / Math.sqrt(2)
-        dx *= factor
-        dy *= factor
+        const normalizationFactor = 1 / Math.sqrt(2);
+        dx *= normalizationFactor;
+        dy *= normalizationFactor;
       }
     }
   
-    const newX = Math.round(Math.max(0, Math.min(ARENA_SIZE, player.position.x + dx)))
-    const newY = Math.round(Math.max(0, Math.min(ARENA_SIZE, player.position.y + dy)))
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+    const newX = Math.round(clamp(player.position.x + dx, 0, ARENA_SIZE));
+    const newY = Math.round(clamp(player.position.y + dy, 0, ARENA_SIZE));
     return { newX, newY, dx, dy }
   }
 
   function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
-    let tookDamage = false
+    let tookDamage = false;
     let newHealth = player.stats.health;
-    const now = Date.now()
+    const now = Date.now();
   
-    for (const cactus of cactusList) {
-      // Calcular a distância entre o jogador e o cacto
-      const dist = Math.hypot(x - cactus.x, y - cactus.y)
+    cactusList.forEach((cactus) => {
+      const distance = Math.hypot(x - cactus.x, y - cactus.y);
+      const collisionThreshold = (player.size + cactus.size) / 2;
   
-      //console.log(`Distância entre jogador e cacto: ${dist}`)
-      //console.log(`Raio do jogador: ${player.size / 2}, Raio do cacto: ${cactus.size / 2}`)
+      if (distance < collisionThreshold) {
+        const timeSinceLastHit = now - (cactus.lastHit ?? 0);
   
-      // Verifique se a distância entre o jogador e o cacto é menor que a soma dos raios
-      if (dist < (player.size / 2 + cactus.size / 2)) {
-        //console.log("Colisão detectada!")
-        if (!cactus.lastHit || now - cactus.lastHit > 500) {
-          cactus.lastHit = now
-          newHealth = Math.max(0, player.stats.health - 5)
-          tookDamage = true
+        if (timeSinceLastHit > 500) {
+          cactus.lastHit = now;
+          newHealth = Math.max(0, player.stats.health - 5);
+          tookDamage = true;
         }
       }
-    }
+    });
   
-    return {tookDamage, newHealth}
+    return { tookDamage, newHealth };
   }    
 
   function handleFoodCollision(x: number, y: number, foodList: any[], player: any) {
-    const updatedFood = [...foodList]
-    let foodEaten = false
-
-    for (let i = 0; i < updatedFood.length; i++) {
-      const f = updatedFood[i];
-      const dist = Math.hypot(x - f.x, y - f.y);
-    
-      if (dist < player.size / 2 + f.size / 2) {
+    const updatedFood = [...foodList];
+  
+    updatedFood.forEach((food, index) => {
+      const distance = Math.hypot(x - food.x, y - food.y);
+  
+      const collisionThreshold = (player.size + food.size) / 2;
+      if (distance < collisionThreshold) {
         const newFood = generateFood(ARENA_SIZE);
-        updatedFood[i] = newFood; // Substitui localmente
-    
-        // Atualiza só esse item no Firebase
-        update(ref(database, `bugsio/rooms/${roomKey}/food/${i}`), newFood);
-    
+        updatedFood[index] = newFood;
+  
+        update(ref(database, `bugsio/rooms/${roomKey}/food/${index}`), newFood);
+  
         const newHealth = Math.min(player.stats.health + FOOD_VALUE_HEATH, player.stats.maxHealth);
         const newScore = player.score + FOOD_VALUE_SCORE;
-    
+  
+        // Atualiza o estado local do player
         setPlayer((prev: any) => ({
           ...prev,
           stats: {
@@ -503,54 +522,53 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
           },
           score: newScore,
         }));
-        
+  
+        // Atualiza o player no Firebase
         update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
           'stats/health': newHealth,
           score: newScore,
-        });        
-    
-        foodEaten = true;
+        })
       }
-    }
+    });
+  
+    return { updatedFood };
   }
-
+  
   function useAbility() {
     if (!player?.ability) return;
-
+  
     const now = Date.now();
-    const abilityName = player.ability.name;
-    const abilityCooldownMs = (player.ability.cooldown || 5) * 1000;
-
+    const { name: abilityName, cooldown = 5 } = player.ability;
+    const cooldownMs = cooldown * 1000;
     const lastUsed = abilityCooldownsRef.current[abilityName] || 0;
+  
     if (now < lastUsed) {
+      setIsCooldown(true);
       return;
     }
-
-    // Executa efeitos baseados no tipo
-    switch (abilityName) {
-      case "Special Attack":
-        specialAttack(activeEffectsRef, roomKey, player);
-        break;
-      case "Hard Shell":
-        activateShield(activeEffectsRef, roomKey, player);
-        break;
-      case "Speed Boost":
-        activateSpeedBoost(activeEffectsRef, roomKey, player);
-        break;
-      case "Regeneration":
-        healPlayer(roomKey, player, setPlayer);
-        break;
-      case "Poison":
-        applyPoisonEffect(player.uid, roomKey);
-        break;
-      // adicione outros tipos conforme for criando mais habilidades
-      default:
-        break
-    }
-
-    // Coloca habilidade em cooldown
-    abilityCooldownsRef.current[abilityName] = now + abilityCooldownMs;
+  
+    executeAbilityEffect(abilityName);
+  
+    abilityCooldownsRef.current[abilityName] = now + cooldownMs;
+    setCooldownTime(cooldownMs);
+    setIsCooldown(true);
   }
+  
+  function executeAbilityEffect(abilityName: string) {
+    const abilityActions: Record<string, () => void> = {
+      "Special Attack": () => specialAttack(activeEffectsRef, roomKey, player),
+      "Hard Shell": () => activateShield(activeEffectsRef, roomKey, player),
+      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, roomKey, player),
+      "Regeneration": () => healPlayer(roomKey, player, setPlayer),
+      "Poison": () => applyPoisonEffect(player.uid, roomKey),
+      "Slow Strike": () => applySlow(player.uid, roomKey),
+    };
+  
+    const action = abilityActions[abilityName];
+    if (action) {
+      action();
+    }
+  }  
   
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
@@ -559,8 +577,6 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       setAssassin('')
     }
   }
-
-  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
@@ -593,6 +609,20 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
                 ? "[&>div]:bg-orange-500"
                 : "[&>div]:bg-red-500"
             }`}
+          />
+
+          <div className="text-xs text-green-300 mt-3 mb-1">
+            Cooldown: {Math.floor(cooldownTime / 1000)}s / {Math.floor(player.ability.cooldown || 5)}s
+          </div>
+          <Progress
+            value={(cooldownTime / (player.ability.cooldown * 1000)) * 100}
+            className="h-2 bg-red-500"
+            style={{
+              background: `#f87171`, // Cor de fundo da barra
+              height: '8px',
+              borderRadius: '4px',
+              backgroundImage: `linear-gradient(to right, #22c55e ${ (cooldownTime / (player.ability.cooldown * 1000)) * 100}%, #f87171 0%)` // Cor verde para o progresso
+            }}
           />
         </div>
 

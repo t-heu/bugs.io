@@ -25,13 +25,14 @@ export default function Game() {
   
   const characters = insects; 
 
-  const handleCharacterSelect = (character: any) => {
+  const handleCharacterSelect = (character: any, scoreCurrent: number = 0) => {
     if (!name) return alert('Erro: Nome não fornecido');
   
     if (!(/^[a-zA-Z\s]*$/.test(name))) {
       return alert('Erro: Nome inválido');
     }
 
+    setScore(scoreCurrent)
     joinOrCreateRoom(name, character)
 
     setGameState("playing")
@@ -63,23 +64,23 @@ export default function Game() {
           y: ARENA_SIZE / 2,
         },
         size: 30,
+        score: 0,
         stats: {
           speed: character.stats.speed * 0.5,
           attack: character.stats.attack,
-          health: character.stats.health,// * 10,
-          maxHealth: character.stats.health,// * 10,
+          health: character.stats.health,
+          maxHealth: character.stats.health,
         },
         effects: {
           invincible: '',
           speedBoost: '',
-          poison: '',
-          specialAttack: ''
+          poisonedUntil: '',
+          specialAttack: '',
+          slow: ''
         },
         poisonNextAttack: false,
-        poisonedUntil: '',
-        score: 0,
         type: character.id,
-        ability: character.ability ? character.ability : null
+        ability: character.ability || null
       };
 
       setRoomKey(roomKey)

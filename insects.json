@@ -12,6 +12,13 @@
     "colors": {
       "fill": "#FF5722",
       "stroke": "#D84315"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 12,
+      "boost": 2.0,
+      "duration": 4000,
+      "description": "Aumenta a velocidade em 2x por 5 segundos."
     }
   },
   {
@@ -27,6 +34,12 @@
     "colors": {
       "fill": "#795548",
       "stroke": "#4E342E"
+    },
+    "ability": {
+      "name": "Hard Shell",
+      "cooldown": 18,
+      "duration": 5000,
+      "description": "Fica invencível por 5 segundos."
     }
   },   
   {
@@ -42,6 +55,13 @@
     "colors": {
       "fill": "#9C27B0",
       "stroke": "#6A1B9A"
+    },
+    "ability":{
+      "name": "Slow Strike",
+      "cooldown": 12,
+      "slowAmount": 0.4,
+      "duration": 4,
+      "description": "Ao acertar um inimigo, reduz a velocidade dele em 40% por 4 segundos."
     }
   },
   {
@@ -78,6 +98,13 @@
     "colors": {
       "fill": "#FFC107",
       "stroke": "#FFA000"
+    },
+    "ability": {
+      "name": "Special Attack",
+      "cooldown": 10,
+      "damageMultiplier": 2.5,
+      "duration": 4000,
+      "description": "Realiza um ataque poderoso causando grande dano em área."
     }
   },
   {
@@ -114,6 +141,12 @@
     "colors": {
       "fill": "#F44336",
       "stroke": "#B71C1C"
+    },
+    "ability": {
+      "name": "Regeneration",
+      "cooldown": 18,
+      "healAmount": 10,
+      "description": "Recupera vida instantaneamente."
     }
   },
   {
@@ -134,6 +167,7 @@
       "name": "Poison",
       "cooldown": 12,
       "poisonDamage": 2,
+      "duration": 4000,
       "description": "Dá dano inicial e envenena o inimigo por 5 segundos."
     }
   },
@@ -187,6 +221,12 @@
     "colors": {
       "fill": "#8D6E63",
       "stroke": "#4E342E"
+    },
+    "ability": {
+      "name": "Poison",
+      "cooldown": 10,
+      "poisonDamage": 3,
+      "description": "Aplica veneno no inimigo, causando dano ao longo do tempo por 5 segundos."
     }
   },
   {
@@ -202,6 +242,12 @@
     "colors": {
       "fill": "#607D8B",
       "stroke": "#37474F"
+    },
+    "ability": {
+      "name": "Lethal Strike",
+      "cooldown": 14,
+      "damageMultiplier": 3.0,
+      "description": "Realiza um ataque extremamente poderoso em um único alvo, causando 3x o dano normal."
     }
   },
   {
@@ -217,6 +263,12 @@
     "colors": {
       "fill": "#4CAF50",
       "stroke": "#2E7D32"
+    },
+    "ability": {
+      "name": "Critical Slash",
+      "cooldown": 10,
+      "criticalMultiplier": 2.5,
+      "description": "Garante um golpe crítico, causando 2.5x o dano no próximo ataque."
     }
   },
   {
@@ -232,6 +284,13 @@
     "colors": {
       "fill": "#81C784",
       "stroke": "#388E3C"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 10,
+      "boost": 1.5,
+      "duration": 5000,
+      "description": "Aumenta a velocidade em 1.5x por 5 segundos, permitindo fugir rapidamente de situações perigosas."
     }
   },
   {
@@ -252,6 +311,7 @@
       "name": "Speed Boost",
       "cooldown": 12,
       "boost": 2.0,
+      "duration": 4000,
       "description": "Dá dano inicial e envenena o inimigo por 5 segundos."
     }
   },
@@ -268,6 +328,12 @@
     "colors": {
       "fill": "#B0BEC5",
       "stroke": "#455A64"
+    },
+    "ability": {
+      "name": "Regeneration",
+      "cooldown": 20,
+      "healAmount": 12,
+      "description": "Recupera parte da vida instantaneamente para prolongar sua sobrevivência."
     }
   },
   {
@@ -283,6 +349,12 @@
     "colors": {
       "fill": "#A5D6A7",
       "stroke": "#33691E"
+    },
+    "ability": {
+      "name": "Hard Shell",
+      "cooldown": 18,
+      "duration": 4000,
+      "description": "Fica invulnerável por 4 segundos, como se desaparecesse entre o ambiente."
     }
   },
   {
@@ -298,6 +370,13 @@
     "colors": {
       "fill": "#E0E0E0",
       "stroke": "#757575"
+    },
+    "ability": {
+      "name": "Poison",
+      "cooldown": 10,
+      "poisonDamage": 1,
+      "duration": 5,
+      "description": "Aplica veneno no inimigo, causando dano contínuo durante 5 segundos."
     }
   },
   {
@@ -313,6 +392,13 @@
     "colors": {
       "fill": "#00BCD4",
       "stroke": "#00838F"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 12,
+      "boost": 2.2,
+      "duration": 5000,
+      "description": "Aumenta muito a velocidade de movimento por 5 segundos."
     }
   },
   {
@@ -328,6 +414,13 @@
     "colors": {
       "fill": "#E91E63",
       "stroke": "#AD1457"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 14,
+      "boost": 1.8,
+      "duration": 4000,
+      "description": "Aumenta a velocidade temporariamente para escapar dos inimigos."
     }
   },
   {
@@ -343,6 +436,13 @@
     "colors": {
       "fill": "#CE93D8",
       "stroke": "#6A1B9A"
+    },
+    "ability": {
+      "name": "Poison",
+      "cooldown": 14,
+      "poisonDamage": 1,
+      "duration": 6,
+      "description": "Espalha pó venenoso, causando dano contínuo ao inimigo por 6 segundos."
     }
   },
   {
@@ -358,6 +458,13 @@
     "colors": {
       "fill": "#607D8B",
       "stroke": "#455A64"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 12,
+      "boost": 1.8,
+      "duration": 5000,
+      "description": "Aumenta temporariamente a velocidade para escapar ou alcançar inimigos."
     }
   },
   {
@@ -373,6 +480,12 @@
     "colors": {
       "fill": "#8D6E63",
       "stroke": "#4E342E"
+    },
+    "ability": {
+      "name": "Hard Shell",
+      "cooldown": 20,
+      "duration": 5,
+      "description": "Aumenta a resistência e reduz o dano recebido por 5 segundos."
     }
   },
   {
@@ -388,6 +501,13 @@
     "colors": {
       "fill": "#A1887F",
       "stroke": "#3E2723"
+    },
+    "ability": {
+      "name": "Special Attack",
+      "cooldown": 12,
+      "damageMultiplier": 2.2,
+      "duration": 3,
+      "description": "Causa um dano adicional em área com suas pinças, atingindo inimigos ao redor."
     }
   },
   {
@@ -403,6 +523,13 @@
     "colors": {
       "fill": "#FDD835",
       "stroke": "#F57F17"
+    },
+    "ability": {
+      "name": "Poison",
+      "cooldown": 10,
+      "poisonDamage": 3,
+      "duration": 5,
+      "description": "Envenena o inimigo, causando dano ao longo de 5 segundos."
     }
   },
   {
@@ -444,6 +571,12 @@
     "colors": {
       "fill": "#6D4C41",
       "stroke": "#3E2723"
+    },
+    "ability": {
+      "name": "Regeneration",
+      "cooldown": 20,
+      "healAmount": 15,
+      "description": "Recupera uma quantidade significativa de vida ao longo de alguns segundos."
     }
   },
   {
@@ -459,6 +592,13 @@
     "colors": {
       "fill": "#D7CCC8",
       "stroke": "#5D4037"
+    },
+    "ability": {
+      "name": "Slow Strike",
+      "cooldown": 12,
+      "slowAmount": 0.4,
+      "duration": 4,
+      "description": "Reduz a velocidade do inimigo em 40% por 4 segundos ao acertá-lo."
     }
   },
   {
@@ -474,6 +614,13 @@
     "colors": {
       "fill": "#FFD54F",
       "stroke": "#FBC02D"
+    },
+    "ability": {
+      "name": "Speed Boost",
+      "cooldown": 10,
+      "boost": 2.0,
+      "duration": 4000,
+      "description": "Aumenta a velocidade do Vagalume, permitindo que ele se mova rapidamente por um curto período."
     }
   }
 ]
