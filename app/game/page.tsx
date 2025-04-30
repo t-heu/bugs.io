@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
@@ -13,17 +13,26 @@ import { generateInitialFood } from "@/utils/food"
 import { generateInitialCactus } from "@/utils/cactus"
 import { ARENA_SIZE, FOOD_COUNT } from "@/utils/gameConstants"
 
+import { exitPlayer } from "@/utils/monitorConnection"
+
 import insects from "../../insects.json"
 
 export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOver
   const [score, setScore] = useState(0)
   const [roomKey, setRoomKey] = useState('')
-  const [player, setPlayer] = useState<any>()
+  const [player, setPlayer] = useState<any>({})
   const [assassin, setAssassin] = useState('')
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
   
-  const characters = insects; 
+  const characters = insects;
+
+  useEffect(() => {
+    if (player && player.uid && gameState === "selection") {
+      setGameState("playing");
+    }
+  }, [player]);
 
   const handleCharacterSelect = (character: any, scoreCurrent: number = 0) => {
     if (!name) return alert('Erro: Nome não fornecido');
@@ -32,23 +41,30 @@ export default function Game() {
       return alert('Erro: Nome inválido');
     }
 
-    setScore(scoreCurrent)
-    joinOrCreateRoom(name, character)
+    setLoading(true)
 
-    setGameState("playing")
+    if (player.uid) {
+      exitPlayer(roomKey, player.uid)
+      setPlayer({})
+      setAssassin('')
+    }
+
+    setScore(scoreCurrent)
+    joinOrCreateRoom(name, character, scoreCurrent)
   }
 
   const handleGameOver = (finalScore: number) => {
-    setScore(finalScore)
     setGameState("gameOver")
+    setLoading(false)
+    setScore(finalScore)
   }
 
   const restartGame = () => {
     setGameState("selection")
-    setScore(0)
+    setLoading(false)
   }
 
-  function createPlayer(roomKey: string, name: string, character: any) {
+  function createPlayer(roomKey: string, name: string, character: any, scoreCurrent: number) {
     try {
       const updates: any = {};
       const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
@@ -64,7 +80,7 @@ export default function Game() {
           y: ARENA_SIZE / 2,
         },
         size: 30,
-        score: 0,
+        score: scoreCurrent,
         stats: {
           speed: character.stats.speed * 0.5,
           attack: character.stats.attack,
@@ -87,16 +103,16 @@ export default function Game() {
       setPlayer(playerData)
   
       if (nextPlayer) {
-        sessionStorage.setItem('uid', nextPlayer)
         updates[`bugsio/rooms/${roomKey}/players/p${nextPlayer}`] = playerData;
         update(ref(database), updates);
       }
     } catch (error) {
+      setLoading(false)
       console.error('Erro ao criar jogador:', error);
     }
   }
   
-  async function createGame(status: boolean, name: string, character: any) {
+  async function createGame(status: boolean, name: string, character: any, scoreCurrent: number) {
     try {
       if (status) {
         const roomKey = generateRandomWord(6);
@@ -111,14 +127,15 @@ export default function Game() {
           cactus: cactusList
         });
   
-        createPlayer(roomKey, name, character);
+        createPlayer(roomKey, name, character, scoreCurrent);
       }
     } catch (e) {
+      setLoading(false)
       console.error('Erro ao criar jogo:', e);
     }
   }
   
-  function joinOrCreateRoom(name: string, character: any) {
+  function joinOrCreateRoom(name: string, character: any, scoreCurrent: number) {
     get(child(ref(database), 'bugsio/rooms')).then((snapshot: any) => {
       if (snapshot.exists()) {
         const rooms = snapshot.val();
@@ -130,19 +147,20 @@ export default function Game() {
           const numPlayers = Object.keys(playersObject).length;
   
           if (!room.gameInProgress && numPlayers < 8) {
-            createPlayer(roomKey, name, character);
+            createPlayer(roomKey, name, character, scoreCurrent);
             foundRoom = true;
             return true;
           }
         });
   
         if (!foundRoom) {
-          createGame(true, name, character);
+          createGame(true, name, character, scoreCurrent);
         }
       } else {
-        createGame(true, name, character);
+        createGame(true, name, character, scoreCurrent);
       }
     }).catch((error: any) => {
+      setLoading(false)
       console.error(`Erro ao buscar salas: ${error.message}`);
     });
   }  
@@ -157,7 +175,14 @@ export default function Game() {
               Voltar
             </Button>
           </Link>
-          <CharacterSelection characters={characters} name={name} onName={setName} onSelect={handleCharacterSelect} />
+          <CharacterSelection 
+            characters={characters} 
+            name={name} 
+            onName={setName} 
+            onSelect={handleCharacterSelect} 
+            score={score} 
+            loading={loading}
+          />
         </div>
       )}
 

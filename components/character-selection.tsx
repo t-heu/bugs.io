@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -36,7 +36,7 @@ import {TanajuraDrawing} from "@/app/insects/tanajura"
 import {TermiteDrawing} from "@/app/insects/termite"
 import {FireflyDrawing} from "@/app/insects/firefly"
 
-const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, strokeColor: string }>> = {
+const insectDrawingComponents: any = {
   ant: AntDrawing,
   spider: SpiderDrawing,
   beetle: BeetleDrawing,
@@ -68,9 +68,8 @@ const insectDrawingComponents: Record<InsectType, React.FC<{ fillColor: string, 
   firefly: FireflyDrawing
 };
 
-export default function CharacterSelection({ onSelect, name, onName, characters }: any) {
+export default function CharacterSelection({ onSelect, name, onName, characters, score, loading }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
-  const [score, setScore] = useState(0);
 
   function getStatBlocks(value: number, max: number, totalBlocks = 10): number {
     const ratio = value / max;
@@ -87,37 +86,8 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
     ) : null;
   };
 
-  useEffect(() => {
-    const storedScore = sessionStorage.getItem("score");
-    const parsedScore = parseInt(storedScore ?? "0", 10);
-    const NewScore = isNaN(parsedScore) ? 0 : parsedScore;
-    setScore(NewScore);
-  },[])
-
-  const getPower = (stats: { speed: number; attack: number; health: number }) => {
-    return 0//(stats.speed * 0.5) + (stats.attack * 1.2) + (stats.health * 0.3);
-  };
-  
-  const getRequiredScore = (power: number) => {
-    if (power <= 25) return 0;
-    if (power <= 30) return 200;
-    if (power <= 35) return 500;
-    if (power <= 42) return 800;
-    if (power <= 46) return 1100;
-    return 1400;
-  };
-  
-  const charactersWithScore = characters.map((char: any) => {
-    const power = getPower(char.stats);
-    return {
-      ...char,
-      power,
-      requiredScore: getRequiredScore(power)
-    };
-  });
-
-  const availableCharacters = charactersWithScore.filter((char: any) => char.requiredScore <= score);
-  const lockedCharacters = charactersWithScore.filter((char: any) => char.requiredScore > score); 
+  const availableCharacters = characters.filter((char: any) => char.requiredScore <= score);
+  const lockedCharacters = characters.filter((char: any) => char.requiredScore > score);
 
   const renderCharacterCard = (character: any, isLocked: boolean = false) => {
     const isHovered = hoveredCharacter === character.id;
@@ -184,14 +154,18 @@ export default function CharacterSelection({ onSelect, name, onName, characters 
         </CardContent>
         {!isLocked && (
           <CardFooter>
-            <Button className="w-full bg-green-600 hover:bg-green-500" onClick={() => onSelect(character, score)}>
+            <Button
+              className="w-full bg-green-600 hover:bg-green-500"
+              onClick={() => onSelect(character, score - character.requiredScore)}
+              disabled={loading}
+            >
               Selecionar
             </Button>
           </CardFooter>
         )}
       </Card>
     );
-  };
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-8">

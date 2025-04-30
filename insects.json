@@ -4,6 +4,7 @@
     "name": "Formiga",
     "description": "Rápida e ágil",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 9,
       "attack": 6,
@@ -26,6 +27,7 @@
     "name": "Caracol",
     "description": "Blindado, mas devagar",
     "attributes": ["Velocidade muito baixa", "Ataque baixo", "Vida extremamente alta"],
+    "requiredScore": 800,
     "stats": {
       "speed": 1.2,
       "attack": 5,
@@ -47,6 +49,7 @@
     "name": "Aranha",
     "description": "Forte e agressiva",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
+    "requiredScore": 1400,
     "stats": {
       "speed": 7,
       "attack": 24,
@@ -69,6 +72,7 @@
     "name": "Besouro",
     "description": "Resistente e durável",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida alta"],
+    "requiredScore": 1100,
     "stats": {
       "speed": 4,
       "attack": 15,
@@ -90,6 +94,7 @@
     "name": "Vespa",
     "description": "Letal e veloz",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
+    "requiredScore": 800,
     "stats": {
       "speed": 9,
       "attack": 18,
@@ -112,6 +117,7 @@
     "name": "Barata",
     "description": "Sobrevivente implacável",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida altíssima"],
+    "requiredScore": 850,
     "stats": {
       "speed": 9,
       "attack": 6,
@@ -133,6 +139,7 @@
     "name": "Joaninha",
     "description": "Graciosa e equilibrada",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 5,
       "attack": 6,
@@ -154,6 +161,7 @@
     "name": "Escorpião",
     "description": "Perigoso e resistente",
     "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
+    "requiredScore": 1400,
     "stats": {
       "speed": 4,
       "attack": 40,
@@ -176,6 +184,7 @@
     "name": "Minhoca",
     "description": "Lenta e escorregadia",
     "attributes": ["Velocidade baixa", "Ataque baixíssimo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 2,
       "attack": 2,
@@ -191,6 +200,7 @@
     "name": "Abelha",
     "description": "Rápida e protetora",
     "attributes": ["Alta velocidade", "Ataque médio", "Vida baixa"],
+    "requiredScore": 700,
     "stats": {
       "speed": 13,
       "attack": 16,
@@ -213,6 +223,7 @@
     "name": "Centopéia",
     "description": "Ágil e venenosa",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
+    "requiredScore": 1300,
     "stats": {
       "speed": 12,
       "attack": 28,
@@ -234,6 +245,7 @@
     "name": "Barata d'água",
     "description": "Silenciosa e letal",
     "attributes": ["Velocidade média", "Ataque alto", "Vida média"],
+    "requiredScore": 1400,
     "stats": {
       "speed": 7,
       "attack": 28,
@@ -255,6 +267,7 @@
     "name": "Louva-a-deus",
     "description": "Ágil e caçador preciso",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
+    "requiredScore": 1500,
     "stats": {
       "speed": 12,
       "attack": 28,
@@ -276,6 +289,7 @@
     "name": "Grilo",
     "description": "Saltador veloz",
     "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 14,
       "attack": 6,
@@ -298,6 +312,7 @@
     "name": "Gafanhoto",
     "description": "Veloz e evasivo",
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida baixa"],
+    "requiredScore": 200,
     "stats": {
       "speed": 15,
       "attack": 10,
@@ -320,6 +335,7 @@
     "name": "Cigarra",
     "description": "Barulhenta e resistente",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida média"],
+    "requiredScore": 300,
     "stats": {
       "speed": 5,
       "attack": 13,
@@ -341,6 +357,7 @@
     "name": "Bicho-pau",
     "description": "Mestre da camuflagem",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida média"],
+    "requiredScore": 200,
     "stats": {
       "speed": 6,
       "attack": 6,
@@ -362,6 +379,7 @@
     "name": "Mosquito",
     "description": "Irritante e rápido",
     "attributes": ["Velocidade altíssima", "Ataque baixo", "Vida baixíssima"],
+    "requiredScore": 0,
     "stats": {
       "speed": 15,
       "attack": 5,
@@ -384,6 +402,7 @@
     "name": "Libélula",
     "description": "Ágil e predadora aérea",
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida média"],
+    "requiredScore": 1100,
     "stats": {
       "speed": 14,
       "attack": 20,
@@ -406,6 +425,7 @@
     "name": "Borboleta",
     "description": "Bela e evasiva",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 7,
       "attack": 5,
@@ -428,6 +448,7 @@
     "name": "Mariposa",
     "description": "Noturna e delicada",
     "attributes": ["Velocidade baixa", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 4,
       "attack": 6,
@@ -450,6 +471,7 @@
     "name": "Mosca",
     "description": "Ágil e persistente",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 10,
       "attack": 4,
@@ -472,6 +494,7 @@
     "name": "Taturana",
     "description": "Lenta, mas muito resistente",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida altíssima"],
+    "requiredScore": 450,
     "stats": {
       "speed": 3,
       "attack": 15,
@@ -493,6 +516,7 @@
     "name": "Tesourinha",
     "description": "Versátil com sua pinça traseira",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
+    "requiredScore": 660,
     "stats": {
       "speed": 7,
       "attack": 14,
@@ -515,6 +539,7 @@
     "name": "Marimbondo",
     "description": "Ágil e com ataque feroz",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
+    "requiredScore": 1340,
     "stats": {
       "speed": 12,
       "attack": 30,
@@ -537,6 +562,7 @@
     "name": "Vespa Esmeralda",
     "description": "Graciosa, venenosa e letal",
     "attributes": ["Velocidade alta", "Ataque médio", "Vida baixa"],
+    "requiredScore": 800,
     "stats": {
       "speed": 13,
       "attack": 20,
@@ -563,6 +589,7 @@
     "name": "Tanajura",
     "description": "Grande e resistente, mas lenta",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida altíssima"],
+    "requiredScore": 1300,
     "stats": {
       "speed": 2,
       "attack": 18,
@@ -584,6 +611,7 @@
     "name": "Cupim",
     "description": "Pequeno, mas persistente",
     "attributes": ["Velocidade baixa", "Ataque baixo", "Vida média"],
+    "requiredScore": 220,
     "stats": {
       "speed": 4,
       "attack": 8,
@@ -606,6 +634,7 @@
     "name": "Vagalume",
     "description": "Brilhante e veloz durante a noite",
     "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
+    "requiredScore": 0,
     "stats": {
       "speed": 13,
       "attack": 7,
