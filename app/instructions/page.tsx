@@ -35,6 +35,12 @@ export default function Instructions() {
                       <li key={i2}>{att}</li>
                     ))}
                   </ul>
+                  {info.ability && (
+                    <>
+                      <p className="mt-2">Habilidade: {info.ability.name}</p>
+                      <p className="mt-2">Info.: {info.ability.description}</p>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

@@ -176,7 +176,7 @@ export default function CharacterSelection({ onSelect, name, onName, characters,
         placeholder="Seu nome"
         value={name}
         onChange={(e) => onName(e.target.value)}
-        className="mb-5 w-full p-2 border border-green-500 rounded-md bg-green-950/70 text-green-300"
+        className="mb-5 w-full p-2 border border-green-500 rounded-md bg-green-950/70 text-green-300 placeholder-green-400"
       />
 
       <h2 className="text-xl font-semibold text-green-400 mb-4">Disponíveis</h2>

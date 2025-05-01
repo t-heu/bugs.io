@@ -4,7 +4,7 @@
     "name": "Formiga",
     "description": "Rápida e ágil",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 0,
+    "requiredScore": 50,
     "stats": {
       "speed": 9,
       "attack": 6,
@@ -289,7 +289,7 @@
     "name": "Grilo",
     "description": "Saltador veloz",
     "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 0,
+    "requiredScore": 150,
     "stats": {
       "speed": 14,
       "attack": 6,
@@ -379,7 +379,7 @@
     "name": "Mosquito",
     "description": "Irritante e rápido",
     "attributes": ["Velocidade altíssima", "Ataque baixo", "Vida baixíssima"],
-    "requiredScore": 0,
+    "requiredScore": 150,
     "stats": {
       "speed": 15,
       "attack": 5,
@@ -425,7 +425,7 @@
     "name": "Borboleta",
     "description": "Bela e evasiva",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 0,
+    "requiredScore": 70,
     "stats": {
       "speed": 7,
       "attack": 5,
@@ -471,7 +471,7 @@
     "name": "Mosca",
     "description": "Ágil e persistente",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 0,
+    "requiredScore": 100,
     "stats": {
       "speed": 10,
       "attack": 4,
@@ -634,7 +634,7 @@
     "name": "Vagalume",
     "description": "Brilhante e veloz durante a noite",
     "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 0,
+    "requiredScore": 90,
     "stats": {
       "speed": 13,
       "attack": 7,

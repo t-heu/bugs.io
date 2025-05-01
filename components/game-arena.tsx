@@ -19,11 +19,6 @@ import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@
 
 import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
 
-type HandleDeathOptions = {
-  playerUid?: string;
-  score?: number;
-};
-
 export default function GameArena({ setAssassin, onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
   const gameInitializedRef = useRef(false)
@@ -96,7 +91,8 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
       if (player.stats.health <= 0) {
         setAssassin(player.killer || '');
-        handlePlayerDeath({ playerUid: player.uid, score: player.score });
+        setGameRunning(false);
+        onGameOver(player.score);
         return;
       }
 
@@ -202,19 +198,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     }, 100);
   
     return () => clearInterval(intervalId);
-  }, [isCooldown, player?.ability?.name]);
-  
-  const handlePlayerDeath = ({
-    playerUid,
-    score = 0
-  }: HandleDeathOptions) => {
-    if (!playerUid) return;
-
-    //sessionStorage.setItem("score", String(score));
-    //setPlayer(null);
-    setGameRunning(false);
-    onGameOver(score);
-  };    
+  }, [isCooldown, player?.ability?.name]);   
 
   const renderGame = () => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
@@ -262,7 +246,8 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     if (tookDamage && !isInvincible) {
       if (newHealth === 0) {
         setAssassin("cactu");
-        handlePlayerDeath({ playerUid: player.uid, score: player.score });
+        setGameRunning(false);
+        onGameOver(player.score);
         return;
       }
   
@@ -294,33 +279,34 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
     // 3. No seu updateGame() (game loop), dar dano de veneno a cada segundo:
     otherPlayers.forEach((target) => {
-      if (target.effects.poisonedUntil && target.effects.poisonedUntil > Date.now()) {
-        const lastTick = lastPoisonTickRef.current[target.uid] || 0;
-        if (Date.now() - lastTick > 1000) {
-          let poisonDamage = player.ability.poisonDamage;
+      const isPoisoned = target.effects.poisonedUntil && target.effects.poisonedUntil > now;
+      const lastTick = lastPoisonTickRef.current[target.uid] || 0;
+      const tickElapsed = now - lastTick > 1000;
 
-          if (player.ability.specialBonusDamage && player.ability.specialBonusDamage.target === target.id) {
-            const bonusPoisonDamage = player.ability.specialBonusDamage.bonusDamage || 0;
-            poisonDamage += bonusPoisonDamage;
-          }
+      if (!isPoisoned || !tickElapsed) return;
 
-          const newHealth = Math.max(0, target.stats.health - poisonDamage);
+      let poisonDamage = player.ability.poisonDamage || 0;
 
-          update(ref(database, `bugsio/rooms/${roomKey}/players/p${target.uid}/stats`), {
-            health: newHealth,
-          });
-
-          setOtherPlayers((prev) =>
-            prev.map((p) =>
-              p.uid === target.uid
-                ? { ...p, stats: { ...p.stats, health: newHealth } }
-                : p
-            )
-          );
-
-          lastPoisonTickRef.current[target.uid] = Date.now();
-        }
+      const bonus = player.ability?.specialBonusDamage;
+      if (bonus && bonus.target === target.id && bonus.bonusDamage !== undefined) {
+        poisonDamage += bonus.bonusDamage || 0;
       }
+
+      const newHealth = Math.max(0, target.stats.health - poisonDamage);
+
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${target.uid}/stats`), {
+        health: newHealth,
+      });
+
+      setOtherPlayers((prev) =>
+        prev.map((p) =>
+          p.uid === target.uid
+            ? { ...p, stats: { ...p.stats, health: newHealth } }
+            : p
+        )
+      );
+
+      lastPoisonTickRef.current[target.uid] = nowEffect;
     });
 
     // ☠️ Verifica morte
@@ -332,7 +318,9 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         setPlayer(snapData)
         setAssassin(snapData.killer || '');
       });
-      handlePlayerDeath({ playerUid: player.uid, score: player.score });
+
+      setGameRunning(false);
+      onGameOver(player.score);
       return;
     }
 
@@ -546,7 +534,8 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
     if (confirmExit) {
-      handlePlayerDeath({ playerUid: player.uid })
+      setGameRunning(false);
+      onGameOver(0);
       setAssassin('')
     }
   }
@@ -569,34 +558,40 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
           <div className="text-sm text-green-300">Players On: {otherPlayers.length}</div>
         </div>
 
-        <div className="w-1/3">
-          <div className="text-xs text-green-300 mb-1">
-            Vida: {Math.floor(player.stats.health)}/{player.stats.maxHealth}
+        <div className="w-1/3 space-y-3">
+          {/* Vida */}
+          <div>
+            <div className="text-xs text-green-300 mb-1 font-semibold tracking-wide">
+              ❤️ Vida: {Math.floor(player.stats.health)}/{player.stats.maxHealth}
+            </div>
+            <Progress
+              value={(player.stats.health / player.stats.maxHealth) * 100}
+              className={`
+                h-3 rounded-md overflow-hidden transition-all duration-300
+                bg-green-900/30
+                ${
+                  (player.stats.health / player.stats.maxHealth) > 0.5
+                    ? "[&>div]:bg-green-300"
+                    : (player.stats.health / player.stats.maxHealth) > 0.25
+                    ? "[&>div]:bg-orange-400"
+                    : "[&>div]:bg-red-500"
+                }
+              `}
+            />
           </div>
-          <Progress
-            value={(player.stats.health / player.stats.maxHealth) * 100}
-            className={`h-2 ${
-              (player.stats.health / player.stats.maxHealth) > 0.5
-                ? "[&>div]:bg-white"
-                : (player.stats.health / player.stats.maxHealth) > 0.25
-                ? "[&>div]:bg-orange-500"
-                : "[&>div]:bg-red-500"
-            }`}
-          />
 
-          <div className="text-xs text-green-300 mt-3 mb-1">
-            Cooldown: {Math.floor(cooldownTime / 1000)}s / {Math.floor(player.ability.cooldown || 5)}s
-          </div>
-          <Progress
-            value={(cooldownTime / (player.ability.cooldown * 1000)) * 100}
-            className="h-2 bg-red-500"
-            style={{
-              background: `#f87171`, // Cor de fundo da barra
-              height: '8px',
-              borderRadius: '4px',
-              backgroundImage: `linear-gradient(to right, #22c55e ${ (cooldownTime / (player.ability.cooldown * 1000)) * 100}%, #f87171 0%)` // Cor verde para o progresso
-            }}
-          />
+          {/* Cooldown */}
+          {player.ability && (
+            <div>
+              <div className="text-xs text-green-300 mb-1 font-semibold tracking-wide">
+                ⏳ Cooldown: {Math.floor(cooldownTime / 1000)}s
+              </div>
+              <Progress
+                value={(cooldownTime / (player.ability.cooldown * 1000)) * 100}
+                className="h-3 rounded-md bg-red-900/30 overflow-hidden transition-all duration-300 [&>div]:bg-lime-500"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2">
