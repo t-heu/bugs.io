@@ -4,10 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { InsectType } from "@/app/insects"
-
 import {InsectDrawing} from "@/app/insects/insect-drawing";
-import { insectDrawingComponents } from "@/app/insects";
+import { insectDrawingComponents, InsectType } from "@/app/insects";
 
 export default function CharacterSelection({ onSelect, name, onName, characters, score, loading }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);

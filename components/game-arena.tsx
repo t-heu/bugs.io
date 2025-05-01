@@ -11,6 +11,7 @@ import { useMobileJoystick } from "@/hooks/use-mobile-joystick"
 import { useAbilityControl } from "@/hooks/use-ability-control"
 import { useMobileAbilityButton } from "@/hooks/use-mobile-ability-button"
 import { useAbilityLogic } from "@/hooks/use-ability-logic"
+import { usePlayerPositionSocket } from "@/hooks/use-player-position-socket"
 
 import { database, ref, update, off, onValue, onChildChanged, get } from "@/api/firebase"
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
@@ -55,6 +56,12 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
   useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
+
+  const { sendPosition } = usePlayerPositionSocket(player, roomKey, (update) => {
+    setOtherPlayers((prev) =>
+      prev.map((p) => (p.uid === update.uid ? { ...p, position: { x: update.x, y: update.y } } : p))
+    );
+  });  
 
   useEffect(() => monitorConnectionStatus(roomKey, player.uid), [roomKey, player.uid]);
   
@@ -143,13 +150,6 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     };
   }, [roomKey]);
 
-  useEffect(() => {
-    if (!roomKey || !player) return
-
-    const interval = setInterval(() => updateGame(), 1000 / 30)
-    return () => clearInterval(interval)
-  }, [player, food, cactus, otherPlayers])
-
   const renderGame = useCallback(() => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
     if (!canvas) return
@@ -179,10 +179,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     const isInvincible = activeEffectsRef.current["invincible"] && activeEffectsRef.current["invincible"] > nowEffect;
     const hasSpeedBoost = activeEffectsRef.current["speedBoost"] && activeEffectsRef.current["speedBoost"] > nowEffect;
   
-    let speed = player.stats.speed;
-    if (hasSpeedBoost) {
-      speed *= player.ability.boost;
-    }
+    let speed = hasSpeedBoost ? player.stats.speed *= player.ability.boost : player.stats.speed;
 
     const { newX, newY } = updatePlayerPosition(speed);
   
@@ -232,12 +229,18 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       return;
     }
 
-    const newPosition = { x: newX, y: newY }
+    /*const newPosition = { x: newX, y: newY }
     setPlayer((prev: any) => ({
       ...prev,
       position: newPosition,
     }))
-    update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/position`), newPosition)
+    update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/position`), newPosition)*/
+    const newPosition = { x: newX, y: newY };
+    setPlayer((prev: any) => ({
+      ...prev,
+      position: newPosition,
+    }));
+    sendPosition(newPosition); // WebSocket
   }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver])
 
   // Game loop
@@ -296,6 +299,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     const damagedUIDs = new Set();
   
     otherPlayers.forEach((targetPlayer) => {
+      console.log(targetPlayer.position.x, player.position.x)
       const dist = Math.hypot(
         targetPlayer.position.x - player.position.x,
         targetPlayer.position.y - player.position.y
@@ -351,7 +355,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         });
       }
     });
-  }  
+  }
 
   function updatePlayerPosition(speed: any) {
     let dx = 0, dy = 0
