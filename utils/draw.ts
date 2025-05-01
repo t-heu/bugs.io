@@ -1,72 +1,12 @@
-// Tipos possíveis para o tipo de inseto
-export type InsectType = 
-  | "ant" 
-  | "spider" 
-  | "beetle" 
-  | "cockroach" 
-  | "ladybug" 
-  | "wasp"
-  | "scorpion"
-  | "butterfly"
-  | "mosquito"
-  | "mantis"
-  | "stick_bug"
-  | "centipede"
-  | "cricket"
-  | "dragonfly"
-  | "cicada"
-  | "bee"
-  | "water_bug"
-  | "worm"
-  | "grasshopper"
-  | "moth"
-  | "snail"
-  | "fly"
-  | "caterpillar"
-  | "earwig"
-  | "marimbondo"
-  | "emeraldWasp"
-  | "tanajura"
-  | "termite"
-  | "firefly";
-
 type ViewportOffset = {
   x: number;
   y: number;
 };
 
 import insects from "../insects.json"
-import { ARENA_SIZE } from "@/utils/gameConstants"
+import { ARENA_SIZE } from "@/utils/game-constants"
 
-import {Ant} from "@/app/insects/ant";
-import {Beetle} from "@/app/insects/beetle"
-import {Cockroach} from "@/app/insects/cockroach"
-import {Ladybug} from "@/app/insects/ladybug"
-import {Spider} from "@/app/insects/spider"
-import {Wasp} from "@/app/insects/wasp"
-import {Scorpion} from "@/app/insects/scorpion"
-import {Butterfly} from "@/app/insects/butterfly"
-import {Mosquito} from "@/app/insects/mosquito"
-import {Mantis} from "@/app/insects/mantis"
-import {StickBug} from "@/app/insects/stick-bug"
-import {Centipede} from "@/app/insects/centipede"
-import {Cricket} from "@/app/insects/cricket"
-import {Dragonfly} from "@/app/insects/dragonfly"
-import {Cicada} from "@/app/insects/cicada"
-import {Bee} from "@/app/insects/bee"
-import {WaterBug} from "@/app/insects/waterBug"
-import {Worm} from "@/app/insects/worm"
-import {Grasshopper} from "@/app/insects/grasshopper"
-import {Moth} from "@/app/insects/moth"
-import {Fly} from "@/app/insects/fly"
-import {Snail} from "@/app/insects/snail"
-import {Caterpillar} from "@/app/insects/caterpillar"
-import {Earwig} from "@/app/insects/earwig"
-import {Marimbondo} from "@/app/insects/marimbondo"
-import {EmeraldWasp} from "@/app/insects/emerald-wasp"
-import {Tanajura} from "@/app/insects/tanajura"
-import {Termite} from "@/app/insects/termite"
-import {Firefly} from "@/app/insects/firefly"
+import { insectDrawingComponents, InsectType } from "@/app/insects";
 
 // Helpers
 export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
@@ -218,37 +158,7 @@ export const drawInsect = (
     strokeColor = "#FFFFFF"
   }
 
-  const insectDrawFunctions = {
-    ant: Ant,
-    spider: Spider,
-    beetle: Beetle,
-    wasp: Wasp,
-    cockroach: Cockroach,
-    ladybug: Ladybug,
-    scorpion: Scorpion,
-    butterfly: Butterfly,
-    mosquito: Mosquito,
-    mantis: Mantis,
-    "stick_bug": StickBug,
-    centipede: Centipede,
-    cricket: Cricket,
-    dragonfly: Dragonfly,
-    cicada: Cicada,
-    bee: Bee,
-    "water_bug": WaterBug,
-    worm: Worm,
-    grasshopper: Grasshopper,
-    moth: Moth,
-    fly: Fly,
-    snail: Snail,
-    caterpillar: Caterpillar,
-    earwig: Earwig,
-    marimbondo: Marimbondo,
-    emeraldWasp: EmeraldWasp,
-    tanajura: Tanajura,
-    termite: Termite,
-    firefly: Firefly
-  };
+  const insectDrawFunctions = insectDrawingComponents;
   
   if (insectDrawFunctions[type]) {
     insectDrawFunctions[type](ctx, fillColor, strokeColor);

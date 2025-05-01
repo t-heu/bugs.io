@@ -1,5 +1,3 @@
-import React, { useRef, useEffect } from 'react';
-
 export function EmeraldWasp(ctx: any, fillColor: string, strokeColor: string) {
   ctx.fillStyle = fillColor;
   ctx.strokeStyle = strokeColor;
@@ -64,27 +62,3 @@ export function EmeraldWasp(ctx: any, fillColor: string, strokeColor: string) {
   ctx.quadraticCurveTo(-25, -10, -20, -35);
   ctx.stroke();
 }
-
-export const EmeraldWaspDrawing = ({ fillColor, strokeColor }: {fillColor: string, strokeColor: string}) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas: any = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa tudo antes de desenhar
-
-    ctx.save(); // Salva o estado inicial
-    ctx.translate(50, 50); // Move o ponto (0, 0) pro centro do canvas
-
-    EmeraldWasp(ctx, fillColor, strokeColor); // Desenha a formiga
-
-    ctx.restore(); // Restaura o contexto pro estado original
-
-  }, [fillColor, strokeColor]);
-
-  return <canvas ref={canvasRef} width={100} height={100} />;
-};

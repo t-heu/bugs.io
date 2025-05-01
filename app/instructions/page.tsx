@@ -50,7 +50,7 @@ export default function Instructions() {
             <h2 className="text-2xl font-semibold mb-4">Controles</h2>
             <p className="mb-2">Use as teclas WASD ou as setas para mover seu inseto pela arena.</p>
             <p>Use a tecla "SPACE" para atacar outros insetos/jogadores.</p>
-            <p>Use a tecla "E" para ativar sua habilidade ESPECIAL.</p>v
+            <p>Use a tecla "E" para ativar sua habilidade ESPECIAL.</p>
           </section>
 
           <section className="bg-green-900/50 p-6 rounded-lg">

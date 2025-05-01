@@ -8,12 +8,12 @@ import CharacterSelection from "@/components/character-selection"
 import GameArena from "@/components/game-arena"
 
 import { database, set, ref, update, get, child, push } from "@/api/firebase"
-import generateRandomWord from "@/utils/generateRandomWord"
+import generateRandomWord from "@/utils/generate-random-word"
 import { generateInitialFood } from "@/utils/food"
 import { generateInitialCactus } from "@/utils/cactus"
-import { ARENA_SIZE, FOOD_COUNT } from "@/utils/gameConstants"
+import { ARENA_SIZE, FOOD_COUNT, CACTUS_COUNT } from "@/utils/game-constants"
 
-import { exitPlayer } from "@/utils/monitorConnection"
+import { exitPlayer } from "@/utils/monitor-connection"
 
 import insects from "../../insects.json"
 
@@ -118,7 +118,7 @@ export default function Game() {
         const roomKey = generateRandomWord(6);
 
         const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
-        const cactusList = generateInitialCactus(15, ARENA_SIZE)
+        const cactusList = generateInitialCactus(CACTUS_COUNT, ARENA_SIZE)
   
         await set(ref(database, 'bugsio/rooms/' + roomKey), {
           gameInProgress: false,

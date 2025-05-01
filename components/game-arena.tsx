@@ -1,46 +1,43 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 
 import { useMobile } from "@/hooks/use-mobile"
-import { useKeyboardControls } from "@/hooks/useKeyboardControls"
-import { useMobileAttackButton } from "@/hooks/useMobileAttackButton"
-import { useMobileJoystick } from "@/hooks/useMobileJoystick"
-import { useAbilityControl } from "@/hooks/useAbilityControl"
-import { useMobileAbilityButton } from "@/hooks/useMobileAbilityButton"
+import { useKeyboardControls } from "@/hooks/use-keyboard-controls"
+import { useMobileAttackButton } from "@/hooks/use-mobile-attack-button"
+import { useMobileJoystick } from "@/hooks/use-mobile-joystick"
+import { useAbilityControl } from "@/hooks/use-ability-control"
+import { useMobileAbilityButton } from "@/hooks/use-mobile-ability-button"
+import { useAbilityLogic } from "@/hooks/use-ability-logic"
 
 import { database, ref, update, off, onValue, onChildChanged, get } from "@/api/firebase"
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
 import { generateFood } from "@/utils/food"
-import { monitorConnectionStatus } from "@/utils/monitorConnection"
-import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/gameConstants"
-
-import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
+import { monitorConnectionStatus } from "@/utils/monitor-connection"
+import { ARENA_SIZE, VIEWPORT_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-constants"
 
 export default function GameArena({ setAssassin, onGameOver, roomKey, player, setPlayer }: any) {
   const canvasRef = useRef(null)
-  const gameInitializedRef = useRef(false)
   const joystickRef = useRef(null)
   const attackButtonRef = useRef<HTMLDivElement | null>(null)
   const abilityButtonRef = useRef(null);
   const attackPressedRef = useRef(false);
   const lastAttackTimeRef = useRef<number>(0);
-  const abilityCooldownsRef = useRef<{ [key: string]: number }>({});
   const activeEffectsRef = useRef<{ [key: string]: number }>({});
   const lastPoisonTickRef = useRef<{ [uid: string]: number }>({});
 
   const [food, setFood] = useState<any>([])
   const [cactus, setCactus] = useState<any>([])
   const [keys, setKeys] = useState({ up: false, down: false, left: false, right: false })
-  const [gameRunning, setGameRunning] = useState(true)
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 })
   const [joystickActive, setJoystickActive] = useState(false)
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
   const [joystickAngle, setJoystickAngle] = useState(0)
   const [joystickDistance, setJoystickDistance] = useState(0)
-  const [otherPlayers, setOtherPlayers] = useState<any[]>([])  
+  const [otherPlayers, setOtherPlayers] = useState<any[]>([])
+  const [gameOver, setGameOver] = useState(false)
 
   const isMobile = useMobile()
   useKeyboardControls(setKeys, attackPressedRef)
@@ -53,61 +50,47 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     setJoystickAngle,
     setJoystickDistance
   );
+
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer);
+
   useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
 
-  const [cooldownTime, setCooldownTime] = useState(0);
-  const [isCooldown, setIsCooldown] = useState(false);
-
-  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [player]);
+  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [roomKey, player.uid]);
   
   // Inicializa o jogo uma única vez
   useEffect(() => {
-    if (gameInitializedRef.current) return
-    gameInitializedRef.current = true
-  
-    const data = ref(database, `bugsio/rooms/${roomKey}`);
+    const data = ref(database, `bugsio/rooms/${roomKey}`)
     get(data).then(snapshot => {
-      const snapData = snapshot.val() || [];
+      const snapData = snapshot.val() || {}
+      setCactus(snapData.cactus || [])
+      setFood(snapData.food || [])
+    })
+  }, [roomKey])  
 
-      setCactus(snapData.cactus);
-      setFood(snapData.food)
-    });
-  
-  }, [])  
-
-  // Escuta tudo do jogador (atualiza todo objeto sempre que algo muda)
+  // Escuta mudanças no jogador
   useEffect(() => {
-    if (!roomKey || !player?.uid) return;
+    if (!roomKey || !player?.uid) return
+    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)
 
-    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`);
+    const unsubscribe = onChildChanged(playerRef, snapshot => {
+      const key = snapshot.key
+      const value = snapshot.val()
+      if (!key) return
 
-    // 🔁 Escuta mudanças individuais nos campos
-    const unsubscribe = onChildChanged(playerRef, (snapshot) => {
-      const key = snapshot.key;
-      const value = snapshot.val();
-      
-      if (!key) return;
-
-      if (player.stats.health <= 0) {
-        setAssassin(player.killer || '');
-        setGameRunning(false);
-        onGameOver(player.score);
-        return;
+      if (value?.stats?.health === 0) {
+        setAssassin(value.killer || '')
+        setGameOver(true)
+        onGameOver(player.score)
+        return
       }
 
-      // Atualiza só o campo alterado
-      setPlayer((prevPlayer: any) => ({
-        ...prevPlayer,
-        [key]: value,
-      }));
-    });
+      setPlayer((prev: any) => ({ ...prev, [key]: value }))
+    })
 
-    return () => {
-      off(playerRef, "child_changed", unsubscribe);
-    };
-  }, [roomKey, player]);
-  
+    return () => off(playerRef, 'child_changed', unsubscribe)
+  }, [roomKey, player?.uid, setPlayer])
+
   // Escuta outros jogadores
   useEffect(() => {
     if (!roomKey) return;
@@ -159,48 +142,15 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       off(foodRef, 'child_changed', unsubscribeChanged);
     };
   }, [roomKey]);
-   
-  // Game loop
-  useEffect(() => {
-    if (!gameRunning) return
-
-    let animationFrameId: any
-
-    const gameLoop = () => {
-      updateGame()
-      renderGame()
-
-      animationFrameId = requestAnimationFrame(gameLoop)
-    }
-
-    animationFrameId = requestAnimationFrame(gameLoop)
-
-    return () => {
-      cancelAnimationFrame(animationFrameId)
-    }
-  }, [gameRunning, player, food, keys, joystickActive, joystickAngle, joystickDistance])
 
   useEffect(() => {
-    if (!isCooldown || !player?.ability) return;
-  
-    const abilityName = player.ability.name;
-    const lastUsed = abilityCooldownsRef.current[abilityName] || 0;
-  
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      const remaining = Math.max(lastUsed - now, 0);
-      setCooldownTime(remaining);
-  
-      if (remaining <= 0) {
-        setIsCooldown(false);
-        clearInterval(intervalId);
-      }
-    }, 100);
-  
-    return () => clearInterval(intervalId);
-  }, [isCooldown, player?.ability?.name]);   
+    if (!roomKey || !player) return
 
-  const renderGame = () => {
+    const interval = setInterval(() => updateGame(), 1000 / 30)
+    return () => clearInterval(interval)
+  }, [player, food, cactus, otherPlayers])
+
+  const renderGame = useCallback(() => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
     if (!canvas) return
   
@@ -218,13 +168,14 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
       drawPlayer(ctx, p, now, viewportOffset, false)
     })
     drawPlayer(ctx, player, now, viewportOffset, true)
-  }
+  }, [food, cactus, otherPlayers, player, viewportOffset])
 
-  const updateGame = () => {
+  const updateGame = useCallback(() => {
     if (!canvasRef.current) return;
     if (!player) return;
 
-    const nowEffect = Date.now();
+    const now = Date.now()
+    const nowEffect = now
     const isInvincible = activeEffectsRef.current["invincible"] && activeEffectsRef.current["invincible"] > nowEffect;
     const hasSpeedBoost = activeEffectsRef.current["speedBoost"] && activeEffectsRef.current["speedBoost"] > nowEffect;
   
@@ -246,38 +197,65 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     if (tookDamage && !isInvincible) {
       if (newHealth === 0) {
         setAssassin("cactu");
-        setGameRunning(false);
         onGameOver(player.score);
-        return;
       }
   
-      setPlayer((prev: any) => {
-        if (!prev) return prev;
-      
-        const updated = {
-          ...prev,
-          stats: {
-            ...prev.stats,
-            health: newHealth,
-          },
-        };
-      
-        update(
-          ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}/stats`),
-          { health: newHealth }
-        );
-      
-        return updated;
-      });      
+      setPlayer((prev: any) => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          health: newHealth,
+        },
+      }))
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/stats`), {
+        health: newHealth,
+      })      
     }   
 
-    const now = Date.now();
     if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
       lastAttackTimeRef.current = now;
       handlePlayerAttack(player, otherPlayers);
     }    
 
-    // 3. No seu updateGame() (game loop), dar dano de veneno a cada segundo:
+    // dar dano de veneno a cada segundo
+    applyPoisonDamageToTargets(nowEffect, now)
+
+    // ☠️ Verifica morte
+    if (player.stats.health <= 0) {
+      get(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)).then(snapshot => {
+        const data = snapshot.val()
+        setPlayer(data)
+        setAssassin(data.killer || '')
+      });
+
+      onGameOver(player.score);
+      return;
+    }
+
+    const newPosition = { x: newX, y: newY }
+    setPlayer((prev: any) => ({
+      ...prev,
+      position: newPosition,
+    }))
+    update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/position`), newPosition)
+  }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver])
+
+  // Game loop
+  useEffect(() => {
+    if (!player || gameOver) return
+    let animationId: number
+
+    const loop = () => {
+      updateGame()
+      renderGame()
+      animationId = requestAnimationFrame(loop)
+    }
+
+    animationId = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(animationId)
+  }, [player, gameOver, updateGame, renderGame]);
+
+  const applyPoisonDamageToTargets = (nowEffect: any, now: any) => {
     otherPlayers.forEach((target) => {
       const isPoisoned = target.effects.poisonedUntil && target.effects.poisonedUntil > now;
       const lastTick = lastPoisonTickRef.current[target.uid] || 0;
@@ -308,41 +286,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
 
       lastPoisonTickRef.current[target.uid] = nowEffect;
     });
-
-    // ☠️ Verifica morte
-    if (player.stats.health <= 0) {
-      const data = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`);
-      get(data).then(snapshot => {
-        const snapData = snapshot.val() || [];
-
-        setPlayer(snapData)
-        setAssassin(snapData.killer || '');
-      });
-
-      setGameRunning(false);
-      onGameOver(player.score);
-      return;
-    }
-
-    setPlayer((prev: any) => {
-      if (!prev) return prev;
-      const updatedPlayer = {
-        ...prev,
-        position: {
-          ...prev.position,
-          x: newX,
-          y: newY,
-        },
-      };
-    
-      update(ref(database, `bugsio/rooms/${roomKey}/players/p${prev.uid}/position`), {
-        x: newX,
-        y: newY,
-      });
-    
-      return updatedPlayer;
-    });
-  };
+  }
   
   function handlePlayerAttack(
     player: any,
@@ -494,47 +438,10 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   
     return { updatedFood };
   }
-  
-  function useAbility() {
-    if (!player?.ability) return;
-  
-    const now = Date.now();
-    const { name: abilityName, cooldown = 5 } = player.ability;
-    const cooldownMs = cooldown * 1000;
-    const lastUsed = abilityCooldownsRef.current[abilityName] || 0;
-  
-    if (now < lastUsed) {
-      setIsCooldown(true);
-      return;
-    }
-  
-    executeAbilityEffect(abilityName);
-  
-    abilityCooldownsRef.current[abilityName] = now + cooldownMs;
-    setCooldownTime(cooldownMs);
-    setIsCooldown(true);
-  }
-  
-  function executeAbilityEffect(abilityName: string) {
-    const abilityActions: Record<string, () => void> = {
-      "Special Attack": () => specialAttack(activeEffectsRef, roomKey, player),
-      "Hard Shell": () => activateShield(activeEffectsRef, roomKey, player),
-      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, roomKey, player),
-      "Regeneration": () => healPlayer(roomKey, player, setPlayer),
-      "Poison": () => applyPoisonEffect(player.uid, roomKey),
-      "Slow Strike": () => applySlow(player.uid, roomKey),
-    };
-  
-    const action = abilityActions[abilityName];
-    if (action) {
-      action();
-    }
-  }  
-  
+
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você ira perder sua pontuação atual.")
     if (confirmExit) {
-      setGameRunning(false);
       onGameOver(0);
       setAssassin('')
     }
@@ -581,7 +488,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
           </div>
 
           {/* Cooldown */}
-          {player.ability && (
+          {isCooldown && (
             <div>
               <div className="text-xs text-green-300 mb-1 font-semibold tracking-wide">
                 ⏳ Cooldown: {Math.floor(cooldownTime / 1000)}s

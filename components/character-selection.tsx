@@ -6,67 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 import { InsectType } from "@/utils/draw"
 
-import {AntDrawing} from "@/app/insects/ant";
-import {BeetleDrawing} from "@/app/insects/beetle"
-import {CockroachDrawing} from "@/app/insects/cockroach"
-import {LadybugDrawing} from "@/app/insects/ladybug"
-import {SpiderDrawing} from "@/app/insects/spider"
-import {WaspDrawing} from "@/app/insects/wasp"
-import {ScorpionDrawing} from "@/app/insects/scorpion"
-import {ButterflyDrawing} from "@/app/insects/butterfly"
-import {MosquitoDrawing} from "@/app/insects/mosquito"
-import {MantisDrawing} from "@/app/insects/mantis"
-import {StickBugDrawing} from "@/app/insects/stick-bug"
-import {CentipedeDrawing} from "@/app/insects/centipede"
-import {CricketDrawing} from "@/app/insects/cricket"
-import {DragonflyDrawing} from "@/app/insects/dragonfly"
-import {CicadaDrawing} from "@/app/insects/cicada"
-import {BeeDrawing} from "@/app/insects/bee"
-import {WaterBugDrawing} from "@/app/insects/waterBug"
-import {WormDrawing} from "@/app/insects/worm"
-import {GrasshopperDrawing} from "@/app/insects/grasshopper"
-import {MothDrawing} from "@/app/insects/moth"
-import {FlyDrawing} from "@/app/insects/fly"
-import {SnailDrawing} from "@/app/insects/snail"
-import {CaterpillarDrawing} from "@/app/insects/caterpillar"
-import {EarwigDrawing} from "@/app/insects/earwig"
-import {MarimbondoDrawing} from "@/app/insects/marimbondo"
-import {EmeraldWaspDrawing} from "@/app/insects/emerald-wasp"
-import {TanajuraDrawing} from "@/app/insects/tanajura"
-import {TermiteDrawing} from "@/app/insects/termite"
-import {FireflyDrawing} from "@/app/insects/firefly"
-
-const insectDrawingComponents: any = {
-  ant: AntDrawing,
-  spider: SpiderDrawing,
-  beetle: BeetleDrawing,
-  ladybug: LadybugDrawing,
-  wasp: WaspDrawing,
-  cockroach: CockroachDrawing,
-  scorpion: ScorpionDrawing,
-  butterfly: ButterflyDrawing,
-  mosquito: MosquitoDrawing,
-  mantis: MantisDrawing,
-  stick_bug: StickBugDrawing,
-  centipede: CentipedeDrawing,
-  cricket: CricketDrawing,
-  dragonfly: DragonflyDrawing,
-  worm: WormDrawing,
-  cicada: CicadaDrawing,
-  bee: BeeDrawing,
-  grasshopper: GrasshopperDrawing,
-  water_bug: WaterBugDrawing,
-  moth: MothDrawing,
-  fly: FlyDrawing,
-  snail: SnailDrawing,
-  caterpillar: CaterpillarDrawing,
-  earwig: EarwigDrawing,
-  marimbondo: MarimbondoDrawing,
-  emeraldWasp: EmeraldWaspDrawing,
-  tanajura: TanajuraDrawing,
-  termite: TermiteDrawing,
-  firefly: FireflyDrawing
-};
+import {InsectDrawing} from "@/app/insects/insect-drawing";
+import { insectDrawingComponents } from "@/app/insects";
 
 export default function CharacterSelection({ onSelect, name, onName, characters, score, loading }: any) {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -80,9 +21,9 @@ export default function CharacterSelection({ onSelect, name, onName, characters,
     const color = isHovered ? "#4ade80" : "#22c55e";
     const strokeColor = isHovered ? "#ffffff" : "#15803d";
 
-    const InsectComponent = insectDrawingComponents[type];
-    return InsectComponent ? (
-      <InsectComponent fillColor={color} strokeColor={strokeColor} />
+    const drawInsect = insectDrawingComponents[type];
+    return drawInsect ? (
+      <InsectDrawing draw={drawInsect} fillColor={color} strokeColor={strokeColor} />
     ) : null;
   };
 

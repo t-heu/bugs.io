@@ -1,5 +1,3 @@
-import React, { useRef, useEffect } from 'react';
-
 export function Snail(ctx: any, fillColor: string, strokeColor: string) {
   ctx.fillStyle = fillColor;
   ctx.strokeStyle = strokeColor;
@@ -48,27 +46,3 @@ export function Snail(ctx: any, fillColor: string, strokeColor: string) {
   ctx.arc(-15, -5, 4, 0, Math.PI * 2); // interno
   ctx.stroke();
 }
-
-export const SnailDrawing = ({ fillColor, strokeColor }: {fillColor: string, strokeColor: string}) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas: any = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa tudo antes de desenhar
-
-    ctx.save(); // Salva o estado inicial
-    ctx.translate(50, 50); // Move o ponto (0, 0) pro centro do canvas
-
-    Snail(ctx, fillColor, strokeColor); // Desenha a formiga
-
-    ctx.restore(); // Restaura o contexto pro estado original
-
-  }, [fillColor, strokeColor]);
-
-  return <canvas ref={canvasRef} width={100} height={100} />;
-};
