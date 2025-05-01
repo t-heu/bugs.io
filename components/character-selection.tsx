@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { InsectType } from "@/utils/draw"
+import { InsectType } from "@/app/insects"
 
 import {InsectDrawing} from "@/app/insects/insect-drawing";
 import { insectDrawingComponents } from "@/app/insects";
