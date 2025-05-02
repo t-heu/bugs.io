@@ -651,5 +651,21 @@
       "duration": 4000,
       "description": "Aumenta a velocidade do Vagalume, permitindo que ele se mova rapidamente por um curto período."
     }
-  }
+  },
+  {
+    "id": "velvet_ant",
+    "name": "Formiga-de-veludo",
+    "description": "Vespa solitária com picada dolorosa",
+    "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
+    "stats": {
+      "speed": 4,
+      "attack": 35,
+      "health": 80
+    },
+    "colors": {
+      "fill": "#E53935",
+      "stroke": "#6A1B1A"
+    },
+    "requiredScore": 1340
+  }  
 ]

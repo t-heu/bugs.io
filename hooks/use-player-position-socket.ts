@@ -10,10 +10,12 @@ export function usePlayerPositionSocket(
   onOthersUpdate: (update: PlayerUpdate) => void
 ) {
   const wsRef = useRef<WebSocket | null>(null);
+  const lastSentPosition = useRef<{ x: number; y: number }>({ x: -1, y: -1 }); // posição "inicial inválida"
 
   useEffect(() => {
     if (!player?.uid || !roomKey) return;
-
+    if (wsRef.current) return; // Já existe uma conexão
+    
     const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL as string);
     wsRef.current = ws;
 
@@ -39,7 +41,12 @@ export function usePlayerPositionSocket(
 
   function sendPosition(pos: Position) {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ type: 'position', x: pos.x, y: pos.y }));
+
+    // ⚠️ Só envia se mudou desde o último envio
+    if (pos.x !== lastSentPosition.current.x || pos.y !== lastSentPosition.current.y) {
+      lastSentPosition.current = pos;
+      wsRef.current.send(JSON.stringify({ type: 'position', x: pos.x, y: pos.y }));
+    }
   }
 
   return { sendPosition };

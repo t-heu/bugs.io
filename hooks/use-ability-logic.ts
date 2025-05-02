@@ -35,7 +35,7 @@ export function useAbilityLogic(player: any, roomKey: string, setPlayer: any,) {
       "Speed Boost": () => activateSpeedBoost(activeEffectsRef, roomKey, player),
       "Regeneration": () => healPlayer(roomKey, player, setPlayer),
       "Poison": () => applyPoisonEffect(player.uid, roomKey),
-      "Slow Strike": () => applySlow(player.uid, roomKey),
+      "Slow Strike": () => applySlow(activeEffectsRef, roomKey, player),
     };
 
     const action = abilityActions[abilityName];

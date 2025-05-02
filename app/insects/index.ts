@@ -27,6 +27,7 @@ import { EmeraldWasp } from "./emerald-wasp";
 import { Tanajura } from "./tanajura";
 import { Termite } from "./termite";
 import { Firefly } from "./firefly";
+import { VelvetAnt } from "./velvet-ant";
 
 export const insectDrawingComponents = {
   ant: Ant,
@@ -58,6 +59,7 @@ export const insectDrawingComponents = {
   tanajura: Tanajura,
   termite: Termite,
   firefly: Firefly,
+  velvet_ant: VelvetAnt
 };
 
 export type InsectType = 
@@ -89,5 +91,6 @@ export type InsectType =
   | "emeraldWasp"
   | "tanajura"
   | "termite"
-  | "firefly";
+  | "firefly"
+  | "velvet_ant";
   

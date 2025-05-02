@@ -178,8 +178,19 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     const nowEffect = now
     const isInvincible = activeEffectsRef.current["invincible"] && activeEffectsRef.current["invincible"] > nowEffect;
     const hasSpeedBoost = activeEffectsRef.current["speedBoost"] && activeEffectsRef.current["speedBoost"] > nowEffect;
-  
-    let speed = hasSpeedBoost ? player.stats.speed *= player.ability.boost : player.stats.speed;
+    const hasSlow = activeEffectsRef.current["slow"] && activeEffectsRef.current["slow"] > nowEffect;
+
+    let finalSpeed = player.stats.speed;
+
+    if (hasSpeedBoost) {
+      finalSpeed *= player.ability.boost;
+    }
+
+    if (hasSlow) {
+      finalSpeed *= player.ability.slowAmount;
+    }
+
+    let speed = finalSpeed;
 
     const { newX, newY } = updatePlayerPosition(speed);
   
