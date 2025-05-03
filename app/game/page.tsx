@@ -75,10 +75,6 @@ export default function Game() {
         name,
         uid: nextPlayer,
         killer: '',
-        position: {
-          x: ARENA_SIZE / 2,
-          y: ARENA_SIZE / 2,
-        },
         size: 30,
         score: scoreCurrent,
         stats: {
@@ -99,8 +95,13 @@ export default function Game() {
         ability: character.ability || null
       };
 
+      const localPlayer = {...playerData, position: {
+        x: ARENA_SIZE / 2,
+        y: ARENA_SIZE / 2,
+      }}
+
       setRoomKey(roomKey)
-      setPlayer(playerData)
+      setPlayer(localPlayer);
   
       if (nextPlayer) {
         updates[`bugsio/rooms/${roomKey}/players/p${nextPlayer}`] = playerData;
@@ -192,7 +193,7 @@ export default function Game() {
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="bg-green-900/70 p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-3xl font-bold mb-4">Fim de Jogo</h2>
-            <p className="text-xl mb-6">{assassin ? `Você foi eliminado por ${assassin}!` : 'Você saiu!'}</p>
+            <p className="text-xl mb-6">{assassin ? assassin : 'Você saiu!'}</p>
             <p className="text-xl mb-6">Sua pontuação: {score}</p>
 
             <div className="space-y-4">

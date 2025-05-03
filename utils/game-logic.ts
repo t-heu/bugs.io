@@ -1,0 +1,194 @@
+import { Dispatch, SetStateAction } from 'react';
+
+import { database, ref, update } from "@/api/firebase"
+import { generateFood } from "@/utils/food"
+import { ARENA_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-constants"
+
+export function handlePlayerAttack(
+  player: any,
+  otherPlayers: any[],
+  roomKey: string,
+  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
+  lastPoisonTickRef: any
+) {
+  const attackRange = 50;
+  const damagedUIDs = new Set();
+
+  otherPlayers.forEach((targetPlayer) => {
+    const dist = Math.hypot(
+      targetPlayer.position.x - player.position.x,
+      targetPlayer.position.y - player.position.y
+    );
+    if (dist > attackRange) return;
+    if (damagedUIDs.has(targetPlayer.uid)) return;
+    if (targetPlayer.effects?.invincible && targetPlayer.effects.invincible > Date.now()) return;
+
+    damagedUIDs.add(targetPlayer.uid);
+
+    const playerAttack = player.stats.attack * (player.size / 30);
+    const isSpecialAttackActive = player.effects.specialAttack > Date.now();
+    const multiplier = isSpecialAttackActive ? player.ability.damageMultiplier : 1.5;
+    const damageToTarget = playerAttack * multiplier;
+
+    const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
+
+    // Atualiza Firebase
+    update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}/stats`), {
+      health: newHealthTarget,
+    });
+
+    // Atualiza local
+    setOtherPlayers((prev) =>
+      prev.map((p) =>
+        p.uid === targetPlayer.uid
+          ? { ...p, stats: { ...p.stats, health: newHealthTarget } }
+          : p
+      )
+    );
+
+    if (player.poisonNextAttack) {
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}/effects`), {
+        poisonedUntil: Date.now() + player.ability.duration,
+      });
+
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+        poisonNextAttack: false,
+      });
+
+      lastPoisonTickRef.current[targetPlayer.uid] = Date.now();
+    }
+
+    if (targetPlayer.name && newHealthTarget === 0) {
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${targetPlayer.uid}`), {
+        killer: `${player.name} - (${player.type})`,
+      });
+
+      const newScore = player.score + 15;
+
+      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
+        score: newScore,
+      });
+    }
+  });
+}
+
+export function applyPoisonDamageToTargets(
+  nowEffect: any, 
+  now: any, 
+  otherPlayers: any[], 
+  roomKey: string,
+  player: any,
+  lastPoisonTickRef: any,
+  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
+) {
+  otherPlayers.forEach((target) => {
+    const isPoisoned = target.effects.poisonedUntil && target.effects.poisonedUntil > now;
+    const lastTick = lastPoisonTickRef.current[target.uid] || 0;
+    const tickElapsed = now - lastTick > 1000;
+
+    if (!isPoisoned || !tickElapsed) return;
+
+    let poisonDamage = player.ability.poisonDamage || 0;
+
+    const bonus = player.ability?.specialBonusDamage;
+    if (bonus && bonus.target === target.id && bonus.bonusDamage !== undefined) {
+      poisonDamage += bonus.bonusDamage || 0;
+    }
+
+    const newHealth = Math.max(0, target.stats.health - poisonDamage);
+
+    update(ref(database, `bugsio/rooms/${roomKey}/players/p${target.uid}/stats`), {
+      health: newHealth,
+    });
+
+    setOtherPlayers((prev) =>
+      prev.map((p) =>
+        p.uid === target.uid
+          ? { ...p, stats: { ...p.stats, health: newHealth } }
+          : p
+      )
+    );
+
+    lastPoisonTickRef.current[target.uid] = nowEffect;
+  });
+}
+
+export function updatePlayerPosition(
+  speed: any, 
+  isMobile: any, 
+  joystickActive: any, 
+  joystickAngle: any,
+  joystickDistance: any,
+  keys: any,
+  player: any
+) {
+  let dx = 0, dy = 0
+
+  if (isMobile && joystickActive) {
+    dx = Math.cos(joystickAngle) * joystickDistance * speed
+    dy = Math.sin(joystickAngle) * joystickDistance * speed
+  } else {
+    if (keys.up) dy -= speed
+    if (keys.down) dy += speed
+    if (keys.left) dx -= speed
+    if (keys.right) dx += speed
+
+    if (dx !== 0 && dy !== 0) {
+      const normalizationFactor = 1 / Math.sqrt(2);
+      dx *= normalizationFactor;
+      dy *= normalizationFactor;
+    }
+  }
+
+  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+  const newX = Math.round(clamp(player.position.x + dx, 0, ARENA_SIZE));
+  const newY = Math.round(clamp(player.position.y + dy, 0, ARENA_SIZE));
+  return { newX, newY, dx, dy }
+}
+
+export function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
+  let tookDamage = false;
+  let newHealth = player.stats.health;
+  const now = Date.now();
+
+  cactusList.forEach((cactus) => {
+    const distance = Math.hypot(x - cactus.x, y - cactus.y);
+    const collisionThreshold = (player.size + cactus.size) / 2;
+
+    if (distance < collisionThreshold) {
+      const timeSinceLastHit = now - (cactus.lastHit ?? 0);
+
+      if (timeSinceLastHit > 500) {
+        cactus.lastHit = now;
+        newHealth = Math.max(0, player.stats.health - 5);
+        tookDamage = true;
+      }
+    }
+  });
+
+  return { tookDamage, newHealth };
+}    
+
+export function handleFoodCollision(x: number, y: number, foodList: any[], player: any, roomKey: string) {
+  const updatedFood = [...foodList];
+  let newHealth_food = 0
+  let newScore_food = 0
+
+  updatedFood.forEach((food, index) => {
+    const distance = Math.hypot(x - food.x, y - food.y);
+
+    const collisionThreshold = (player.size + food.size) / 2;
+    if (distance < collisionThreshold) {
+      const newFood = generateFood(ARENA_SIZE);
+      updatedFood[index] = newFood;
+
+      update(ref(database, `bugsio/rooms/${roomKey}/food/${index}`), newFood);
+
+      newHealth_food = Math.min(player.stats.health + FOOD_VALUE_HEATH, player.stats.maxHealth);
+      newScore_food = player.score + FOOD_VALUE_SCORE;
+    }
+  });
+
+  return { newHealth_food, newScore_food  };
+}

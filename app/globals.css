@@ -93,25 +93,12 @@ body {
   }
 }
 
-.special {
-  bottom: 150px;
-  width: 70px;
-  height: 70px;
-  background-color: #22c55e;
-}
-
-.attack {
-  bottom: 60px;
-  width: 70px;
-  height: 70px;
-  background-color: #ea4335;
-}
-
 .floating-button {
   position: absolute;
   right: 30px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -120,14 +107,28 @@ body {
   user-select: none;
   touch-action: none;
   z-index: 20;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+  border: 2px solid;
+  backdrop-filter: blur(4px);
 }
 
-.attack:hover {
-  background-color: #cc2b2b;
+.special {
+  bottom: 150px;
+  background-color: rgba(255, 212, 71, 0.5);
+  border-color: #FFD447;
 }
 
-.special:hover {
-  background-color: #1ea654;
+.attack {
+  bottom: 60px;
+  background-color: rgba(153, 27, 27, 0.5);
+  border-color: #ef4444;
+}
+
+.floating-button:hover {
+  transform: scale(1.05);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.floating-button:active {
+  transform: scale(0.95);
 }

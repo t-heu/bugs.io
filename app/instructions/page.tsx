@@ -20,7 +20,7 @@ export default function Instructions() {
         <div className="space-y-8">
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Objetivo</h2>
-            <p>Colete migalhas de comida para ganhar pontos e recuperar sua vida e torna-se um outro inseto maior e mais forte da arena!</p>
+            <p>Lute contra outros jogadores em batalhas intensas, usando habilidades especiais e vantagens únicas de cada inseto. Colete folhas durante a partida para ganhar pontos e recuperar vida. Com os pontos acumulados, você pode desbloquear e comprar insetos mais fortes, evoluindo sua estratégia e dominando a arena!</p>
           </section>
 
           <section className="bg-green-900/50 p-6 rounded-lg">
@@ -56,11 +56,11 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Dicas</h2>
             <ul className="list-disc list-inside space-y-2">
-            <li>Coma migalhas para recuperar sua vida durante a partida</li>
-            <li>Cada inseto tem habilidades únicas — escolha e use com estratégia</li>
-            <li>Evite confrontos desvantajosos e trace boas rotas de fuga</li>
-            <li>Colabore com outros do mesmo tipo para derrubar os maiores inimigos</li>
-            <li>Cuidado com os cactus espalhados, eles podem te dar dano</li>
+            <li>Coma folinhas espalhadas para recuperar vida durante as batalhas e ganhar pontos.</li>
+            <li>Cada inseto possui habilidades únicas — escolha com sabedoria e use-as estrategicamente.</li>
+            <li>Evite confrontos desvantajosos e sempre tenha uma rota de fuga em mente.</li>
+            <li>Colabore com outros insetos do mesmo tipo para enfrentar inimigos mais poderosos</li>
+            <li>Atenção aos cactos pela arena — eles causam dano ao encostar!</li>
             </ul>
           </section>
         </div>

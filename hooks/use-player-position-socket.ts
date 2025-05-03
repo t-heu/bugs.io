@@ -10,6 +10,7 @@ export function usePlayerPositionSocket(
   onOthersUpdate: (update: PlayerUpdate) => void
 ) {
   const wsRef = useRef<WebSocket | null>(null);
+  const isDisconnected = useRef<boolean>(false);
   const lastSentPosition = useRef<{ x: number; y: number }>({ x: -1, y: -1 }); // posição "inicial inválida"
 
   useEffect(() => {
@@ -34,6 +35,15 @@ export function usePlayerPositionSocket(
       }
     };
 
+    ws.onclose = () => {
+      console.log('🔌 WebSocket fechado');
+      isDisconnected.current = true;
+    };
+
+    ws.onerror = (err) => {
+      console.error('❌ WebSocket erro:', err);
+    };
+
     return () => {
       if (ws.readyState === 1) ws.close();
     };
@@ -49,5 +59,5 @@ export function usePlayerPositionSocket(
     }
   }
 
-  return { sendPosition };
+  return { sendPosition, isDisconnected };
 }
