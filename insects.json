@@ -63,7 +63,7 @@
       "name": "Slow Strike",
       "cooldown": 12,
       "slowAmount": 0.4,
-      "duration": 4,
+      "duration": 4000,
       "description": "Ao acertar um inimigo, reduz a velocidade dele em 40% por 4 segundos."
     }
   },
@@ -161,7 +161,7 @@
     "name": "Escorpião",
     "description": "Perigoso e resistente",
     "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
-    "requiredScore": 1400,
+    "requiredScore": 1350,
     "stats": {
       "speed": 4,
       "attack": 40,
@@ -176,7 +176,7 @@
       "cooldown": 12,
       "poisonDamage": 2,
       "duration": 4000,
-      "description": "Dá dano inicial e envenena o inimigo por 5 segundos."
+      "description": "Dá dano inicial e envenena o inimigo por 4 segundos."
     }
   },
   {
@@ -237,6 +237,7 @@
       "name": "Poison",
       "cooldown": 10,
       "poisonDamage": 3,
+      "duration": 5000,
       "description": "Aplica veneno no inimigo, causando dano ao longo do tempo por 5 segundos."
     }
   },
@@ -393,7 +394,7 @@
       "name": "Poison",
       "cooldown": 10,
       "poisonDamage": 1,
-      "duration": 5,
+      "duration": 5000,
       "description": "Aplica veneno no inimigo, causando dano contínuo durante 5 segundos."
     }
   },
@@ -462,7 +463,7 @@
       "name": "Poison",
       "cooldown": 14,
       "poisonDamage": 1,
-      "duration": 6,
+      "duration": 6000,
       "description": "Espalha pó venenoso, causando dano contínuo ao inimigo por 6 segundos."
     }
   },
@@ -507,7 +508,7 @@
     "ability": {
       "name": "Hard Shell",
       "cooldown": 20,
-      "duration": 5,
+      "duration": 5000,
       "description": "Aumenta a resistência e reduz o dano recebido por 5 segundos."
     }
   },
@@ -530,7 +531,7 @@
       "name": "Special Attack",
       "cooldown": 12,
       "damageMultiplier": 2.2,
-      "duration": 3,
+      "duration": 3000,
       "description": "Causa um dano adicional em área com suas pinças, atingindo inimigos ao redor."
     }
   },
@@ -553,7 +554,7 @@
       "name": "Poison",
       "cooldown": 10,
       "poisonDamage": 3,
-      "duration": 5,
+      "duration": 5000,
       "description": "Envenena o inimigo, causando dano ao longo de 5 segundos."
     }
   },
@@ -562,7 +563,7 @@
     "name": "Vespa Esmeralda",
     "description": "Graciosa, venenosa e letal",
     "attributes": ["Velocidade alta", "Ataque médio", "Vida baixa"],
-    "requiredScore": 800,
+    "requiredScore": 860,
     "stats": {
       "speed": 13,
       "attack": 20,
@@ -576,7 +577,7 @@
       "name": "Poison",
       "cooldown": 15,
       "poisonDamage": 5,
-      "duration": 5,
+      "duration": 5000,
       "description": "Aplica dano contínuo ao longo do tempo em um inimigo atingido.",
       "specialBonusDamage": {
         "target": "cockroach",
@@ -625,7 +626,7 @@
       "name": "Slow Strike",
       "cooldown": 12,
       "slowAmount": 0.4,
-      "duration": 4,
+      "duration": 4000,
       "description": "Reduz a velocidade do inimigo em 40% por 4 segundos ao acertá-lo."
     }
   },
