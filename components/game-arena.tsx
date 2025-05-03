@@ -406,6 +406,16 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         </div>
       </div>
 
+      {player.ability && (
+        <div className="absolute top-28 left-4 right-4 flex justify-between items-center">
+          <div className="bg-green-900/70 p-2 rounded-lg">
+            <p className="text-sm text-green-300 font-semibold">Pressione <span className="text-white">E</span> para ativar sua habilidade</p>
+            <p className="text-sm text-green-300"><span className="font-medium">Habilidade:</span> {player.ability.name}</p>
+            <p className="text-sm text-green-300"><span className="font-medium">Descrição:</span> {player.ability.description}</p>
+          </div>
+        </div>
+      )}
+
       {/* Mobile controls */}
       {isMobile && (
         <div
