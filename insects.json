@@ -6,9 +6,9 @@
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
     "requiredScore": 50,
     "stats": {
-      "speed": 9,
-      "attack": 6,
-      "health": 30
+      "speed": 8,
+      "attack": 7,
+      "health": 35
     },
     "colors": {
       "fill": "#FF5722",
@@ -16,10 +16,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 12,
-      "boost": 2.0,
-      "duration": 4000,
-      "description": "Aumenta a velocidade em 2x por 5 segundos."
+      "cooldown": 15,
+      "boost": 1.8,
+      "duration": 3500,
+      "description": "Acelera momentaneamente, aumentando sua velocidade em 80% por 3.5 segundos. Ideal para fugas rápidas ou ataques surpresa."
     }
   },
   {
@@ -27,11 +27,11 @@
     "name": "Caracol",
     "description": "Blindado, mas devagar",
     "attributes": ["Velocidade muito baixa", "Ataque baixo", "Vida extremamente alta"],
-    "requiredScore": 800,
+    "requiredScore": 1000,
     "stats": {
       "speed": 1.2,
-      "attack": 5,
-      "health": 110
+      "attack": 6,
+      "health": 100
     },
     "colors": {
       "fill": "#795548",
@@ -39,9 +39,9 @@
     },
     "ability": {
       "name": "Hard Shell",
-      "cooldown": 18,
-      "duration": 5000,
-      "description": "Fica invencível por 5 segundos."
+      "cooldown": 25,
+      "duration": 4000,
+      "description": "Retrai-se em sua concha, tornando-se completamente invulnerável a danos por 4 segundos. Perfeito para sobreviver a ataques poderosos."
     }
   },   
   {
@@ -51,9 +51,9 @@
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
     "requiredScore": 1400,
     "stats": {
-      "speed": 7,
-      "attack": 24,
-      "health": 50
+      "speed": 6,
+      "attack": 20,
+      "health": 60
     },
     "colors": {
       "fill": "#9C27B0",
@@ -61,10 +61,10 @@
     },
     "ability":{
       "name": "Slow Strike",
-      "cooldown": 12,
-      "slowAmount": 0.4,
-      "duration": 4000,
-      "description": "Ao acertar um inimigo, reduz a velocidade dele em 40% por 4 segundos."
+      "cooldown": 14,
+      "slowAmount": 0.35,
+      "duration": 3500,
+      "description": "Seu ataque injeta um veneno paralisante, reduzindo a velocidade do alvo em 35% por 3.5 segundos. Excelente para controlar inimigos ágeis."
     }
   },
   {
@@ -74,9 +74,9 @@
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida alta"],
     "requiredScore": 1100,
     "stats": {
-      "speed": 4,
-      "attack": 15,
-      "health": 85
+      "speed": 3,
+      "attack": 14,
+      "health": 90
     },
     "colors": {
       "fill": "#3F51B5",
@@ -84,9 +84,9 @@
     },
     "ability": {
       "name": "Regeneration",
-      "cooldown": 20,
-      "healAmount": 10,
-      "description": "Recupera vida instantaneamente."
+      "cooldown": 22,
+      "healAmount": 8,
+      "description": "Ativa uma regeneração rápida, restaurando instantaneamente 8 pontos de vida. Fundamental para prolongar combates desgastantes."
     }
   },
   {
@@ -94,11 +94,11 @@
     "name": "Vespa",
     "description": "Letal e veloz",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
-    "requiredScore": 800,
+    "requiredScore": 900,
     "stats": {
-      "speed": 9,
-      "attack": 18,
-      "health": 40
+      "speed": 8,
+      "attack": 22,
+      "health": 35
     },
     "colors": {
       "fill": "#FFC107",
@@ -106,10 +106,10 @@
     },
     "ability": {
       "name": "Special Attack",
-      "cooldown": 10,
-      "damageMultiplier": 2.5,
-      "duration": 4000,
-      "description": "Realiza um ataque poderoso causando grande dano em área."
+      "cooldown": 12,
+      "damageMultiplier": 2.0,
+      "duration": 3000,
+      "description": "Desfere um ferrão devastador que causa o dobro do dano normal. O ataque especial dura 3 segundos com potencial para eliminar inimigos rapidamente."
     }
   },
   {
@@ -117,11 +117,11 @@
     "name": "Barata",
     "description": "Sobrevivente implacável",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida altíssima"],
-    "requiredScore": 850,
+    "requiredScore": 900,
     "stats": {
-      "speed": 9,
-      "attack": 6,
-      "health": 95
+      "speed": 7,
+      "attack": 8,
+      "health": 100
     },
     "colors": {
       "fill": "#795548",
@@ -129,9 +129,9 @@
     },
     "ability": {
       "name": "Hard Shell",
-      "cooldown": 15,
-      "duration": 5000,
-      "description": "Fica invencível por 5 segundos."
+      "cooldown": 20,
+      "duration": 4000,
+      "description": "Endurece seu exoesqueleto, tornando-se invencível por 4 segundos. A defesa perfeita para sobreviver em situações críticas."
     }
   },
   {
@@ -143,7 +143,7 @@
     "stats": {
       "speed": 5,
       "attack": 6,
-      "health": 40
+      "health": 45
     },
     "colors": {
       "fill": "#F44336",
@@ -151,9 +151,9 @@
     },
     "ability": {
       "name": "Regeneration",
-      "cooldown": 18,
-      "healAmount": 10,
-      "description": "Recupera vida instantaneamente."
+      "cooldown": 20,
+      "healAmount": 8,
+      "description": "Cura 8 pontos de vida instantaneamente. Uma habilidade vital para se recuperar durante batalhas intensas."
     }
   },
   {
@@ -161,11 +161,11 @@
     "name": "Escorpião",
     "description": "Perigoso e resistente",
     "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
-    "requiredScore": 1350,
+    "requiredScore": 1500,
     "stats": {
-      "speed": 4,
-      "attack": 40,
-      "health": 70
+      "speed": 3,
+      "attack": 35,
+      "health": 75
     },
     "colors": {
       "fill": "#6D4C41",
@@ -173,10 +173,10 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 12,
-      "poisonDamage": 2,
+      "cooldown": 15,
+      "poisonDamage": 3,
       "duration": 4000,
-      "description": "Dá dano inicial e envenena o inimigo por 4 segundos."
+      "description": "Golpeia com seu ferrão venenoso, causando dano inicial + 3 de dano por segundo durante 4 segundos. Letal contra alvos com muita saúde."
     }
   },
   {
@@ -186,9 +186,9 @@
     "attributes": ["Velocidade baixa", "Ataque baixíssimo", "Vida baixa"],
     "requiredScore": 0,
     "stats": {
-      "speed": 2,
-      "attack": 2,
-      "health": 30
+      "speed": 1.2,
+      "attack": 3,
+      "health": 40
     },
     "colors": {
       "fill": "#A1887F",
@@ -200,11 +200,11 @@
     "name": "Abelha",
     "description": "Rápida e protetora",
     "attributes": ["Alta velocidade", "Ataque médio", "Vida baixa"],
-    "requiredScore": 700,
+    "requiredScore": 800,
     "stats": {
-      "speed": 13,
-      "attack": 16,
-      "health": 35
+      "speed": 12,
+      "attack": 18,
+      "health": 30
     },
     "colors": {
       "fill": "#FFEB3B",
@@ -212,10 +212,10 @@
     },
     "ability": {
       "name": "Special Attack",
-      "cooldown": 10,
-      "damageMultiplier": 2.5,
-      "duration": 4000,
-      "description": "Ataque especial causando dano em área."
+      "cooldown": 12,
+      "damageMultiplier": 2.0,
+      "duration": 3000,
+      "description": "Libera uma investida em área que causa 200% do dano normal. Eficaz contra grupos de inimigos próximos."
     }
   },
   {
@@ -223,11 +223,11 @@
     "name": "Centopéia",
     "description": "Ágil e venenosa",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
-    "requiredScore": 1300,
+    "requiredScore": 1400,
     "stats": {
-      "speed": 12,
-      "attack": 28,
-      "health": 50
+      "speed": 10,
+      "attack": 25,
+      "health": 45
     },
     "colors": {
       "fill": "#8D6E63",
@@ -235,10 +235,10 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 10,
-      "poisonDamage": 3,
-      "duration": 5000,
-      "description": "Aplica veneno no inimigo, causando dano ao longo do tempo por 5 segundos."
+      "cooldown": 12,
+      "poisonDamage": 2.5,
+      "duration": 4500,
+      "description": "Morde com veneno neurotóxico, causando 2.5 de dano por segundo durante 4.5 segundos. Excelente para desgastar oponentes gradualmente."
     }
   },
   {
@@ -246,11 +246,11 @@
     "name": "Barata d'água",
     "description": "Silenciosa e letal",
     "attributes": ["Velocidade média", "Ataque alto", "Vida média"],
-    "requiredScore": 1400,
+    "requiredScore": 1500,
     "stats": {
-      "speed": 7,
-      "attack": 28,
-      "health": 55
+      "speed": 6,
+      "attack": 25,
+      "health": 50
     },
     "colors": {
       "fill": "#607D8B",
@@ -258,9 +258,9 @@
     },
     "ability": {
       "name": "Lethal Strike",
-      "cooldown": 14,
-      "damageMultiplier": 3.0,
-      "description": "Realiza um ataque extremamente poderoso em um único alvo, causando 3x o dano normal."
+      "cooldown": 16,
+      "damageMultiplier": 2.5,
+      "description": "Executa um ataque preciso que causa 2.5x o dano normal em um único alvo. Pode eliminar inimigos com um golpe bem colocado."
     }
   },
   {
@@ -268,11 +268,11 @@
     "name": "Louva-a-deus",
     "description": "Ágil e caçador preciso",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
-    "requiredScore": 1500,
+    "requiredScore": 1600,
     "stats": {
-      "speed": 12,
-      "attack": 28,
-      "health": 50
+      "speed": 10,
+      "attack": 30,
+      "health": 45
     },
     "colors": {
       "fill": "#4CAF50",
@@ -280,9 +280,9 @@
     },
     "ability": {
       "name": "Critical Slash",
-      "cooldown": 10,
-      "criticalMultiplier": 2.5,
-      "description": "Garante um golpe crítico, causando 2.5x o dano no próximo ataque."
+      "cooldown": 12,
+      "criticalMultiplier": 2.3,
+      "description": "Prepara um golpe certeiro que causa 230% do dano normal no próximo ataque. Ideal para eliminar alvos prioritários rapidamente."
     }
   },
   {
@@ -293,8 +293,8 @@
     "requiredScore": 150,
     "stats": {
       "speed": 14,
-      "attack": 6,
-      "health": 30
+      "attack": 12,
+      "health": 25
     },
     "colors": {
       "fill": "#81C784",
@@ -302,10 +302,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 10,
+      "cooldown": 12,
       "boost": 1.5,
-      "duration": 5000,
-      "description": "Aumenta a velocidade em 1.5x por 5 segundos, permitindo fugir rapidamente de situações perigosas."
+      "duration": 4000,
+      "description": "Dá um salto veloz, aumentando sua velocidade em 50% por 4 segundos. Perfeito para reposicionamento tático ou fugas."
     }
   },
   {
@@ -313,11 +313,11 @@
     "name": "Gafanhoto",
     "description": "Veloz e evasivo",
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida baixa"],
-    "requiredScore": 200,
+    "requiredScore": 250,
     "stats": {
-      "speed": 15,
-      "attack": 10,
-      "health": 30
+      "speed": 14,
+      "attack": 12,
+      "health": 25
     },
     "colors": {
       "fill": "#AED581",
@@ -325,10 +325,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 12,
-      "boost": 2.0,
-      "duration": 4000,
-      "description": "Dá dano inicial e envenena o inimigo por 5 segundos."
+      "cooldown": 14,
+      "boost": 1.8,
+      "duration": 3500,
+      "description": "Impulsiona-se com suas patas traseiras, ganhando 80% de velocidade adicional por 3.5 segundos. Excelente para ataques relâmpago."
     }
   },
   {
@@ -336,11 +336,11 @@
     "name": "Cigarra",
     "description": "Barulhenta e resistente",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida média"],
-    "requiredScore": 300,
+    "requiredScore": 350,
     "stats": {
-      "speed": 5,
-      "attack": 13,
-      "health": 55
+      "speed": 4,
+      "attack": 12,
+      "health": 60
     },
     "colors": {
       "fill": "#B0BEC5",
@@ -348,9 +348,9 @@
     },
     "ability": {
       "name": "Regeneration",
-      "cooldown": 20,
-      "healAmount": 12,
-      "description": "Recupera parte da vida instantaneamente para prolongar sua sobrevivência."
+      "cooldown": 22,
+      "healAmount": 10,
+      "description": "Regenera 10 pontos de vida instantaneamente. Uma habilidade crucial para personagens tanque que precisam se sustentar em batalha."
     }
   },
   {
@@ -358,11 +358,11 @@
     "name": "Bicho-pau",
     "description": "Mestre da camuflagem",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida média"],
-    "requiredScore": 200,
+    "requiredScore": 250,
     "stats": {
-      "speed": 6,
-      "attack": 6,
-      "health": 60
+      "speed": 5,
+      "attack": 7,
+      "health": 65
     },
     "colors": {
       "fill": "#A5D6A7",
@@ -370,9 +370,9 @@
     },
     "ability": {
       "name": "Hard Shell",
-      "cooldown": 18,
-      "duration": 4000,
-      "description": "Fica invulnerável por 4 segundos, como se desaparecesse entre o ambiente."
+      "cooldown": 20,
+      "duration": 3500,
+      "description": "Camufla-se completamente no ambiente, tornando-se invulnerável por 3.5 segundos. A habilidade definitiva de sobrevivência."
     }
   },
   {
@@ -380,11 +380,11 @@
     "name": "Mosquito",
     "description": "Irritante e rápido",
     "attributes": ["Velocidade altíssima", "Ataque baixo", "Vida baixíssima"],
-    "requiredScore": 150,
+    "requiredScore": 200,
     "stats": {
       "speed": 15,
-      "attack": 5,
-      "health": 20
+      "attack": 6,
+      "health": 15
     },
     "colors": {
       "fill": "#E0E0E0",
@@ -392,10 +392,10 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 10,
-      "poisonDamage": 1,
-      "duration": 5000,
-      "description": "Aplica veneno no inimigo, causando dano contínuo durante 5 segundos."
+      "cooldown": 12,
+      "poisonDamage": 0.8,
+      "duration": 4500,
+      "description": "Aplica um veneno debilitante que causa 0.8 de dano por segundo durante 4.5 segundos. Ideal para desgastar inimigos ao longo do tempo."
     }
   },
   {
@@ -403,11 +403,11 @@
     "name": "Libélula",
     "description": "Ágil e predadora aérea",
     "attributes": ["Velocidade altíssima", "Ataque médio", "Vida média"],
-    "requiredScore": 1100,
+    "requiredScore": 1200,
     "stats": {
-      "speed": 14,
-      "attack": 20,
-      "health": 45
+      "speed": 13,
+      "attack": 18,
+      "health": 40
     },
     "colors": {
       "fill": "#00BCD4",
@@ -415,10 +415,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 12,
-      "boost": 2.2,
-      "duration": 5000,
-      "description": "Aumenta muito a velocidade de movimento por 5 segundos."
+      "cooldown": 16,
+      "boost": 2.0,
+      "duration": 4000,
+      "description": "Ativa um voo supersônico que dobra sua velocidade por 4 segundos. Permite ataques relâmpago ou fugas impossíveis de acompanhar."
     }
   },
   {
@@ -426,11 +426,11 @@
     "name": "Borboleta",
     "description": "Bela e evasiva",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 70,
+    "requiredScore": 100,
     "stats": {
-      "speed": 7,
-      "attack": 5,
-      "health": 25
+      "speed": 8,
+      "attack": 6,
+      "health": 30
     },
     "colors": {
       "fill": "#E91E63",
@@ -438,10 +438,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 14,
-      "boost": 1.8,
-      "duration": 4000,
-      "description": "Aumenta a velocidade temporariamente para escapar dos inimigos."
+      "cooldown": 16,
+      "boost": 2.0,
+      "duration": 3500,
+      "description": "Bate as asas rapidamente, aumentando sua velocidade em 100% por 3.5 segundos. Excelente para manobras evasivas ou ataques surpresa."
     }
   },
   {
@@ -451,9 +451,9 @@
     "attributes": ["Velocidade baixa", "Ataque baixo", "Vida baixa"],
     "requiredScore": 0,
     "stats": {
-      "speed": 4,
-      "attack": 6,
-      "health": 30
+      "speed": 5,
+      "attack": 7,
+      "health": 35
     },
     "colors": {
       "fill": "#CE93D8",
@@ -461,10 +461,10 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 14,
-      "poisonDamage": 1,
-      "duration": 6000,
-      "description": "Espalha pó venenoso, causando dano contínuo ao inimigo por 6 segundos."
+      "cooldown": 16,
+      "poisonDamage": 0.8,
+      "duration": 5000,
+      "description": "Libera escamas venenosas que causam 0.8 de dano por segundo durante 5 segundos. Efeito cumulativo perfeito para combates prolongados."
     }
   },
   {
@@ -472,10 +472,10 @@
     "name": "Mosca",
     "description": "Ágil e persistente",
     "attributes": ["Velocidade média", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 100,
+    "requiredScore": 120,
     "stats": {
-      "speed": 10,
-      "attack": 4,
+      "speed": 11,
+      "attack": 5,
       "health": 25
     },
     "colors": {
@@ -484,10 +484,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 12,
-      "boost": 1.8,
-      "duration": 5000,
-      "description": "Aumenta temporariamente a velocidade para escapar ou alcançar inimigos."
+      "cooldown": 14,
+      "boost": 1.7,
+      "duration": 4000,
+      "description": "Acelera seu voo em 70% por 4 segundos. Permite ataques rápidos e reposicionamento tático instantâneo."
     }
   },
   {
@@ -495,10 +495,10 @@
     "name": "Taturana",
     "description": "Lenta, mas muito resistente",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida altíssima"],
-    "requiredScore": 450,
+    "requiredScore": 500,
     "stats": {
-      "speed": 3,
-      "attack": 15,
+      "speed": 2,
+      "attack": 12,
       "health": 100
     },
     "colors": {
@@ -507,9 +507,9 @@
     },
     "ability": {
       "name": "Hard Shell",
-      "cooldown": 20,
-      "duration": 5000,
-      "description": "Aumenta a resistência e reduz o dano recebido por 5 segundos."
+      "cooldown": 22,
+      "duration": 4500,
+      "description": "Enrola-se em seu casulo, reduzindo todo o dano recebido a zero por 4.5 segundos. A defesa perfeita para tanques."
     }
   },
   {
@@ -517,11 +517,11 @@
     "name": "Tesourinha",
     "description": "Versátil com sua pinça traseira",
     "attributes": ["Velocidade média", "Ataque médio", "Vida média"],
-    "requiredScore": 660,
+    "requiredScore": 700,
     "stats": {
-      "speed": 7,
-      "attack": 14,
-      "health": 60
+      "speed": 6,
+      "attack": 16,
+      "health": 55
     },
     "colors": {
       "fill": "#A1887F",
@@ -529,10 +529,10 @@
     },
     "ability": {
       "name": "Special Attack",
-      "cooldown": 12,
-      "damageMultiplier": 2.2,
-      "duration": 3000,
-      "description": "Causa um dano adicional em área com suas pinças, atingindo inimigos ao redor."
+      "cooldown": 14,
+      "damageMultiplier": 2.0,
+      "duration": 2500,
+      "description": "Ataque giratório com suas pinças que causa 200% de dano em área por 2.5 segundos. Eficaz contra múltiplos inimigos próximos."
     }
   },
   {
@@ -540,11 +540,11 @@
     "name": "Marimbondo",
     "description": "Ágil e com ataque feroz",
     "attributes": ["Velocidade alta", "Ataque alto", "Vida média"],
-    "requiredScore": 1340,
+    "requiredScore": 1400,
     "stats": {
-      "speed": 12,
-      "attack": 30,
-      "health": 55
+      "speed": 11,
+      "attack": 28,
+      "health": 50
     },
     "colors": {
       "fill": "#FDD835",
@@ -552,10 +552,10 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 10,
-      "poisonDamage": 3,
-      "duration": 5000,
-      "description": "Envenena o inimigo, causando dano ao longo de 5 segundos."
+      "cooldown": 12,
+      "poisonDamage": 2.5,
+      "duration": 4500,
+      "description": "Injeta um veneno potente que causa 2.5 de dano por segundo durante 4.5 segundos. Excelente para combinar com ataques básicos."
     }
   },
   {
@@ -563,11 +563,11 @@
     "name": "Vespa Esmeralda",
     "description": "Graciosa, venenosa e letal",
     "attributes": ["Velocidade alta", "Ataque médio", "Vida baixa"],
-    "requiredScore": 860,
+      "requiredScore": 900,
     "stats": {
-      "speed": 13,
-      "attack": 20,
-      "health": 35
+      "speed": 12,
+      "attack": 22,
+      "health": 30
     },
     "colors": {
       "fill": "#66BB6A",
@@ -575,13 +575,13 @@
     },
     "ability": {
       "name": "Poison",
-      "cooldown": 15,
-      "poisonDamage": 5,
-      "duration": 5000,
-      "description": "Aplica dano contínuo ao longo do tempo em um inimigo atingido.",
+      "cooldown": 18,
+      "poisonDamage": 4,
+      "duration": 4000,
+      "description": "Ferrão esmeralda que causa 4 de dano por segundo durante 4 segundos. Efeito especialmente potente contra baratas (dano bônus +10).",
       "specialBonusDamage": {
         "target": "cockroach",
-        "bonusDamage": 15
+        "bonusDamage": 10
       }
     }
   },
@@ -590,11 +590,11 @@
     "name": "Tanajura",
     "description": "Grande e resistente, mas lenta",
     "attributes": ["Velocidade baixa", "Ataque médio", "Vida altíssima"],
-    "requiredScore": 1300,
+    "requiredScore": 1400,
     "stats": {
-      "speed": 2,
-      "attack": 18,
-      "health": 95
+      "speed": 1.4,
+      "attack": 16,
+      "health": 90
     },
     "colors": {
       "fill": "#6D4C41",
@@ -602,9 +602,9 @@
     },
     "ability": {
       "name": "Regeneration",
-      "cooldown": 20,
-      "healAmount": 15,
-      "description": "Recupera uma quantidade significativa de vida ao longo de alguns segundos."
+      "cooldown": 25,
+      "healAmount": 12,
+      "description": "Ativa uma cura profunda que restaura 12 pontos de vida instantaneamente. Fundamental para tanques se manterem no combate."
     }
   },
   {
@@ -612,11 +612,11 @@
     "name": "Cupim",
     "description": "Pequeno, mas persistente",
     "attributes": ["Velocidade baixa", "Ataque baixo", "Vida média"],
-    "requiredScore": 220,
+    "requiredScore": 250,
     "stats": {
-      "speed": 4,
-      "attack": 8,
-      "health": 60
+      "speed": 3,
+      "attack": 9,
+      "health": 65
     },
     "colors": {
       "fill": "#D7CCC8",
@@ -624,10 +624,10 @@
     },
     "ability": {
       "name": "Slow Strike",
-      "cooldown": 12,
-      "slowAmount": 0.4,
-      "duration": 4000,
-      "description": "Reduz a velocidade do inimigo em 40% por 4 segundos ao acertá-lo."
+      "cooldown": 14,
+      "slowAmount": 0.35,
+      "duration": 3500,
+      "description": "Ataque que reduz a velocidade do alvo em 35% por 3.5 segundos. Excelente para controlar inimigos rápidos e manter vantagem tática."
     }
   },
   {
@@ -635,11 +635,11 @@
     "name": "Vagalume",
     "description": "Brilhante e veloz durante a noite",
     "attributes": ["Velocidade alta", "Ataque baixo", "Vida baixa"],
-    "requiredScore": 90,
+    "requiredScore": 100,
     "stats": {
-      "speed": 13,
-      "attack": 7,
-      "health": 30
+      "speed": 12,
+      "attack": 8,
+      "health": 25
     },
     "colors": {
       "fill": "#FFD54F",
@@ -647,10 +647,10 @@
     },
     "ability": {
       "name": "Speed Boost",
-      "cooldown": 10,
-      "boost": 2.0,
-      "duration": 4000,
-      "description": "Aumenta a velocidade do Vagalume, permitindo que ele se mova rapidamente por um curto período."
+      "cooldown": 12,
+      "boost": 1.8,
+      "duration": 3500,
+      "description": "Brilho bioluminescente que aumenta sua velocidade em 80% por 3.5 segundos. Ideal para ataques noturnos surpresa."
     }
   },
   {
@@ -659,14 +659,14 @@
     "description": "Vespa solitária com picada dolorosa",
     "attributes": ["Velocidade baixa", "Ataque altíssimo", "Vida alta"],
     "stats": {
-      "speed": 4,
-      "attack": 35,
-      "health": 80
+      "speed": 3,
+      "attack": 32,
+      "health": 85
     },
     "colors": {
       "fill": "#E53935",
       "stroke": "#6A1B1A"
     },
-    "requiredScore": 1340
-  }  
+    "requiredScore": 1400
+  }
 ]
