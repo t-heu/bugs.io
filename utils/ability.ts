@@ -1,11 +1,11 @@
-export function specialAttack(activeEffectsRef: any, roomKey: string, player: any, sendToRoom: any) {
+export function specialAttack(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
   const now = Date.now();
 
   const specialAttackUntil = now + player.ability.duration;
 
   activeEffectsRef.current["SpecialAttack"] = specialAttackUntil;
 
-  sendToRoom(JSON.stringify({
+  broadcast(JSON.stringify({
     type: 'player_update',
     uid: player.uid,
     lastUpdate: Date.now(),
@@ -17,13 +17,13 @@ export function specialAttack(activeEffectsRef: any, roomKey: string, player: an
   }));
 }
 
-export function activateShield(activeEffectsRef: any, roomKey: string, player: any, sendToRoom: any) {
+export function activateShield(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
   const now = Date.now();
   const invincibleUntil = now + player.ability.duration;
 
   activeEffectsRef.current["invincible"] = invincibleUntil;
 
-   sendToRoom(JSON.stringify({
+   broadcast(JSON.stringify({
     type: 'player_update',
     uid: player.uid,
     updates: {
@@ -35,14 +35,14 @@ export function activateShield(activeEffectsRef: any, roomKey: string, player: a
   }));
 }
 
-export function activateSpeedBoost(activeEffectsRef: any, roomKey: string, player: any, sendToRoom: any) {
+export function activateSpeedBoost(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
   const now = Date.now();
 
   const speedBoostUntil = now + player.ability.duration;
 
   activeEffectsRef.current["speedBoost"] = speedBoostUntil;
 
-  sendToRoom(JSON.stringify({
+  broadcast(JSON.stringify({
     type: 'player_update',
     uid: player.uid,
     updates: {
@@ -54,7 +54,7 @@ export function activateSpeedBoost(activeEffectsRef: any, roomKey: string, playe
   }));
 }
 
-export function healPlayer(roomKey: string, player: any, setPlayer: any, sendToRoom: any) {
+export function healPlayer(roomKey: string, player: any, setPlayer: any, broadcast: any) {
   const healAmount = player.ability.healAmount;
   const newHealth = Math.min(player.stats.health + healAmount, player.stats.maxHealth);
 
@@ -66,7 +66,7 @@ export function healPlayer(roomKey: string, player: any, setPlayer: any, sendToR
     },
   }));
 
-  sendToRoom(JSON.stringify({
+  broadcast(JSON.stringify({
     type: 'player_update',
     uid: player.uid,
     updates: {
@@ -78,8 +78,8 @@ export function healPlayer(roomKey: string, player: any, setPlayer: any, sendToR
   }));
 }
 
-export function applyPoisonEffect(playerUid: string, roomKey: string, sendToRoom: any) {
-  sendToRoom(JSON.stringify({
+export function applyPoisonEffect(playerUid: string, roomKey: string, broadcast: any) {
+  broadcast(JSON.stringify({
     type: 'player_update',
     uid: playerUid,
     updates: {
@@ -89,14 +89,14 @@ export function applyPoisonEffect(playerUid: string, roomKey: string, sendToRoom
   }));
 }
 
-export function applySlow(activeEffectsRef: any, roomKey: string, player: any, sendToRoom: any) {
+export function applySlow(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
   const now = Date.now();
 
   const slowUntil = now + player.ability.duration;
 
   activeEffectsRef.current["slow"] = slowUntil;
 
-  sendToRoom(JSON.stringify({
+  broadcast(JSON.stringify({
     type: 'player_update',
     uid: player.uid,
     updates: {

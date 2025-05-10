@@ -7,7 +7,8 @@ export function handlePlayerAttack(
   player: any,
   otherPlayers: any[],
   lastPoisonTickRef: any,
-  sendToRoom: any
+  broadcast: any,
+  updatedPlayer: any
 ) {
   const attackRange = 50;
   const damagedUIDs = new Set();
@@ -30,15 +31,15 @@ export function handlePlayerAttack(
 
     const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
     
-    sendToRoom(JSON.stringify({
-      type: 'player_update',
+    broadcast(JSON.stringify({
+      type: 'player_health',
       uid: targetPlayer.uid,
-      updates: {stats: { health: newHealthTarget }},
+      health: newHealthTarget,
       lastUpdate: Date.now()
     }));
 
     if (player.poisonNextAttack) {
-      sendToRoom(JSON.stringify({
+      broadcast(JSON.stringify({
         type: 'player_update',
         uid: player.uid,
         updates: {
@@ -52,19 +53,22 @@ export function handlePlayerAttack(
     }
 
     if (targetPlayer.name && newHealthTarget === 0) {
-      sendToRoom(JSON.stringify({
-        type: 'player_update',
+      updatedPlayer.killer = `${player.name} - (${player.type})`;
+
+      broadcast(JSON.stringify({
+        type: 'player_kill',
         uid: targetPlayer.uid,
-        updates: {killer: `${player.name} - (${player.type})`},
+        killer: `${player.name} - (${player.type})`,
         lastUpdate: Date.now()
       }));
 
       const newScore = player.score + 15;
+      updatedPlayer.score = newScore
 
-      sendToRoom(JSON.stringify({
-        type: 'player_update',
+      broadcast(JSON.stringify({
+        type: 'player_score',
         uid: player.uid,
-        updates: {score: newScore},
+        score: newScore,
         lastUpdate: Date.now()
       }));
     }
@@ -78,7 +82,7 @@ export function applyPoisonDamageToTargets(
   player: any,
   lastPoisonTickRef: any,
   setOtherPlayers: Dispatch<SetStateAction<any[]>>,
-  sendToRoom: any
+  broadcast: any
 ) {
   otherPlayers.forEach((target) => {
     const isPoisoned = target.effects.poisonedUntil && target.effects.poisonedUntil > now;
@@ -96,10 +100,10 @@ export function applyPoisonDamageToTargets(
 
     const newHealth = Math.max(0, target.stats.health - poisonDamage);
 
-    sendToRoom(JSON.stringify({
-      type: 'player_update',
+    broadcast(JSON.stringify({
+      type: 'player_health',
       uid: target.uid,
-      updates: {stats: { health: newHealth }},
+      health: newHealth,
       lastUpdate: Date.now()
     }));
 
@@ -177,8 +181,9 @@ export function handleFoodCollision(
   y: number,
   foodList: any[] = [],  // Valor padrão para foodList
   player: any,
-  sendToRoom: (msg: string) => void,
-  setFood: (newFood: any[]) => void
+  broadcast: (msg: string) => void,
+  setFood: (newFood: any[]) => void,
+  updatedPlayer: any
 ) {
   if (!foodList || foodList.length === 0) {
     return; // Caso a lista de comida seja indefinida ou vazia
@@ -205,7 +210,7 @@ export function handleFoodCollision(
       changed = true;
 
       // Envia comida atualizada para todos os jogadores
-      sendToRoom(JSON.stringify({
+      broadcast(JSON.stringify({
         type: 'food_update',
         index,
         newFood,
@@ -217,16 +222,24 @@ export function handleFoodCollision(
     // Atualiza o estado local da comida para o jogador atual
     setFood(updatedFood);
 
+    updatedPlayer.stats.health = newHealth_food
+    updatedPlayer.score = newScore_food
+
     // Atualiza vida e score do jogador
-    sendToRoom(JSON.stringify({
-      type: 'player_update',
+    const now = Date.now();
+
+    broadcast(JSON.stringify({
+      type: 'player_health',
       uid: player.uid,
-      updates: {
-        stats: { health: newHealth_food },
-        score: newScore_food
-      },
-      lastUpdate: Date.now()
+      health: newHealth_food,
+      lastUpdate: now
     }));
-    return
+
+    broadcast(JSON.stringify({
+      type: 'player_score',
+      uid: player.uid,
+      score: newScore_food,
+      lastUpdate: now
+    }));
   }
 }

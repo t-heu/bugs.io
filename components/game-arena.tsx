@@ -29,7 +29,7 @@ interface GameArenaProps {
   player: Player;
   setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
   gameRoom: GameRoom;
-  sendToRoom: any;
+  broadcast: any;
   disconnectedPeers: any
 }
 
@@ -40,7 +40,7 @@ export default function GameArena({
   player, 
   setPlayer, 
   gameRoom,
-  sendToRoom,
+  broadcast,
   disconnectedPeers
 }: GameArenaProps) {
   const canvasRef = useRef(null)
@@ -53,6 +53,7 @@ export default function GameArena({
   const lastPoisonTickRef = useRef<{ [uid: string]: number }>({});
   const animationId = useRef<number | null>(null);
   const isLooping = useRef<boolean>(false);
+  const hasJoinedRef = useRef(false);
 
   const [food, setFood] = useState<any>([])
   const [cactus, setCactus] = useState<any>([])
@@ -76,12 +77,10 @@ export default function GameArena({
     setJoystickDistance
   );
 
-  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer, sendToRoom);
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer, broadcast);
 
   useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
-
-  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
     if (!player || !gameRoom || hasJoinedRef.current) return;
@@ -99,8 +98,15 @@ export default function GameArena({
     if (!player || !gameRoom?.players) return;
 
     const currentPlayers = gameRoom.players;
-
     // Atualiza o próprio player
+    attPlayer(currentPlayers);
+
+    // Atualiza os outros jogadores
+    updatePlayers(currentPlayers);
+
+  }, [gameRoom?.players, player?.uid, disconnectedPeers]);
+
+  const attPlayer = (currentPlayers: any[]) => {
     const updatedSelf = currentPlayers.find(p => p.uid === player.uid);
     if (updatedSelf) {
       setPlayer((prev: any) => {
@@ -129,18 +135,18 @@ export default function GameArena({
         return prev;
       });
     }
+  };
 
-    // Atualiza os outros jogadores - garantir que mortos sejam removidos
+  const updatePlayers = (currentPlayers: any[]) => {
     const updatedOthers = currentPlayers.filter(p => {
       const isDisconnected = disconnectedPeers && p.uid === disconnectedPeers;
       const isDead = p.stats.health <= 0;
 
       if (isDead) {
-        // Envia mensagem de que o jogador morreu
-        sendToRoom(JSON.stringify({
+        broadcast(JSON.stringify({
           type: 'player_exit',
           uid: p.uid,
-          reason: 'dead'
+          reason: 'dead',
         }));
       }
 
@@ -148,7 +154,7 @@ export default function GameArena({
     });
 
     setOtherPlayers(updatedOthers);
-  }, [gameRoom?.players, player?.uid, disconnectedPeers]);
+  };
 
   const renderGame = useCallback(() => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
@@ -171,6 +177,10 @@ export default function GameArena({
   const updateGame = useCallback(() => {
     if (!canvasRef.current || !player) return;
 
+    const updatedPlayer = { 
+      ...player, 
+    };
+
     const now = Date.now();
     const nowEffect = now;
     const isInvincible = activeEffectsRef.current["invincible"] > nowEffect;
@@ -192,7 +202,7 @@ export default function GameArena({
     );
 
     setViewportOffset({ x: newX - VIEWPORT_SIZE / 2, y: newY - VIEWPORT_SIZE / 2 });
-    handleFoodCollision(newX, newY, food, player, sendToRoom, setFood);
+    handleFoodCollision(newX, newY, food, player, broadcast, setFood, updatedPlayer);
 
     const { tookDamage, newHealth } = handleCactusCollision(newX, newY, cactus, player);
     if (tookDamage && !isInvincible) {
@@ -201,27 +211,29 @@ export default function GameArena({
         onGameOver(player.score);
       }
 
-      sendToRoom(JSON.stringify({
-        type: 'player_update',
+      updatedPlayer.stats.health = newHealth
+
+      broadcast(JSON.stringify({
+        type: 'player_health',
         uid: player.uid,
-        updates: { stats: { health: newHealth } },
+        health: newHealth,
         lastUpdate: Date.now()
       }));
     }
 
     if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
       lastAttackTimeRef.current = now;
-      handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, sendToRoom);
+      handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, broadcast, updatedPlayer);
     }
 
-    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, sendToRoom);
+    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
 
     if (player.stats.health <= 0) {
       setAssassin(`Você foi eliminado por ${player.killer || 'desconhecido'}!`);
       onGameOver(player.score);
       setOtherPlayers(prev => prev.filter(p => p.uid !== player.uid));
 
-      sendToRoom(JSON.stringify({
+      broadcast(JSON.stringify({
         type: 'player_exit',
         uid: player.uid,
         room: roomKey
@@ -230,21 +242,17 @@ export default function GameArena({
     }
 
     const newPosition = { x: newX, y: newY };
-    const updatedPlayer = { 
-      ...player, 
-      stats: { ...player.stats, health: newHealth }, // Atualiza a saúde
-      position: newPosition // Atualiza a posição
-    };
+    updatedPlayer.position = newPosition
     setPlayer(updatedPlayer);
 
     if (
       Math.abs(player.position.x - newPosition.x) > 1 ||
       Math.abs(player.position.y - newPosition.y) > 1
     ) {
-      sendToRoom(JSON.stringify({
-        type: 'player_update',
+      broadcast(JSON.stringify({
+        type: 'player_position',
         uid: updatedPlayer.uid,
-        updates: { position: updatedPlayer.position },
+        position: updatedPlayer.position,
         lastUpdate: Date.now()
       }));
     }
@@ -283,8 +291,15 @@ export default function GameArena({
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(roomKey)
+    .then(() => {
+      setTimeout(() => alert('Copied!'), 1000);
+    })
+  };
+
   const healthPercentage = (player.stats.health / player.stats.maxHealth) * 100;
-  const cooldownPercentage = (cooldownTime / (player.ability.cooldown * 1000)) * 100;
+  const cooldownPercentage = isCooldown ? (cooldownTime / (player.ability.cooldown * 1000)) * 100 : 0;
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
@@ -302,7 +317,7 @@ export default function GameArena({
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
           <div className="text-sm text-green-300">Seu nome: {player.name}</div>
           <div className="text-sm text-green-300">Players On: {otherPlayers.length}</div>
-          <div className="text-sm px-2 py-2 rounded-md text-green-300 bg-[#111]">ROOM ID: {roomKey}</div>
+          <div title="Copy" style={{ cursor: 'pointer' }} onClick={handleCopy} className="text-sm px-2 py-2 rounded-md text-green-300 bg-[#111]">ROOM ID: {roomKey}</div>
         </div>
 
         <div className="w-1/3 space-y-3">

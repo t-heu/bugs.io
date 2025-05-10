@@ -33,6 +33,7 @@ export function handleJoin(data: any, from: any, isHost: boolean | null, setGame
 }
 
 export function handleFullLoadRoom(data: any, setGameRoom: any) {
+  //console.log(data)
   setGameRoom(data);
 }
 
@@ -52,67 +53,67 @@ export function handleFoodUpdate(data: any, setGameRoom: any) {
   });
 }
 
-export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any, localUid: string) {
-  if (!data.uid || !data.updates) return;
-  console.log('[PLAYER_UPDATE]', data);
-
+function mergePlayerByUid(
+  uid: string,
+  updater: (p: Player) => Player,
+  setGameRoom: any
+) {
   setGameRoom((prev: GameRoom | null) => {
     if (!prev) return prev;
 
-    const updatedPlayers = prev.players.map((p: Player) => {
-      if (p.uid !== data.uid) return p;
-
-      const isNewer = (data.lastUpdate ?? 0) > (p.lastUpdate ?? 0);
-      if (!isNewer) return p;
-
-      const updatedStats = {
-        ...p.stats,
-        ...(data.updates.stats || {}),
-      };
-
-      if (updatedStats.health <= 0) {
-        updatedStats.health = 0;
-      }
-      console.log('aq: ', data.updates)
-      const updatedPlayer: Player = {
-        ...p,
-        lastUpdate: data.lastUpdate ?? Date.now(),
-        stats: updatedStats,
-        effects: {
-          ...p.effects,
-          ...(data.updates.effects || {}),
-        },
-        position: {
-          ...p.position,
-          ...(data.updates.position || {}),
-        },
-        ability: data.updates.ability !== undefined ? data.updates.ability : p.ability,
-        killer: data.updates.killer !== undefined ? data.updates.killer : p.killer,
-        score: data.updates.score !== undefined ? data.updates.score : p.score,
-        size: data.updates.size !== undefined ? data.updates.size : p.size,
-        poisonNextAttack: data.updates.poisonNextAttack !== undefined
-          ? data.updates.poisonNextAttack
-          : p.poisonNextAttack,
-        type: data.updates.type !== undefined ? data.updates.type : p.type,
-        name: data.updates.name !== undefined ? data.updates.name : p.name,
-      };
-
-      // ✅ Se esse é o jogador local, reenviar update para os outros
-      if (data.uid === localUid) {
-        sendMessage(JSON.stringify({
-          type: 'player_update',
-          uid: localUid,
-          updates: data.updates,
-          lastUpdate: updatedPlayer.lastUpdate,
-        }));
-      }
-
-      return updatedPlayer;
-    });
-
     return {
       ...prev,
-      players: updatedPlayers,
+      players: prev.players.map(p => {
+        if (p.uid !== uid) return p;
+        return updater(p);
+      }),
     };
   });
+}
+
+export function handlePlayerPosition(data: any, setGameRoom: any) {
+  if (!data.uid || !data.position) return;
+
+  mergePlayerByUid(data.uid, (p) => ({
+    ...p,
+    position: {
+      ...p.position,
+      ...data.position,
+    },
+    lastUpdate: data.lastUpdate ?? Date.now(),
+  }), setGameRoom);
+}
+
+export function handlePlayerHealth(data: any, setGameRoom: any) {
+  if (!data.uid || typeof data.health !== 'number') return;
+
+  mergePlayerByUid(data.uid, (p) => {
+    const newHealth = Math.max(0, data.health);
+    return {
+      ...p,
+      stats: { ...p.stats, health: newHealth },
+      lastUpdate: data.lastUpdate ?? Date.now(),
+    };
+  }, setGameRoom);
+}
+
+export function handlePlayerScore(data: any, setGameRoom: any) {
+  if (!data.uid || typeof data.score !== 'number') return;
+
+  mergePlayerByUid(data.uid, (p) => ({
+    ...p,
+    score: data.score ?? p.score,
+    lastUpdate: data.lastUpdate ?? Date.now(),
+  }), setGameRoom);
+}
+
+export function handlePlayerKill(data: any, setGameRoom: any) {
+  const { uid, killer } = data;
+  if (!uid || !killer) return;
+
+  mergePlayerByUid(uid, (p) => ({
+    ...p,
+    killer,
+    lastUpdate: data.lastUpdate ?? Date.now(),
+  }), setGameRoom);
 }

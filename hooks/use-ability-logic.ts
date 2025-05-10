@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
 
-export function useAbilityLogic(player: any, roomKey: string, setPlayer: any, sendToRoom: any) {
+export function useAbilityLogic(player: any, roomKey: string, setPlayer: any, broadcast: any) {
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0); // em milissegundos
   const abilityCooldownsRef = useRef<Record<string, number>>({});
@@ -30,12 +30,12 @@ export function useAbilityLogic(player: any, roomKey: string, setPlayer: any, se
 
   function executeAbilityEffect(abilityName: string) {
     const abilityActions: Record<string, () => void> = {
-      "Special Attack": () => specialAttack(activeEffectsRef, roomKey, player, sendToRoom),
-      "Hard Shell": () => activateShield(activeEffectsRef, roomKey, player, sendToRoom),
-      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, roomKey, player, sendToRoom),
-      "Regeneration": () => healPlayer(roomKey, player, setPlayer, sendToRoom),
-      "Poison": () => applyPoisonEffect(player.uid, roomKey, sendToRoom),
-      "Slow Strike": () => applySlow(activeEffectsRef, roomKey, player, sendToRoom),
+      "Special Attack": () => specialAttack(activeEffectsRef, roomKey, player, broadcast),
+      "Hard Shell": () => activateShield(activeEffectsRef, roomKey, player, broadcast),
+      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, roomKey, player, broadcast),
+      "Regeneration": () => healPlayer(roomKey, player, setPlayer, broadcast),
+      "Poison": () => applyPoisonEffect(player.uid, roomKey, broadcast),
+      "Slow Strike": () => applySlow(activeEffectsRef, roomKey, player, broadcast),
     };
 
     const action = abilityActions[abilityName];

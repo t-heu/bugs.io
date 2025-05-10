@@ -17,8 +17,11 @@ import {
   handleJoin, 
   handleFullLoadRoom, 
   handleRemovePlayer, 
-  handlePlayerUpdate, 
   handleFoodUpdate,
+  handlePlayerPosition,
+  handlePlayerHealth,
+  handlePlayerKill,
+  handlePlayerScore
 } from '@/utils/game-event-handlers';
 import { useWebRTC } from '@/utils/use-web-rtc';
 
@@ -43,7 +46,14 @@ export default function Game() {
   const [userId] = useState(() => Math.random().toString(36).slice(2, 8));
   const [hasJoined, setHasJoined] = useState(false);
 
-  const { sendMessage, onMessage, connected, createOffer, disconnectedPeers, isClosed } = useWebRTC(roomInput, isHost, userId);
+  const { 
+    sendMessage, 
+    onMessage, 
+    connected, 
+    createOffer, 
+    disconnectedPeers, 
+    isClosed 
+  } = useWebRTC(roomInput, isHost, userId);
 
   useEffect(() => {
     if (isHost) {
@@ -63,13 +73,27 @@ export default function Game() {
       const handlers: Record<string, Function> = {
         join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom, sendMessage),
         loadRoom: (data: any) => handleFullLoadRoom(data, setGameRoom),
-        player_update: (data: any) => handlePlayerUpdate(data, setGameRoom, sendMessage, userId),
         player_exit: (data: any) => handleRemovePlayer(data, setGameRoom),
-        food_update: (data: any) =>handleFoodUpdate(data, setGameRoom),
+        food_update: (data: any) => handleFoodUpdate(data, setGameRoom),
+        player_position: (data: any) => handlePlayerPosition(data, setGameRoom),
+        player_health: (data: any) => handlePlayerHealth(data, setGameRoom),
+        player_score: (data: any) => handlePlayerScore(data, setGameRoom),
+        player_kill: (data: any) => handlePlayerKill(data, setGameRoom)
       };
   
       if (handlers[type]) {
         handlers[type](data, from);
+        // Após tratar a mensagem, envia o gameRoom atualizado (apenas se for host)
+        if (type !== 'player_position' && type !== 'loadRoom') {
+          console.log(type)
+          setGameRoom((prev: any) => {
+            sendMessage(JSON.stringify({
+              type: "loadRoom",
+              ...prev
+            }));
+            return prev; // importante: não altera o estado, só envia o atual
+          });
+        }
       }
     });
   }, [onMessage, isHost]);
@@ -250,14 +274,14 @@ export default function Game() {
                 value={roomInput}
                 onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
                 placeholder="EX: ABC123"
-                className="w-full px-4 py-2 rounded-md text-[#eee] mb-4 bg-[#111]"
+                className="border border-green-500 w-full px-4 py-2 rounded-md text-green-300 mb-4 bg-[#111] placeholder-green-300"
               />
             </div>
           )}
 
           {(joinMode === "host" || joinMode === "guest") && (
             <>
-              <p className="text-center px-4 py-2 rounded-md text-[#eee] mb-4 bg-[#111]">
+              <p className="text-center px-4 py-2 rounded-md text-green-300 mb-4 bg-[#111]">
                  {connectionStatus}
               </p>
               <CharacterSelection 
@@ -310,7 +334,7 @@ export default function Game() {
           player={player}
           setPlayer={setPlayer}
           gameRoom={gameRoom}
-          sendToRoom={sendMessage}
+          broadcast={sendMessage}
           disconnectedPeers={disconnectedPeers}
         />
       )}
