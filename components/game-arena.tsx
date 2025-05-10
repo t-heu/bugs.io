@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 
 import { useMobile } from "@/hooks/use-mobile"
 import { useKeyboardControls } from "@/hooks/use-keyboard-controls"
@@ -11,15 +9,40 @@ import { useMobileJoystick } from "@/hooks/use-mobile-joystick"
 import { useAbilityControl } from "@/hooks/use-ability-control"
 import { useMobileAbilityButton } from "@/hooks/use-mobile-ability-button"
 import { useAbilityLogic } from "@/hooks/use-ability-logic"
-import { usePlayerPositionSocket } from "@/hooks/use-player-position-socket"
 
-import { database, ref, update, off, onValue, onChildChanged, get, remove } from "@/api/firebase"
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
-import { monitorConnectionStatus } from "@/utils/monitor-connection"
 import { VIEWPORT_SIZE } from "@/utils/game-constants"
-import { handleCactusCollision, handleFoodCollision, updatePlayerPosition, handlePlayerAttack, applyPoisonDamageToTargets } from "@/utils/game-logic"
+import { 
+  handleCactusCollision, 
+  handleFoodCollision, 
+  updatePlayerPosition, 
+  handlePlayerAttack, 
+  applyPoisonDamageToTargets 
+} from "@/utils/game-logic"
 
-export default function GameArena({ setAssassin, onGameOver, roomKey, player, setPlayer }: any) {
+import { Player, GameRoom } from "@/app/interfaces"
+
+interface GameArenaProps {
+  setAssassin: React.Dispatch<React.SetStateAction<string>>;
+  onGameOver: (score: number) => void;
+  roomKey: string;
+  player: Player;
+  setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
+  gameRoom: GameRoom;
+  sendToRoom: any;
+  disconnectedPeers: any
+}
+
+export default function GameArena({ 
+  setAssassin, 
+  onGameOver, 
+  roomKey, 
+  player, 
+  setPlayer, 
+  gameRoom,
+  sendToRoom,
+  disconnectedPeers
+}: GameArenaProps) {
   const canvasRef = useRef(null)
   const joystickRef = useRef(null)
   const attackButtonRef = useRef<HTMLDivElement | null>(null)
@@ -39,8 +62,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
   const [joystickAngle, setJoystickAngle] = useState(0)
   const [joystickDistance, setJoystickDistance] = useState(0)
-  const [otherPlayers, setOtherPlayers] = useState<any[]>([])
-  const [gameOver, setGameOver] = useState(false)
+  const [otherPlayers, setOtherPlayers] = useState<Player[]>([])
 
   const isMobile = useMobile()
   useKeyboardControls(setKeys, attackPressedRef)
@@ -54,255 +76,184 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
     setJoystickDistance
   );
 
-  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer);
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer, sendToRoom);
 
   useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
 
-  const { sendPosition, isDisconnected } = usePlayerPositionSocket(player, roomKey, (update) => {
-    setOtherPlayers((prev) =>
-      prev.map((p) => (p.uid === update.uid ? { ...p, position: { x: update.x, y: update.y } } : p))
-    );
-  });  
-
-  useEffect(() => monitorConnectionStatus(roomKey, player.uid), [roomKey, player.uid]);
-  
-  // Inicializa o jogo uma única vez
-  useEffect(() => {
-    const data = ref(database, `bugsio/rooms/${roomKey}`)
-    get(data).then(snapshot => {
-      const snapData = snapshot.val() || {}
-      setCactus(snapData.cactus || [])
-      setFood(snapData.food || [])
-    })
-  }, [roomKey])  
-
-  // Escuta mudanças no jogador
-  useEffect(() => {
-    if (!roomKey || !player?.uid) return
-    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)
-
-    const unsubscribe = onChildChanged(playerRef, snapshot => {
-      const key = snapshot.key
-      const value = snapshot.val()
-      if (!key) return
-
-      if (value?.stats?.health === 0) {
-        setAssassin(`Você foi eliminado por ${value.killer}!` || '')
-        setGameOver(true)
-        onGameOver(player.score)
-        return
-      }
-
-      setPlayer((prev: any) => ({ ...prev, [key]: value }))
-    })
-
-    return () => off(playerRef, 'child_changed', unsubscribe)
-  }, [roomKey, player?.uid, setPlayer])
-
-  // Escuta outros jogadores
-  useEffect(() => {
-    if (!roomKey) return;
-  
-    const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
-  
-    const unsubscribe = onValue(playersRef, (snapshot) => {
-      const playersData = snapshot.val() || {};
-      let otherPlayers = Object.values(playersData).filter(
-        (p: any) => p.uid !== player.uid
-      );
-  
-      // Remove jogadores com saúde 0
-      otherPlayers = otherPlayers.filter((p: any) => p.stats.health > 0);
-  
-      // Adia o setState para o final do ciclo de render
-      setTimeout(() => {
-        setOtherPlayers((prevState) => {
-          const updated = Object.values(playersData)
-            .filter((p: any) => p.uid !== player.uid && p.stats.health > 0)
-            .map((p: any) => {
-              const existing = prevState.find((op) => op.uid === p.uid);
-              return {
-                ...p,
-                // Se o dado do Firebase não tiver posição, mantém a anterior
-                position: p.position ?? existing?.position ?? { x: 0, y: 0 },
-              };
-            });
-      
-          return updated;
-        });
-      }, 0);
-    });
-  
-    return () => {
-      off(playersRef, "value", unsubscribe);
-    };
-  }, [roomKey, player.uid]);  
-
-  // update food
-  useEffect(() => {
-    if (!roomKey) return;
-  
-    const foodRef = ref(database, `bugsio/rooms/${roomKey}/food`);
-    const unsubscribeChanged = onChildChanged(foodRef, (snapshot) => {
-      const index = snapshot.key;
-      const data = snapshot.val();
-  
-      setFood((prev: any) => {
-        const updated = [...prev];
-        updated[Number(index)] = data;
-        return updated;
-      });
-    });
-  
-    return () => {
-      off(foodRef, 'child_changed', unsubscribeChanged);
-    };
-  }, [roomKey]);
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
-    if (isDisconnected.current) {
-      removePlayer('Sua conexão foi perdida ou você ficou inativo por um tempo.');
+    if (!player || !gameRoom || hasJoinedRef.current) return;
+
+    hasJoinedRef.current = true;
+
+    setCactus(gameRoom.cactus || []);
+  }, [player?.uid, gameRoom?.players?.length]);
+
+  useEffect(() => {
+    if (gameRoom?.food) {
+      setFood(gameRoom.food);
     }
-  }, [isDisconnected.current]);
+  }, [gameRoom?.food]);
+
+  useEffect(() => {
+    if (!player || !gameRoom?.players) return;
+    //console.log(gameRoom)
+    const currentPlayers = gameRoom.players;
+
+    // Atualiza o próprio player
+    const updatedSelf = currentPlayers.find(p => p.uid === player.uid);
+    if (updatedSelf) {
+      setPlayer((prev: any) => {
+        const prevUpdate = prev?.lastUpdate ?? 0;
+        const nextUpdate = updatedSelf.lastUpdate ?? 0;
+
+        if (nextUpdate > prevUpdate) {
+          return {
+            ...prev,
+            stats: {
+              ...prev.stats,
+              ...(updatedSelf.stats || {}),
+            },
+            effects: {
+              ...prev.effects,
+              ...(updatedSelf.effects || {}),
+            },
+            ability: updatedSelf.ability ?? prev.ability,
+            lastUpdate: nextUpdate,
+            position: prev.position, // mantém posição local
+          };
+        }
+
+        return prev;
+      });
+    }
+
+    // Atualiza os outros jogadores
+    const updatedOthers = currentPlayers.filter(p => {
+    const isDisconnected = disconnectedPeers && p.uid === disconnectedPeers;
+    const isDead = p.stats.health <= 0;
+
+    if (isDisconnected || isDead) {
+      sendToRoom(JSON.stringify({
+        type: 'player_exit',
+        uid: p.uid, // corrigido: uid do player, não do disconnectedPeers
+      }));
+    }
+
+    return !isDisconnected && !isDead && p.uid !== player.uid;
+  });
+  setOtherPlayers(updatedOthers);
+}, [gameRoom?.players, player?.uid, disconnectedPeers])
 
   const renderGame = useCallback(() => {
     const canvas: HTMLCanvasElement | any = canvasRef.current
-    if (!canvas) return
-  
+    if (!canvas || !player?.position) return;
+
     const ctx = canvas.getContext("2d")
-    if (!ctx) return
-  
-    const now = Date.now()
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    if (!player?.position) return;
+    if (!ctx) return;
+
+    const now = Date.now();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawGrid(ctx, canvas, viewportOffset)
     drawArenaBoundary(ctx, viewportOffset)
     drawEntities(ctx, food, (ctx, item) => drawFood(ctx, item, viewportOffset));
     drawEntities(ctx, cactus, (ctx, item) => drawCactus(ctx, item, viewportOffset));
-    otherPlayers.forEach(p => {
-      drawPlayer(ctx, p, now, viewportOffset, false)
-    })
+    otherPlayers.forEach(p => drawPlayer(ctx, p, now, viewportOffset, false))
     drawPlayer(ctx, player, now, viewportOffset, true)
-  }, [food, cactus, otherPlayers, player, viewportOffset])
+  }, [food, cactus, otherPlayers, player, viewportOffset]);
 
   const updateGame = useCallback(() => {
     if (!canvasRef.current || !player) return;
-    
-    const now = Date.now()
-    const nowEffect = now
-    const isInvincible = activeEffectsRef.current["invincible"] && activeEffectsRef.current["invincible"] > nowEffect;
-    const hasSpeedBoost = activeEffectsRef.current["speedBoost"] && activeEffectsRef.current["speedBoost"] > nowEffect;
-    const hasSlow = activeEffectsRef.current["slow"] && activeEffectsRef.current["slow"] > nowEffect;
+
+    const now = Date.now();
+    const nowEffect = now;
+    const isInvincible = activeEffectsRef.current["invincible"] > nowEffect;
+    const hasSpeedBoost = activeEffectsRef.current["speedBoost"] > nowEffect;
+    const hasSlow = activeEffectsRef.current["slow"] > nowEffect;
 
     let finalSpeed = player.stats.speed;
-
-    if (hasSpeedBoost) {
-      finalSpeed *= player.ability.boost;
-    }
-
-    if (hasSlow) {
-      finalSpeed *= player.ability.slowAmount;
-    }
-
-    let speed = finalSpeed;
+    if (hasSpeedBoost) finalSpeed *= player.ability.boost;
+    if (hasSlow) finalSpeed *= player.ability.slowAmount;
 
     const { newX, newY } = updatePlayerPosition(
-      speed, 
-      isMobile, 
-      joystickActive, 
+      finalSpeed,
+      isMobile,
+      joystickActive,
       joystickAngle,
       joystickDistance,
       keys,
       player
     );
-  
-    setViewportOffset({
-      x: newX - VIEWPORT_SIZE / 2,
-      y: newY - VIEWPORT_SIZE / 2,
-    });
 
-    const {newHealth_food, newScore_food} = handleFoodCollision(newX, newY, food, player, roomKey);
-    if (newHealth_food || newScore_food) {
-      // Atualiza o estado local do player
-      setPlayer((prev: any) => ({
-        ...prev,
-        stats: {
-          ...prev.stats,
-          health: newHealth_food,
-        },
-        score: newScore_food,
-      }));
-  
-      // Atualiza o player no Firebase
-      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`), {
-        'stats/health': newHealth_food,
-        score: newScore_food,
-      })
-    }
+    setViewportOffset({ x: newX - VIEWPORT_SIZE / 2, y: newY - VIEWPORT_SIZE / 2 });
+    handleFoodCollision(newX, newY, food, player, sendToRoom, setFood);
 
-    const {tookDamage, newHealth} = handleCactusCollision(newX, newY, cactus, player)
+    const { tookDamage, newHealth } = handleCactusCollision(newX, newY, cactus, player);
     if (tookDamage && !isInvincible) {
       if (newHealth === 0) {
-        setAssassin("Você foi eliminado por cactu!");
+        setAssassin("Você foi morto por cactu!");
         onGameOver(player.score);
       }
   
-      setPlayer((prev: any) => ({
-        ...prev,
-        stats: {
-          ...prev.stats,
-          health: newHealth,
-        },
-      }))
-      update(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}/stats`), {
-        health: newHealth,
-      })      
-    }   
+        sendToRoom(JSON.stringify({
+          type: 'player_update',
+          uid: player.uid,
+          updates: { stats: { health: newHealth } },
+          lastUpdate: Date.now()
+        }));
+      
+    }
 
     if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
       lastAttackTimeRef.current = now;
-      handlePlayerAttack(
-        player, 
-        otherPlayers,
-        roomKey,
-        setOtherPlayers,
-        lastPoisonTickRef
-      );
-    }    
+      handlePlayerAttack(player, otherPlayers, roomKey, setOtherPlayers, lastPoisonTickRef, sendToRoom);
+    }
 
-    // dar dano de veneno a cada segundo
-    applyPoisonDamageToTargets(
-      nowEffect, now, otherPlayers, roomKey, player, lastPoisonTickRef, setOtherPlayers
-    )
+    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, roomKey, player, lastPoisonTickRef, setOtherPlayers, sendToRoom);
 
-    // ☠️ Verifica morte
     if (player.stats.health <= 0) {
-      get(ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`)).then(snapshot => {
-        const data = snapshot.val()
-        setPlayer(data)
-        setAssassin(`Você foi eliminado por ${data.killer}!` || '')
-      });
-
+      setAssassin(`Você foi eliminado por ${player.killer || 'desconhecido'}!`);
       onGameOver(player.score);
+      setOtherPlayers(prev => prev.filter(p => p.uid !== player.uid));
+
+      sendToRoom(JSON.stringify({
+        type: 'player_exit',
+        uid: player.uid,
+        room: roomKey
+      }));
       return;
     }
 
     const newPosition = { x: newX, y: newY };
-    setPlayer((prev: any) => ({
-      ...prev,
-      position: newPosition,
-    }));
-    sendPosition(newPosition);
-  }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver])
+    const updatedPlayer = { 
+      ...player, 
+      stats: { ...player.stats, health: newHealth }, // Atualiza a saúde
+      position: newPosition // Atualiza a posição
+    };
+    setPlayer(updatedPlayer);
+
+    if (
+      Math.abs(player.position.x - newPosition.x) > 1 ||
+      Math.abs(player.position.y - newPosition.y) > 1
+    ) {
+      sendToRoom(JSON.stringify({
+        type: 'player_update',
+        uid: updatedPlayer.uid,
+        updates: { position: updatedPlayer.position },
+        lastUpdate: Date.now()
+      }));
+    }
+  }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver]);
 
   // Game loop
   useEffect(() => {
-    if (!player || gameOver || isLooping.current) return;
+    if (!player || isLooping.current) return;
 
     const loop = () => {
-      if (!player || gameOver) {
+      if (!player) {
         cancelAnimationFrame(animationId.current!);
         return;
       }
@@ -320,27 +271,19 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
         isLooping.current = false;
       }
     };
-  }, [player, gameOver, updateGame, renderGame]);
-
-  const removePlayer = (msg: string = '') => {
-    const playerRef = ref(database, `bugsio/rooms/${roomKey}/players/p${player.uid}`);
-    remove(playerRef)
-      .then(() => {
-        setAssassin(msg);
-        onGameOver(0);
-      })
-      .catch((error) => {
-        console.error("Erro ao remover jogador:", error);
-      });
-  };  
+  }, [player, updateGame, renderGame]);
 
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você irá perder sua pontuação atual.");
     if (confirmExit) {
-      removePlayer();
+      setAssassin('');
+      onGameOver(0);
     }
   };
-  
+
+  const healthPercentage = (player.stats.health / player.stats.maxHealth) * 100;
+  const cooldownPercentage = (cooldownTime / (player.ability.cooldown * 1000)) * 100;
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-green-950">
       {/* Game canvas */}
@@ -357,6 +300,7 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
           <div className="text-sm text-green-300">Seu nome: {player.name}</div>
           <div className="text-sm text-green-300">Players On: {otherPlayers.length}</div>
+          <div className="text-sm text-green-300">ROOM ID: {roomKey}</div>
         </div>
 
         <div className="w-1/3 space-y-3">
@@ -365,20 +309,19 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
             <div className="text-xs text-green-300 mb-1 font-semibold tracking-wide">
               ❤️ Vida: {Math.floor(player.stats.health)}/{player.stats.maxHealth}
             </div>
-            <Progress
-              value={(player.stats.health / player.stats.maxHealth) * 100}
-              className={`
-                h-3 rounded-md overflow-hidden transition-all duration-300
-                bg-green-900/30
-                ${
-                  (player.stats.health / player.stats.maxHealth) > 0.5
-                    ? "[&>div]:bg-green-300"
-                    : (player.stats.health / player.stats.maxHealth) > 0.25
-                    ? "[&>div]:bg-orange-400"
-                    : "[&>div]:bg-red-500"
-                }
-              `}
-            />
+            <div className="w-full h-3 rounded-md bg-green-900/30 overflow-hidden">
+              <div
+                className={`
+                  h-full transition-all duration-300
+                  ${healthPercentage > 50
+                    ? "bg-green-300"
+                    : healthPercentage > 25
+                    ? "bg-orange-400"
+                    : "bg-red-500"}
+                `}
+                style={{ width: `${healthPercentage}%` }}
+              />
+            </div>
           </div>
 
           {/* Cooldown */}
@@ -387,22 +330,22 @@ export default function GameArena({ setAssassin, onGameOver, roomKey, player, se
               <div className="text-xs text-green-300 mb-1 font-semibold tracking-wide">
                 ⏳ Cooldown: {Math.floor(cooldownTime / 1000)}s
               </div>
-              <Progress
-                value={(cooldownTime / (player.ability.cooldown * 1000)) * 100}
-                className="h-3 rounded-md bg-red-900/30 overflow-hidden transition-all duration-300 [&>div]:bg-lime-500"
-              />
+              <div className="w-full h-3 rounded-md bg-red-900/30 overflow-hidden">
+                <div
+                  className="h-full bg-lime-500 transition-all duration-300"
+                  style={{ width: `${cooldownPercentage}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
 
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            className="text-green-300 hover:text-white hover:bg-green-800"
+          <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2"
             onClick={() => exitGame()}            
           >
             Sair
-          </Button>
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
 import insects from "../../insects.json";
@@ -9,10 +8,10 @@ export default function Instructions() {
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
       <div className="max-w-3xl mx-auto py-8">
         <Link href="/">
-          <Button variant="ghost" className="text-green-300 hover:text-white hover:bg-green-800">
+          <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
-          </Button>
+          </button>
         </Link>
 
         <h1 className="text-4xl font-bold mt-6 mb-8 text-center">Como Jogar</h1>
@@ -67,7 +66,9 @@ export default function Instructions() {
 
         <div className="mt-10 text-center">
           <Link href="/game">
-            <Button className="bg-green-600 hover:bg-green-500 px-8 py-6 text-lg">Começar a Jogar</Button>
+            <button className="bg-green-600 hover:bg-green-500 px-8 py-3 text-lg text-[#111] rounded-md">
+              Começar a Jogar
+            </button>
           </Link>
         </div>
       </div>

@@ -1,6 +1,5 @@
 "use client"
 
-import Script from 'next/script';
 import { useEffect, useRef } from 'react';
 
 export default function AdBanner() {
@@ -11,14 +10,14 @@ export default function AdBanner() {
       if (
         adRef.current &&
         adRef.current.offsetWidth > 0 &&
-        typeof window !== 'undefined' &&
+        typeof window !== "undefined" &&
         (window as any).adsbygoogle
       ) {
         try {
           ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
           clearInterval(interval);
         } catch (e) {
-          console.error('AdSense push error:', e);
+          console.error("Erro ao tentar carregar o AdSense:", e);
         }
       }
     }, 500);
@@ -28,12 +27,6 @@ export default function AdBanner() {
 
   return (
     <>
-      <Script
-        id="adsbygoogle-init"
-        strategy="afterInteractive"
-        async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${process.env.NEXT_PUBLIC_CA_PUB}`}
-        crossOrigin="anonymous"
-      />
       <ins
         ref={adRef}
         className="adsbygoogle"

@@ -1,210 +1,332 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+
+import { database, ref, set } from '@/api/firebase';
+
 import CharacterSelection from "@/components/character-selection"
 import GameArena from "@/components/game-arena"
 
-import { database, set, ref, update, get, child, push } from "@/api/firebase"
 import generateRandomWord from "@/utils/generate-random-word"
 import { generateInitialFood } from "@/utils/food"
 import { generateInitialCactus } from "@/utils/cactus"
 import { ARENA_SIZE, FOOD_COUNT, CACTUS_COUNT } from "@/utils/game-constants"
+import { 
+  handleJoin, 
+  handleFullGameRoom, 
+  handleRemovePlayer, 
+  handlePlayerUpdate, 
+  handleFoodUpdate,
+} from '@/utils/game-event-handlers';
+import { useWebRTC } from '@/utils/use-web-rtc';
 
-import { exitPlayer } from "@/utils/monitor-connection"
+import { monitorHostConnection } from "@/utils/monitor-connection"
 
-import insects from "../../insects.json"
+import insects from "@/insects.json"
 
 export default function Game() {
-  const [gameState, setGameState] = useState("selection") // selection, playing, gameOver
-  const [score, setScore] = useState(0)
-  const [roomKey, setRoomKey] = useState('')
-  const [player, setPlayer] = useState<any>({})
+  const [gameState, setGameState] = useState("selection") // selection, playing, gameOve
   const [assassin, setAssassin] = useState('')
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const characters = insects;
+  const [joinMode, setJoinMode] = useState<"none" | "host" | "guest">("none");
+  const [roomInput, setRoomInput] = useState(""); // para digitar o código da sala
+
+  const score = useRef<number>(0);
+
+  const [isHost, setIsHost] = useState<null | boolean>(null);
+  const [player, setPlayer] = useState<any>(null);
+  const [gameRoom, setGameRoom] = useState<any>(null)
+  const [connectionStatus, setConnectionStatus] = useState('Esperando...');
+  const [userId] = useState(() => Math.random().toString(36).slice(2, 8));
+  const [hasJoined, setHasJoined] = useState(false);
+
+  const { sendMessage, onMessage, connected, createOffer, disconnectedPeers, isClosed } = useWebRTC(roomInput, isHost, userId);
 
   useEffect(() => {
-    if (player && player.uid && gameState === "selection") {
-      setGameState("playing");
-    }
-  }, [player]);
+    if (isHost) monitorHostConnection(roomInput)
+  }, [roomInput, player?.uid]);
 
-  const handleCharacterSelect = (character: any, scoreCurrent: number = 0) => {
-    if (!name) return alert('Erro: Nome não fornecido');
+  useEffect(() => {
+    onMessage((msg, from) => {
+      const data = JSON.parse(msg);
+      const type = data?.type;
+      console.log(data)
+      if (!type) return;
   
-    if (!(/^[a-zA-Z\s]*$/.test(name))) {
-      return alert('Erro: Nome inválido');
+      const handlers: Record<string, Function> = {
+        join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom, sendMessage),
+        gameRoom: (data: any) => handleFullGameRoom(data, setGameRoom),
+        player_update: (data: any) => handlePlayerUpdate(data, setGameRoom, sendMessage),
+        player_exit: (data: any) => handleRemovePlayer(data, setGameRoom),
+        food_update: (data: any) =>handleFoodUpdate(data, setGameRoom),
+      };
+  
+      if (handlers[type]) {
+        handlers[type](data, from);
+      }
+    });
+  }, [onMessage, isHost]);
+
+  useEffect(() => {
+    if (isClosed) {
+      setConnectionStatus('Esperando...');
+      setAssassin('Conexão fechada com host!');
+      handleGameOver(0);
     }
+  }, [isClosed]);
 
-    setLoading(true)
+  useEffect(() => {
+    if (isHost) {
+      // Lógica do host: O host apenas define a conexão e começa o jogo assim que ele criar a sala
+      if (gameRoom && !hasJoined) {
+        setConnectionStatus('Conectado!');
+        setGameState("playing");
+        setHasJoined(true);
+      }
+    } else if (connected && !isHost && player && !hasJoined) {
+      // Lógica do guest: O guest envia a mensagem de 'join' apenas uma vez
+      sendMessage(JSON.stringify({ type: 'join', player }));
 
-    if (player.uid) {
-      exitPlayer(roomKey, player.uid)
-      setPlayer({})
-      setAssassin('')
+      // Atualiza o estado de conexão
+      setConnectionStatus('Conectado!');
+      setGameState("playing");
+
+      // Marca que o jogador já entrou para evitar repetição
+      setHasJoined(true);
     }
+  }, [connected, isHost, player, gameRoom, sendMessage, hasJoined]);
 
-    setScore(scoreCurrent)
-    joinOrCreateRoom(name, character, scoreCurrent)
+  async function createHost(character: any) {
+    if (!name) return alert("Erro: Nome não fornecido");
+    if (!/^[a-zA-Z\s]*$/.test(name)) return alert("Erro: Nome inválido");
+
+    try {
+      setLoading(true);
+      const playerData = createPlayer(name, character, 0);
+      const roomKey = createGame(name, playerData);
+
+      if(!roomKey) return;
+
+      await set(ref(database, `bugsio/rooms/${roomKey}`), {
+        timestamp: Date.now() // número (mais comum)
+      });
+      
+      setPlayer(playerData);
+      setRoomInput(roomKey)
+
+      setIsHost(true);
+      setConnectionStatus(`Aguardando convidados... em: ${roomKey}`);
+    } catch (e) {
+      setLoading(false);
+      setConnectionStatus('Esperando...');
+      console.error("Erro ao criar jogo:", e);
+    }
   }
+  
+  async function joinRoom(character: any) {
+    if (!name) return alert("Erro: Nome não fornecido");
+    if (!/^[a-zA-Z\s]*$/.test(name)) return alert("Erro: Nome inválido");
+    if (!roomInput.trim()) return alert('Insira o código da sala');
+
+    try {
+      setLoading(true);
+
+      const playerData = createPlayer(name, character, 0);
+      setPlayer(playerData);      
+
+      setIsHost(false);
+      setConnectionStatus('Conectando ao host...');
+      await createOffer();
+    } catch (error) {
+      setLoading(false);
+      setConnectionStatus((error as Error).message);
+      console.log("Erro ao entrar na sala:", error);
+    }
+  }  
 
   const handleGameOver = (finalScore: number) => {
     setGameState("gameOver")
     setLoading(false)
-    setScore(finalScore)
+    score.current = finalScore
   }
 
   const restartGame = () => {
     setGameState("selection")
     setLoading(false)
+    setJoinMode(isHost ? "host" : "guest")
   }
 
-  function createPlayer(roomKey: string, name: string, character: any, scoreCurrent: number) {
-    try {
-      const updates: any = {};
-      const playersRef = ref(database, `bugsio/rooms/${roomKey}/players`);
-      const newPlayerRef = push(playersRef);
-      const nextPlayer = newPlayerRef.key;
-  
-      const playerData = {
-        name,
-        uid: nextPlayer,
-        killer: '',
-        size: 30,
-        score: scoreCurrent,
-        stats: {
-          speed: character.stats.speed * 0.5,
-          attack: character.stats.attack,
-          health: character.stats.health,
-          maxHealth: character.stats.health,
-        },
-        effects: {
-          invincible: '',
-          speedBoost: '',
-          poisonedUntil: '',
-          specialAttack: '',
-          slow: ''
-        },
-        poisonNextAttack: false,
-        type: character.id,
-        ability: character.ability || null
-      };
-
-      const localPlayer = {...playerData, position: {
+  function createPlayer(name: string, character: any, scoreCurrent: number) {
+    const playerData = {
+      name,
+      uid: userId,
+      killer: '',
+      size: 30,
+      score: scoreCurrent,
+      position: {
         x: ARENA_SIZE / 2,
         y: ARENA_SIZE / 2,
-      }}
+      },
+      stats: {
+        speed: character.stats.speed * 0.5,
+        attack: character.stats.attack,
+        health: character.stats.health,
+        maxHealth: character.stats.health,
+      },
+      effects: {
+        invincible: '',
+        speedBoost: '',
+        poisonedUntil: '',
+        specialAttack: '',
+        slow: ''
+      },
+      poisonNextAttack: false,
+      type: character.id,
+      ability: character.ability || null,
+      lastUpdate: Date.now()
+    };
 
-      setRoomKey(roomKey)
-      setPlayer(localPlayer);
-  
-      if (nextPlayer) {
-        updates[`bugsio/rooms/${roomKey}/players/p${nextPlayer}`] = playerData;
-        update(ref(database), updates);
-      }
-    } catch (error) {
-      setLoading(false)
-      console.error('Erro ao criar jogador:', error);
-    }
+    return playerData
   }
   
-  async function createGame(status: boolean, name: string, character: any, scoreCurrent: number) {
-    try {
-      if (status) {
-        const roomKey = generateRandomWord(6);
+  function createGame(name: string, playerData: any) {
+    const roomKey = generateRandomWord(6);
 
-        const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
-        const cactusList = generateInitialCactus(CACTUS_COUNT, ARENA_SIZE)
-  
-        await set(ref(database, 'bugsio/rooms/' + roomKey), {
-          gameInProgress: false,
-          createdAt: Date.now(),
-          food: initialFood,
-          cactus: cactusList
-        });
-  
-        createPlayer(roomKey, name, character, scoreCurrent);
-      }
-    } catch (e) {
-      setLoading(false)
-      console.error('Erro ao criar jogo:', e);
-    }
+    const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
+    const cactusList = generateInitialCactus(CACTUS_COUNT, ARENA_SIZE)
+
+    const game = {
+      gameInProgress: false,
+      createdAt: Date.now(),
+      food: initialFood,
+      cactus: cactusList,
+      players: [playerData],
+      roomId: roomKey,
+      host: name,
+    };
+    
+    setGameRoom(game)
+
+    return roomKey
   }
-  
-  function joinOrCreateRoom(name: string, character: any, scoreCurrent: number) {
-    get(child(ref(database), 'bugsio/rooms')).then((snapshot: any) => {
-      if (snapshot.exists()) {
-        const rooms = snapshot.val();
-        let foundRoom = false;
-  
-        Object.keys(rooms).some((roomKey) => {
-          const room = rooms[roomKey];
-          const playersObject = room.players || {};
-          const numPlayers = Object.keys(playersObject).length;
-  
-          if (!room.gameInProgress && numPlayers < 8) {
-            createPlayer(roomKey, name, character, scoreCurrent);
-            foundRoom = true;
-            return true;
-          }
-        });
-  
-        if (!foundRoom) {
-          createGame(true, name, character, scoreCurrent);
-        }
-      } else {
-        createGame(true, name, character, scoreCurrent);
-      }
-    }).catch((error: any) => {
-      setLoading(false)
-      console.error(`Erro ao buscar salas: ${error.message}`);
-    });
-  }  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white">
       {gameState === "selection" && (
         <div className="p-4">
           <Link href="/">
-            <Button variant="ghost" className="text-green-300 hover:text-white hover:bg-green-800">
+            <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2 w-fit">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
-            </Button>
+            </button>
           </Link>
-          <CharacterSelection 
-            characters={characters} 
-            name={name} 
-            onName={setName} 
-            onSelect={handleCharacterSelect} 
-            score={score} 
-            loading={loading}
-          />
+
+          {joinMode === "none" && (
+            <div className="p-4 max-w-xl mx-auto flex flex-col gap-6">
+              <div className="flex flex-col gap-4 text-center">
+                <h2 className="text-2xl font-semibold">Como deseja jogar?</h2>
+                <button onClick={() => setJoinMode("host")} className="bg-green-600 hover:bg-green-500 text-[#111] font-medium py-2 px-4 rounded-md">
+                  Criar Sala
+                </button>
+                <button onClick={() => setJoinMode("guest")} className="border border-green-500 hover:bg-green-500 hover:text-[#111] text-green-300 py-2 px-4 rounded-md">
+                  Entrar em Sala
+                </button>
+              </div>
+            </div>
+          )}
+
+          {joinMode === "guest" && (
+            <div className="flex flex-col items-center gap-2">
+              <label htmlFor="roomKey" className="text-sm text-gray-300">Digite o código da sala</label>
+              <input 
+                id="roomKey"
+                value={roomInput}
+                onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
+                placeholder="EX: ABC123"
+                className="w-full px-4 py-2 rounded-md text-[#eee] mb-4 bg-[#111]"
+              />
+            </div>
+          )}
+
+          {(joinMode === "host" || joinMode === "guest") && (
+            <>
+              <p className="text-center px-4 py-2 rounded-md text-[#eee] mb-4 bg-[#111]">
+                 {connectionStatus}
+              </p>
+              <CharacterSelection 
+                characters={insects} 
+                name={name} 
+                onName={setName} 
+                onSelect={(character: any) => {
+                  if (!connected && joinMode === "host") {
+                    createHost(character);
+                  } else if (!connected && joinMode === "guest") {
+                    joinRoom(character);
+                  } else if (connected && joinMode === "guest") {
+                    const newPlayer = createPlayer(name, character, player.score);
+                    setGameRoom((prev: any) => {
+                      if (!prev) return prev;
+
+                      // Remove o jogador antigo com o mesmo UID, se existir
+                      const filteredPlayers = prev.players.filter((p: any) => p.uid !== newPlayer.uid);
+
+                      const updatedGame = {
+                        ...prev,
+                        players: [...filteredPlayers, newPlayer],
+                      };
+
+                      return updatedGame;
+                    });
+                    setPlayer(newPlayer)
+                    // Envia a mensagem para o host
+                    sendMessage(JSON.stringify({ type: 'join', player: newPlayer }));
+                    setGameState("playing");
+                  } else if (connected && joinMode === "host") {
+                    const newPlayer = createPlayer(name, character, player.score);
+                    setPlayer(newPlayer)
+                    setGameState("playing");
+                  }
+                }} 
+                score={score.current} 
+                loading={loading}
+              />
+            </>
+          )}
         </div>
       )}
 
-      {gameState === "playing" && player && roomKey && <GameArena setAssassin={setAssassin} onGameOver={handleGameOver} roomKey={roomKey} player={player} setPlayer={setPlayer} />}
+      {gameState === "playing" && player && roomInput && gameRoom && (
+        <GameArena
+          setAssassin={setAssassin}
+          onGameOver={handleGameOver}
+          roomKey={roomInput}
+          player={player}
+          setPlayer={setPlayer}
+          gameRoom={gameRoom}
+          sendToRoom={sendMessage}
+          disconnectedPeers={disconnectedPeers}
+        />
+      )}
 
       {gameState === "gameOver" && (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="bg-green-900/70 p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-3xl font-bold mb-4">Fim de Jogo</h2>
             <p className="text-xl mb-6">{assassin ? assassin : 'Você saiu!'}</p>
-            <p className="text-xl mb-6">Sua pontuação: {score}</p>
+            <p className="text-xl mb-6">Sua pontuação: {score.current}</p>
 
             <div className="space-y-4">
-              <Button onClick={restartGame} className="w-full bg-green-600 hover:bg-green-500">
+              <button onClick={restartGame} className="mb-2 w-full border-2 text-[#111] border-green-600 bg-green-600 hover:bg-green-500 py-2 px-4 rounded-md text-lg font-medium">
                 Jogar Novamente
-              </Button>
+              </button>
 
-              <Link href="/" className="block w-full">
-                <Button variant="outline" className="w-full border-green-500 text-green-300 hover:bg-green-900/30">
+              <Link href="/">
+                <button className="w-full border-2 border-green-500 text-green-300 hover:bg-green-500 text-lg font-medium py-2 px-4 rounded-md hover:text-[#111]">
                   Menu Principal
-                </Button>
+                </button>
               </Link>
             </div>
           </div>

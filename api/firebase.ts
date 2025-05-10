@@ -14,7 +14,8 @@ import {
   orderByChild, 
   equalTo,
   off,
-  onChildChanged
+  onChildChanged,
+  onChildAdded
 } from "firebase/database";
 import { getAuth } from "firebase/auth"
 
@@ -46,5 +47,6 @@ export {
   equalTo,
   auth,
   off,
-  onChildChanged
+  onChildChanged,
+  onChildAdded
 };

@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ![Logo](docs/logo.png "logo")
 
-"Bugs.io" é um minigame de ação em tempo real onde o jogador controla um inseto em um campo de batalha (arena) cheio de outros bots controlados por IA. O objetivo é coletar comida espalhada pelo mapa, crescer em tamanho e enfrentar outros insetos em combates estratégicos.
+"Bugs" é um minigame de ação em tempo real onde o jogador controla um inseto em um campo de batalha (arena) cheio de outros bots controlados por IA. O objetivo é coletar comida espalhada pelo mapa, crescer em tamanho e enfrentar outros insetos em combates estratégicos.
 
 ## 🖼️ Preview
 ![Screen 1](docs/preview.png "Screen 1")

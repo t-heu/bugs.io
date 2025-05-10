@@ -1,6 +1,6 @@
 {
-  "name": "Bugs.io",
-  "short_name": "Bugs.io",
+  "name": "Bugs",
+  "short_name": "Bugs",
   "description": "Um jogo de batalha de insetos online",
   "start_url": ".",
   "display": "standalone",
