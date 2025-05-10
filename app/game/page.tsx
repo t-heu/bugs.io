@@ -53,7 +53,7 @@ export default function Game() {
     onMessage((msg, from) => {
       const data = JSON.parse(msg);
       const type = data?.type;
-      console.log(data)
+      
       if (!type) return;
   
       const handlers: Record<string, Function> = {

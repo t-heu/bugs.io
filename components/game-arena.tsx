@@ -92,14 +92,12 @@ export default function GameArena({
   }, [player?.uid, gameRoom?.players?.length]);
 
   useEffect(() => {
-    if (gameRoom?.food) {
-      setFood(gameRoom.food);
-    }
+    if (gameRoom?.food) setFood(gameRoom.food);
   }, [gameRoom?.food]);
 
   useEffect(() => {
     if (!player || !gameRoom?.players) return;
-    //console.log(gameRoom)
+
     const currentPlayers = gameRoom.players;
 
     // Atualiza o próprio player
@@ -130,22 +128,25 @@ export default function GameArena({
       });
     }
 
-    // Atualiza os outros jogadores
+    // Atualiza os outros jogadores - garantir que mortos sejam removidos
     const updatedOthers = currentPlayers.filter(p => {
-    const isDisconnected = disconnectedPeers && p.uid === disconnectedPeers;
-    const isDead = p.stats.health <= 0;
+      const isDisconnected = disconnectedPeers && p.uid === disconnectedPeers;
+      const isDead = p.stats.health <= 0;
 
-    if (isDisconnected || isDead) {
-      sendToRoom(JSON.stringify({
-        type: 'player_exit',
-        uid: p.uid, // corrigido: uid do player, não do disconnectedPeers
-      }));
-    }
+      if (isDead) {
+        // Envia mensagem de que o jogador morreu
+        sendToRoom(JSON.stringify({
+          type: 'player_exit',
+          uid: p.uid,
+          reason: 'dead'
+        }));
+      }
 
-    return !isDisconnected && !isDead && p.uid !== player.uid;
-  });
-  setOtherPlayers(updatedOthers);
-}, [gameRoom?.players, player?.uid, disconnectedPeers])
+      return !isDisconnected && !isDead && p.uid !== player.uid;
+    });
+
+    setOtherPlayers(updatedOthers);
+  }, [gameRoom?.players, player?.uid, disconnectedPeers]);
 
   const renderGame = useCallback(() => {
     const canvas: HTMLCanvasElement | any = canvasRef.current

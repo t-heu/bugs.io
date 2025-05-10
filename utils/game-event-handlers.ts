@@ -59,6 +59,20 @@ export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any
     const updatedPlayers = prev.players.map((p: any) => {
       if (p.uid !== data.uid) return p;
 
+      // Verificação mais rigorosa de atualizações
+      if (data.updates.stats?.health !== undefined && data.updates.stats.health <= 0) {
+        // Se o jogador morreu, garantir que permaneça morto
+        return {
+          ...p,
+          stats: {
+            ...p.stats,
+            health: 0, // Força health para 0
+            ...(data.updates.stats || {}),
+          },
+          lastUpdate: Date.now(),
+        };
+      }
+
       const isNewer = (data.lastUpdate ?? 0) > (p.lastUpdate ?? 0);
       if (!isNewer) return p;
 
@@ -82,11 +96,9 @@ export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any
       };
     });
 
-    const newRoom = {
+    return {
       ...prev,
       players: updatedPlayers,
     };
-
-    return newRoom;
   });
 }
