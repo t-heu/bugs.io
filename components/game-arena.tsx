@@ -110,6 +110,8 @@ export default function GameArena({
         if (nextUpdate > prevUpdate) {
           return {
             ...prev,
+            killer: updatedSelf.killer ?? prev.killer,
+            score: updatedSelf.score ?? prev.score,
             stats: {
               ...prev.stats,
               ...(updatedSelf.stats || {}),
@@ -198,22 +200,21 @@ export default function GameArena({
         setAssassin("Você foi morto por cactu!");
         onGameOver(player.score);
       }
-  
-        sendToRoom(JSON.stringify({
-          type: 'player_update',
-          uid: player.uid,
-          updates: { stats: { health: newHealth } },
-          lastUpdate: Date.now()
-        }));
-      
+
+      sendToRoom(JSON.stringify({
+        type: 'player_update',
+        uid: player.uid,
+        updates: { stats: { health: newHealth } },
+        lastUpdate: Date.now()
+      }));
     }
 
     if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
       lastAttackTimeRef.current = now;
-      handlePlayerAttack(player, otherPlayers, roomKey, setOtherPlayers, lastPoisonTickRef, sendToRoom);
+      handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, sendToRoom);
     }
 
-    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, roomKey, player, lastPoisonTickRef, setOtherPlayers, sendToRoom);
+    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, sendToRoom);
 
     if (player.stats.health <= 0) {
       setAssassin(`Você foi eliminado por ${player.killer || 'desconhecido'}!`);
@@ -301,7 +302,7 @@ export default function GameArena({
           <div className="text-sm text-green-300">Pontuação: {player.score}</div>
           <div className="text-sm text-green-300">Seu nome: {player.name}</div>
           <div className="text-sm text-green-300">Players On: {otherPlayers.length}</div>
-          <div className="text-sm text-green-300">ROOM ID: {roomKey}</div>
+          <div className="text-sm px-2 py-2 rounded-md text-green-300 bg-[#111]">ROOM ID: {roomKey}</div>
         </div>
 
         <div className="w-1/3 space-y-3">
@@ -343,7 +344,7 @@ export default function GameArena({
 
         <div className="flex gap-2">
           <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2"
-            onClick={() => exitGame()}            
+            onClick={() => exitGame()}
           >
             Sair
           </button>
@@ -351,7 +352,7 @@ export default function GameArena({
       </div>
 
       {player.ability && (
-        <div className="absolute top-28 left-4 right-4 flex justify-between items-center">
+        <div className="absolute top-36 left-4 right-4 flex justify-between items-center">
           <div className="bg-green-900/70 p-2 rounded-lg">
             <p className="text-sm text-green-300 font-semibold">Pressione <span className="text-white">E</span> para ativar sua habilidade</p>
             <p className="text-sm text-green-300"><span className="font-medium">Habilidade:</span> {player.ability.name}</p>

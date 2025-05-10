@@ -6,8 +6,6 @@ import { ARENA_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-con
 export function handlePlayerAttack(
   player: any,
   otherPlayers: any[],
-  roomKey: string,
-  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
   lastPoisonTickRef: any,
   sendToRoom: any
 ) {
@@ -39,15 +37,6 @@ export function handlePlayerAttack(
       lastUpdate: Date.now()
     }));
 
-    // Atualiza local
-    setOtherPlayers((prev) =>
-      prev.map((p) =>
-        p.uid === targetPlayer.uid
-          ? { ...p, stats: { ...p.stats, health: newHealthTarget } }
-          : p
-      )
-    );
-
     if (player.poisonNextAttack) {
       sendToRoom(JSON.stringify({
         type: 'player_update',
@@ -66,7 +55,8 @@ export function handlePlayerAttack(
       sendToRoom(JSON.stringify({
         type: 'player_update',
         uid: targetPlayer.uid,
-        updates: {killer: `${player.name} - (${player.type})`}
+        updates: {killer: `${player.name} - (${player.type})`},
+        lastUpdate: Date.now()
       }));
 
       const newScore = player.score + 15;
@@ -85,7 +75,6 @@ export function applyPoisonDamageToTargets(
   nowEffect: any, 
   now: any, 
   otherPlayers: any[], 
-  roomKey: string,
   player: any,
   lastPoisonTickRef: any,
   setOtherPlayers: Dispatch<SetStateAction<any[]>>,
@@ -238,5 +227,6 @@ export function handleFoodCollision(
       },
       lastUpdate: Date.now()
     }));
+    return
   }
 }

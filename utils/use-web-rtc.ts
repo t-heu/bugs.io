@@ -64,7 +64,7 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) 
               ch.send(msg);
             }
           });
-        };        
+        };
       }
     }
 

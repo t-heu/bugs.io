@@ -15,14 +15,14 @@ import { generateInitialCactus } from "@/utils/cactus"
 import { ARENA_SIZE, FOOD_COUNT, CACTUS_COUNT } from "@/utils/game-constants"
 import { 
   handleJoin, 
-  handleFullGameRoom, 
+  handleFullLoadRoom, 
   handleRemovePlayer, 
   handlePlayerUpdate, 
   handleFoodUpdate,
 } from '@/utils/game-event-handlers';
 import { useWebRTC } from '@/utils/use-web-rtc';
 
-import { monitorHostConnection } from "@/utils/monitor-connection"
+import { monitorHostConnection, monitorGuestConnection } from "@/utils/monitor-connection"
 
 import insects from "@/insects.json"
 
@@ -46,7 +46,11 @@ export default function Game() {
   const { sendMessage, onMessage, connected, createOffer, disconnectedPeers, isClosed } = useWebRTC(roomInput, isHost, userId);
 
   useEffect(() => {
-    if (isHost) monitorHostConnection(roomInput)
+    if (isHost) {
+      monitorHostConnection(roomInput)
+    } else {
+      monitorGuestConnection(roomInput, userId)
+    }
   }, [roomInput, player?.uid]);
 
   useEffect(() => {
@@ -58,8 +62,8 @@ export default function Game() {
   
       const handlers: Record<string, Function> = {
         join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom, sendMessage),
-        gameRoom: (data: any) => handleFullGameRoom(data, setGameRoom),
-        player_update: (data: any) => handlePlayerUpdate(data, setGameRoom, sendMessage),
+        loadRoom: (data: any) => handleFullLoadRoom(data, setGameRoom),
+        player_update: (data: any) => handlePlayerUpdate(data, setGameRoom, sendMessage, userId),
         player_exit: (data: any) => handleRemovePlayer(data, setGameRoom),
         food_update: (data: any) =>handleFoodUpdate(data, setGameRoom),
       };

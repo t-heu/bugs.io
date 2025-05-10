@@ -19,7 +19,7 @@
       "cooldown": 15,
       "boost": 1.8,
       "duration": 3500,
-      "description": "Acelera momentaneamente, aumentando sua velocidade em 80% por 3.5 segundos. Ideal para fugas rápidas ou ataques surpresa."
+      "description": "Acelera momentaneamente, aumentando sua velocidade em 80% por 3.5 segundos."
     }
   },
   {
@@ -41,7 +41,7 @@
       "name": "Hard Shell",
       "cooldown": 25,
       "duration": 4000,
-      "description": "Retrai-se em sua concha, tornando-se completamente invulnerável a danos por 4 segundos. Perfeito para sobreviver a ataques poderosos."
+      "description": "Retrai-se em sua concha, tornando-se completamente invulnerável a danos por 4 segundos."
     }
   },   
   {
@@ -64,7 +64,7 @@
       "cooldown": 14,
       "slowAmount": 0.35,
       "duration": 3500,
-      "description": "Seu ataque injeta um veneno paralisante, reduzindo a velocidade do alvo em 35% por 3.5 segundos. Excelente para controlar inimigos ágeis."
+      "description": "Seu ataque injeta um veneno paralisante, reduzindo a velocidade do alvo em 35% por 3.5 segundos."
     }
   },
   {
@@ -86,7 +86,7 @@
       "name": "Regeneration",
       "cooldown": 22,
       "healAmount": 8,
-      "description": "Ativa uma regeneração rápida, restaurando instantaneamente 8 pontos de vida. Fundamental para prolongar combates desgastantes."
+      "description": "Ativa uma regeneração rápida, restaurando instantaneamente 8 pontos de vida."
     }
   },
   {
@@ -109,7 +109,7 @@
       "cooldown": 12,
       "damageMultiplier": 2.0,
       "duration": 3000,
-      "description": "Desfere um ferrão devastador que causa o dobro do dano normal. O ataque especial dura 3 segundos com potencial para eliminar inimigos rapidamente."
+      "description": "O ataque especial dura 3 segundos com dobro de dano."
     }
   },
   {
@@ -131,7 +131,7 @@
       "name": "Hard Shell",
       "cooldown": 20,
       "duration": 4000,
-      "description": "Endurece seu exoesqueleto, tornando-se invencível por 4 segundos. A defesa perfeita para sobreviver em situações críticas."
+      "description": "Endurece seu exoesqueleto, tornando-se invencível por 4 segundos."
     }
   },
   {
@@ -153,7 +153,7 @@
       "name": "Regeneration",
       "cooldown": 20,
       "healAmount": 8,
-      "description": "Cura 8 pontos de vida instantaneamente. Uma habilidade vital para se recuperar durante batalhas intensas."
+      "description": "Cura 8 pontos de vida instantaneamente."
     }
   },
   {
@@ -176,7 +176,7 @@
       "cooldown": 15,
       "poisonDamage": 3,
       "duration": 4000,
-      "description": "Golpeia com seu ferrão venenoso, causando dano inicial + 3 de dano por segundo durante 4 segundos. Letal contra alvos com muita saúde."
+      "description": "Golpeia com dano inicial + 3 de dano por segundo durante 4 segundos."
     }
   },
   {
@@ -215,7 +215,7 @@
       "cooldown": 12,
       "damageMultiplier": 2.0,
       "duration": 3000,
-      "description": "Libera uma investida em área que causa 200% do dano normal. Eficaz contra grupos de inimigos próximos."
+      "description": "Libera uma investida em área que causa 200% do dano normal."
     }
   },
   {
@@ -238,7 +238,7 @@
       "cooldown": 12,
       "poisonDamage": 2.5,
       "duration": 4500,
-      "description": "Morde com veneno neurotóxico, causando 2.5 de dano por segundo durante 4.5 segundos. Excelente para desgastar oponentes gradualmente."
+      "description": "Morde com veneno neurotóxico, causando 2.5 de dano por segundo durante 4.5 segundos."
     }
   },
   {
@@ -260,7 +260,7 @@
       "name": "Lethal Strike",
       "cooldown": 16,
       "damageMultiplier": 2.5,
-      "description": "Executa um ataque preciso que causa 2.5x o dano normal em um único alvo. Pode eliminar inimigos com um golpe bem colocado."
+      "description": "Executa um ataque preciso que causa 2.5x o dano normal em um único alvo."
     }
   },
   {
@@ -282,7 +282,7 @@
       "name": "Critical Slash",
       "cooldown": 12,
       "criticalMultiplier": 2.3,
-      "description": "Prepara um golpe certeiro que causa 230% do dano normal no próximo ataque. Ideal para eliminar alvos prioritários rapidamente."
+      "description": "Prepara um golpe certeiro que causa 230% do dano normal no próximo ataque."
     }
   },
   {
@@ -305,7 +305,7 @@
       "cooldown": 12,
       "boost": 1.5,
       "duration": 4000,
-      "description": "Dá um salto veloz, aumentando sua velocidade em 50% por 4 segundos. Perfeito para reposicionamento tático ou fugas."
+      "description": "Dá um salto veloz, aumentando sua velocidade em 50% por 4 segundos."
     }
   },
   {
@@ -328,7 +328,7 @@
       "cooldown": 14,
       "boost": 1.8,
       "duration": 3500,
-      "description": "Impulsiona-se com suas patas traseiras, ganhando 80% de velocidade adicional por 3.5 segundos. Excelente para ataques relâmpago."
+      "description": "Impulsiona-se ganhando 80% de velocidade adicional por 3.5 segundos."
     }
   },
   {
@@ -350,7 +350,7 @@
       "name": "Regeneration",
       "cooldown": 22,
       "healAmount": 10,
-      "description": "Regenera 10 pontos de vida instantaneamente. Uma habilidade crucial para personagens tanque que precisam se sustentar em batalha."
+      "description": "Regenera 10 pontos de vida instantaneamente."
     }
   },
   {
@@ -372,7 +372,7 @@
       "name": "Hard Shell",
       "cooldown": 20,
       "duration": 3500,
-      "description": "Camufla-se completamente no ambiente, tornando-se invulnerável por 3.5 segundos. A habilidade definitiva de sobrevivência."
+      "description": "Camufla-se completamente no ambiente, tornando-se invulnerável por 3.5 segundos."
     }
   },
   {
@@ -395,7 +395,7 @@
       "cooldown": 12,
       "poisonDamage": 0.8,
       "duration": 4500,
-      "description": "Aplica um veneno debilitante que causa 0.8 de dano por segundo durante 4.5 segundos. Ideal para desgastar inimigos ao longo do tempo."
+      "description": "Aplica um veneno debilitante que causa 0.8 de dano por segundo durante 4.5 segundos."
     }
   },
   {
@@ -418,7 +418,7 @@
       "cooldown": 16,
       "boost": 2.0,
       "duration": 4000,
-      "description": "Ativa um voo supersônico que dobra sua velocidade por 4 segundos. Permite ataques relâmpago ou fugas impossíveis de acompanhar."
+      "description": "Ativa um voo supersônico que dobra sua velocidade por 4 segundos."
     }
   },
   {
@@ -441,7 +441,7 @@
       "cooldown": 16,
       "boost": 2.0,
       "duration": 3500,
-      "description": "Bate as asas rapidamente, aumentando sua velocidade em 100% por 3.5 segundos. Excelente para manobras evasivas ou ataques surpresa."
+      "description": "Bate as asas rapidamente, aumentando sua velocidade em 100% por 3.5 segundos."
     }
   },
   {
@@ -464,7 +464,7 @@
       "cooldown": 16,
       "poisonDamage": 0.8,
       "duration": 5000,
-      "description": "Libera escamas venenosas que causam 0.8 de dano por segundo durante 5 segundos. Efeito cumulativo perfeito para combates prolongados."
+      "description": "Libera escamas venenosas que causam 0.8 de dano por segundo durante 5 segundos."
     }
   },
   {
@@ -487,7 +487,7 @@
       "cooldown": 14,
       "boost": 1.7,
       "duration": 4000,
-      "description": "Acelera seu voo em 70% por 4 segundos. Permite ataques rápidos e reposicionamento tático instantâneo."
+      "description": "Acelera seu voo em 70% por 4 segundos."
     }
   },
   {
@@ -509,7 +509,7 @@
       "name": "Hard Shell",
       "cooldown": 22,
       "duration": 4500,
-      "description": "Enrola-se em seu casulo, reduzindo todo o dano recebido a zero por 4.5 segundos. A defesa perfeita para tanques."
+      "description": "Enrola-se em seu casulo, reduzindo todo o dano recebido a zero por 4.5 segundos."
     }
   },
   {
@@ -532,7 +532,7 @@
       "cooldown": 14,
       "damageMultiplier": 2.0,
       "duration": 2500,
-      "description": "Ataque giratório com suas pinças que causa 200% de dano em área por 2.5 segundos. Eficaz contra múltiplos inimigos próximos."
+      "description": "Ataque giratório com suas pinças que causa 200% de dano em área por 2.5 segundos."
     }
   },
   {
@@ -555,7 +555,7 @@
       "cooldown": 12,
       "poisonDamage": 2.5,
       "duration": 4500,
-      "description": "Injeta um veneno potente que causa 2.5 de dano por segundo durante 4.5 segundos. Excelente para combinar com ataques básicos."
+      "description": "Injeta um veneno potente que causa 2.5 de dano por segundo durante 4.5 segundos."
     }
   },
   {
@@ -578,7 +578,7 @@
       "cooldown": 18,
       "poisonDamage": 4,
       "duration": 4000,
-      "description": "Ferrão esmeralda que causa 4 de dano por segundo durante 4 segundos. Efeito especialmente potente contra baratas (dano bônus +10).",
+      "description": "Causa 4 de dano por segundo durante 4 segundos. Efeito especialmente contra baratas (dano bônus +10).",
       "specialBonusDamage": {
         "target": "cockroach",
         "bonusDamage": 10
@@ -604,7 +604,7 @@
       "name": "Regeneration",
       "cooldown": 25,
       "healAmount": 12,
-      "description": "Ativa uma cura profunda que restaura 12 pontos de vida instantaneamente. Fundamental para tanques se manterem no combate."
+      "description": "Ativa uma cura profunda que restaura 12 pontos de vida instantaneamente."
     }
   },
   {
@@ -627,7 +627,7 @@
       "cooldown": 14,
       "slowAmount": 0.35,
       "duration": 3500,
-      "description": "Ataque que reduz a velocidade do alvo em 35% por 3.5 segundos. Excelente para controlar inimigos rápidos e manter vantagem tática."
+      "description": "Ataque que reduz a velocidade do alvo em 35% por 3.5 segundos."
     }
   },
   {
@@ -650,7 +650,7 @@
       "cooldown": 12,
       "boost": 1.8,
       "duration": 3500,
-      "description": "Brilho bioluminescente que aumenta sua velocidade em 80% por 3.5 segundos. Ideal para ataques noturnos surpresa."
+      "description": "Brilho bioluminescente que aumenta sua velocidade em 80% por 3.5 segundos."
     }
   },
   {

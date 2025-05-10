@@ -17,8 +17,20 @@ export function monitorHostConnection(roomCode: string) {
   });
 }
 
-export function exitPlayer(roomCode: string, playerKey: string) {
-  const updates: any = {};
-  updates[`bugsio/rooms/${roomCode}`] = null;
-  update(ref(database), updates);
+export function monitorGuestConnection(roomCode: string, playerKey: string) {
+  if (!roomCode) return;
+
+  const playerRef1 = ref(database, `bugsio/rooms/${roomCode}/answers/${playerKey}`);
+  const playerRef2 = ref(database, `bugsio/rooms/${roomCode}/offers/${playerKey}`);
+  const connectedRef = ref(database, '.info/connected');
+
+  onValue(connectedRef, (snap) => {
+    if (snap.val() === true) {
+      console.log('[GUEST] conectado, agendando remoção da conexão se desconectar.');
+
+      // Apenas configurar o onDisconnect sem fazer set() nos dados
+      onDisconnect(playerRef1).remove();
+      onDisconnect(playerRef2).remove();
+    }
+  });
 }

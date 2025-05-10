@@ -1,3 +1,5 @@
+import { Player, GameRoom } from "@/app/interfaces"
+
 export function handleRemovePlayer(data: any, setGameRoom: any) {
   setGameRoom((prev: any) => {
     if (!prev) return prev;
@@ -25,12 +27,12 @@ export function handleJoin(data: any, from: any, isHost: boolean | null, setGame
       players: [...filteredPlayers, data.player],
     };
 
-    sendMessage(JSON.stringify({ type: 'gameRoom', ...updatedGame }));
+    sendMessage(JSON.stringify({ type: 'loadRoom', ...updatedGame }));
     return updatedGame;
   });
 }
 
-export function handleFullGameRoom(data: any, setGameRoom: any) {
+export function handleFullLoadRoom(data: any, setGameRoom: any) {
   setGameRoom(data);
 }
 
@@ -50,40 +52,32 @@ export function handleFoodUpdate(data: any, setGameRoom: any) {
   });
 }
 
-export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any) { 
+export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any, localUid: string) {
   if (!data.uid || !data.updates) return;
+  console.log('[PLAYER_UPDATE]', data);
 
-  setGameRoom((prev: any) => {
+  setGameRoom((prev: GameRoom | null) => {
     if (!prev) return prev;
 
-    const updatedPlayers = prev.players.map((p: any) => {
+    const updatedPlayers = prev.players.map((p: Player) => {
       if (p.uid !== data.uid) return p;
-
-      // Verificação mais rigorosa de atualizações
-      if (data.updates.stats?.health !== undefined && data.updates.stats.health <= 0) {
-        // Se o jogador morreu, garantir que permaneça morto
-        return {
-          ...p,
-          stats: {
-            ...p.stats,
-            health: 0, // Força health para 0
-            ...(data.updates.stats || {}),
-          },
-          lastUpdate: Date.now(),
-        };
-      }
 
       const isNewer = (data.lastUpdate ?? 0) > (p.lastUpdate ?? 0);
       if (!isNewer) return p;
 
-      return {
+      const updatedStats = {
+        ...p.stats,
+        ...(data.updates.stats || {}),
+      };
+
+      if (updatedStats.health <= 0) {
+        updatedStats.health = 0;
+      }
+      console.log('aq: ', data.updates)
+      const updatedPlayer: Player = {
         ...p,
-        ...data.updates,
         lastUpdate: data.lastUpdate ?? Date.now(),
-        stats: {
-          ...p.stats,
-          ...(data.updates.stats || {}),
-        },
+        stats: updatedStats,
         effects: {
           ...p.effects,
           ...(data.updates.effects || {}),
@@ -93,7 +87,27 @@ export function handlePlayerUpdate(data: any, setGameRoom: any, sendMessage: any
           ...(data.updates.position || {}),
         },
         ability: data.updates.ability !== undefined ? data.updates.ability : p.ability,
+        killer: data.updates.killer !== undefined ? data.updates.killer : p.killer,
+        score: data.updates.score !== undefined ? data.updates.score : p.score,
+        size: data.updates.size !== undefined ? data.updates.size : p.size,
+        poisonNextAttack: data.updates.poisonNextAttack !== undefined
+          ? data.updates.poisonNextAttack
+          : p.poisonNextAttack,
+        type: data.updates.type !== undefined ? data.updates.type : p.type,
+        name: data.updates.name !== undefined ? data.updates.name : p.name,
       };
+
+      // ✅ Se esse é o jogador local, reenviar update para os outros
+      if (data.uid === localUid) {
+        sendMessage(JSON.stringify({
+          type: 'player_update',
+          uid: localUid,
+          updates: data.updates,
+          lastUpdate: updatedPlayer.lastUpdate,
+        }));
+      }
+
+      return updatedPlayer;
     });
 
     return {
