@@ -4,9 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 
 import { useMobile } from "@/hooks/use-mobile"
 import { useKeyboardControls } from "@/hooks/use-keyboard-controls"
-import { useMobileAttackButton } from "@/hooks/use-mobile-attack-button"
 import { useMobileJoystick } from "@/hooks/use-mobile-joystick"
-import { useMobileAbilityButton } from "@/hooks/use-mobile-ability-button"
 import { useAbilityLogic } from "@/hooks/use-ability-logic"
 
 import { drawArenaBoundary, drawEntities, drawFood, drawGrid, drawPlayer, drawCactus } from "@/utils/draw"
@@ -69,17 +67,18 @@ export default function GameArena({
   const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, broadcast);
 
   useKeyboardControls(player, setKeys, attackPressedRef, useAbility)
-  useMobileAttackButton(isMobile, attackButtonRef, attackPressedRef)
-  useMobileJoystick(isMobile,
+  useMobileJoystick({
+    isMobile,
     joystickRef,
-    joystickActive,
+    attackButtonRef,
+    abilityButtonRef,
+    attackPressedRef,
+    useAbility,
     setJoystickActive,
     setJoystickPos,
     setJoystickAngle,
-    setJoystickDistance
-  );
-
-  useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
+    setJoystickDistance,
+  });
 
   useEffect(() => {
     if (!player || !gameRoom || hasJoinedRef.current) return;
