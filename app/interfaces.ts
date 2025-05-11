@@ -12,13 +12,12 @@ export interface Player {
   },
   position: { x: number; y: number }
   effects: {
-    invincible: string
-    speedBoost: string
-    poisonedUntil: string
-    specialAttack: string
-    slow: string
+    shieldExpiresAt: number
+    speedExpiresAt: number
+    specialAttackExpiresAt: number
+    slowExpiresAt: number
+    poisonedExpiresAt: number
   },
-  poisonNextAttack: boolean,
   type: string
   ability: any | null
   lastUpdate: number

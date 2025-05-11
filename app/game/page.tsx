@@ -21,7 +21,12 @@ import {
   handlePlayerPosition,
   handlePlayerHealth,
   handlePlayerKill,
-  handlePlayerScore
+  handlePlayerScore,
+  handlePoison,
+  handleShield,
+  handleSlow,
+  handleSpecialAttack,
+  handleSpeedBoost
 } from '@/utils/game-event-handlers';
 import { useWebRTC } from '@/utils/use-web-rtc';
 
@@ -42,7 +47,7 @@ export default function Game() {
   const [isHost, setIsHost] = useState<null | boolean>(null);
   const [player, setPlayer] = useState<any>(null);
   const [gameRoom, setGameRoom] = useState<any>(null)
-  const [connectionStatus, setConnectionStatus] = useState('Esperando...');
+  const [connectionStatus, setConnectionStatus] = useState('Conecte-se / Crie uma sala');
   const [userId] = useState(() => Math.random().toString(36).slice(2, 8));
   const [hasJoined, setHasJoined] = useState(false);
 
@@ -78,14 +83,18 @@ export default function Game() {
         player_position: (data: any) => handlePlayerPosition(data, setGameRoom),
         player_health: (data: any) => handlePlayerHealth(data, setGameRoom),
         player_score: (data: any) => handlePlayerScore(data, setGameRoom),
-        player_kill: (data: any) => handlePlayerKill(data, setGameRoom)
+        player_kill: (data: any) => handlePlayerKill(data, setGameRoom),
+        poison: (data: any) => handlePoison(data, setGameRoom),
+        shield: (data: any) => handleShield(data, setGameRoom),
+        slow: (data: any) => handleSlow(data, setGameRoom),
+        special_attack: (data: any) => handleSpecialAttack(data, setGameRoom),
+        speed: (data: any) => handleSpeedBoost(data, setGameRoom)
       };
   
       if (handlers[type]) {
         handlers[type](data, from);
         // Após tratar a mensagem, envia o gameRoom atualizado (apenas se for host)
         if (type !== 'player_position' && type !== 'loadRoom') {
-          console.log(type)
           setGameRoom((prev: any) => {
             sendMessage(JSON.stringify({
               type: "loadRoom",
@@ -139,7 +148,7 @@ export default function Game() {
       if(!roomKey) return;
 
       await set(ref(database, `bugsio/rooms/${roomKey}`), {
-        timestamp: Date.now() // número (mais comum)
+        timestamp: Date.now()
       });
       
       setPlayer(playerData);
@@ -147,10 +156,10 @@ export default function Game() {
 
       setIsHost(true);
       setConnectionStatus(`Aguardando convidados... em: ${roomKey}`);
-    } catch (e) {
+    } catch (error) {
       setLoading(false);
-      setConnectionStatus('Esperando...');
-      console.error("Erro ao criar jogo:", e);
+      setConnectionStatus((error as Error).message);
+      console.error("Erro ao criar jogo:", error);
     }
   }
   
@@ -188,6 +197,8 @@ export default function Game() {
   }
 
   function createPlayer(name: string, character: any, scoreCurrent: number) {
+    const margin = 50;
+
     const playerData = {
       name,
       uid: userId,
@@ -195,8 +206,8 @@ export default function Game() {
       size: 30,
       score: scoreCurrent,
       position: {
-        x: ARENA_SIZE / 2,
-        y: ARENA_SIZE / 2,
+        x: Math.random() * (ARENA_SIZE - 2 * margin) + margin,
+        y: Math.random() * (ARENA_SIZE - 2 * margin) + margin,
       },
       stats: {
         speed: character.stats.speed * 0.5,
@@ -205,13 +216,13 @@ export default function Game() {
         maxHealth: character.stats.health,
       },
       effects: {
-        invincible: '',
-        speedBoost: '',
-        poisonedUntil: '',
-        specialAttack: '',
-        slow: ''
+        invincible: null,
+        speedBoost: null,
+        specialAttack: null,
+        slow: null,
+        poisonedUntil: null,
+        poisonNextAttack: false,
       },
-      poisonNextAttack: false,
       type: character.id,
       ability: character.ability || null,
       lastUpdate: Date.now()
@@ -282,7 +293,7 @@ export default function Game() {
           {(joinMode === "host" || joinMode === "guest") && (
             <>
               <p className="text-center px-4 py-2 rounded-md text-green-300 mb-4 bg-[#111]">
-                 {connectionStatus}
+                 Status: {connectionStatus}
               </p>
               <CharacterSelection 
                 characters={insects} 

@@ -33,7 +33,7 @@ export function handleJoin(data: any, from: any, isHost: boolean | null, setGame
 }
 
 export function handleFullLoadRoom(data: any, setGameRoom: any) {
-  //console.log(data)
+  if (!data) return 
   setGameRoom(data);
 }
 
@@ -116,4 +116,64 @@ export function handlePlayerKill(data: any, setGameRoom: any) {
     killer,
     lastUpdate: data.lastUpdate ?? Date.now(),
   }), setGameRoom);
+}
+
+// Handlers Effects
+function applyEffectUntil(
+  uid: string,
+  effectKey: string,
+  duration: number,
+  activeEffectsRef: any,
+  setGameRoom: any
+) {
+  const now = Date.now();
+  const until = now + duration;
+
+  // Atualiza efeito local
+  activeEffectsRef.current[effectKey] = until;
+
+  // Atualiza no estado global
+  mergePlayerByUid(uid, (p) => ({
+    ...p,
+    effects: {
+      ...p.effects,
+      [effectKey]: until,
+    },
+    lastUpdate: now,
+  }), setGameRoom);
+}
+
+export function handleSpecialAttack(data: any, setGameRoom: any) {
+  const { uid, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  applyEffectUntil(uid, "specialAttackExpiresAt", duration, { current: {} }, setGameRoom);
+}
+
+export function handleShield(data: any, setGameRoom: any) {
+  const { uid, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  applyEffectUntil(uid, "shieldExpiresAt", duration, { current: {} }, setGameRoom);
+}
+
+export function handleSpeedBoost(data: any, setGameRoom: any) {
+  const { uid, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  applyEffectUntil(uid, "speedExpiresAt", duration, { current: {} }, setGameRoom);
+}
+
+export function handleSlow(data: any, setGameRoom: any) {
+  const { uid, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  applyEffectUntil(uid, "slowExpiresAt", duration, { current: {} }, setGameRoom);
+}
+
+export function handlePoison(data: any, setGameRoom: any) {
+  const { uid, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  applyEffectUntil(uid, "poisonedExpiresAt", duration, { current: {} }, setGameRoom);
 }

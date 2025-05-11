@@ -6,7 +6,6 @@ import { useMobile } from "@/hooks/use-mobile"
 import { useKeyboardControls } from "@/hooks/use-keyboard-controls"
 import { useMobileAttackButton } from "@/hooks/use-mobile-attack-button"
 import { useMobileJoystick } from "@/hooks/use-mobile-joystick"
-import { useAbilityControl } from "@/hooks/use-ability-control"
 import { useMobileAbilityButton } from "@/hooks/use-mobile-ability-button"
 import { useAbilityLogic } from "@/hooks/use-ability-logic"
 
@@ -65,8 +64,11 @@ export default function GameArena({
   const [joystickDistance, setJoystickDistance] = useState(0)
   const [otherPlayers, setOtherPlayers] = useState<Player[]>([])
 
-  const isMobile = useMobile()
-  useKeyboardControls(setKeys, attackPressedRef)
+  const isMobile = useMobile();
+
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, broadcast);
+
+  useKeyboardControls(player, setKeys, attackPressedRef, useAbility)
   useMobileAttackButton(isMobile, attackButtonRef, attackPressedRef)
   useMobileJoystick(isMobile,
     joystickRef,
@@ -77,9 +79,6 @@ export default function GameArena({
     setJoystickDistance
   );
 
-  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, roomKey, setPlayer, broadcast);
-
-  useAbilityControl(player, useAbility);
   useMobileAbilityButton(isMobile, abilityButtonRef, useAbility);
 
   useEffect(() => {
@@ -98,6 +97,7 @@ export default function GameArena({
     if (!player || !gameRoom?.players) return;
 
     const currentPlayers = gameRoom.players;
+    //console.log(currentPlayers)
     // Atualiza o próprio player
     attPlayer(currentPlayers);
 
@@ -183,8 +183,8 @@ export default function GameArena({
 
     const now = Date.now();
     const nowEffect = now;
-    const isInvincible = activeEffectsRef.current["invincible"] > nowEffect;
-    const hasSpeedBoost = activeEffectsRef.current["speedBoost"] > nowEffect;
+    const isInvincible = activeEffectsRef.current["shield"] > nowEffect;
+    const hasSpeedBoost = activeEffectsRef.current["speed"] > nowEffect;
     const hasSlow = activeEffectsRef.current["slow"] > nowEffect;
 
     let finalSpeed = player.stats.speed;
@@ -291,12 +291,7 @@ export default function GameArena({
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(roomKey)
-    .then(() => {
-      setTimeout(() => alert('Copied!'), 1000);
-    })
-  };
+  const handleCopy = () => navigator.clipboard.writeText(roomKey).then(() => alert('Copied!'))
 
   const healthPercentage = (player.stats.health / player.stats.maxHealth) * 100;
   const cooldownPercentage = isCooldown ? (cooldownTime / (player.ability.cooldown * 1000)) * 100 : 0;

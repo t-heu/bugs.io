@@ -1,60 +1,48 @@
-export function specialAttack(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
+export function specialAttack(activeEffectsRef: any, player: any, broadcast: any) {
   const now = Date.now();
 
-  const specialAttackUntil = now + player.ability.duration;
+  const specialAttackExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["SpecialAttack"] = specialAttackUntil;
+  activeEffectsRef.current["special_attack"] = specialAttackExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'player_update',
+    type: 'special_attack',
     uid: player.uid,
     lastUpdate: Date.now(),
-    updates: {
-      effects: {
-        specialAttack: specialAttackUntil,
-      },
-    },
+    duration: specialAttackExpiresAt,
   }));
 }
 
-export function activateShield(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
+export function activateShield(activeEffectsRef: any, player: any, broadcast: any) {
   const now = Date.now();
-  const invincibleUntil = now + player.ability.duration;
+  const shieldExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["invincible"] = invincibleUntil;
+  activeEffectsRef.current["shield"] = shieldExpiresAt;
 
    broadcast(JSON.stringify({
-    type: 'player_update',
+    type: 'shield',
     uid: player.uid,
-    updates: {
-      effects: {
-        invincible: invincibleUntil,
-      },
-    },
+    duration: shieldExpiresAt,
     lastUpdate: Date.now()
   }));
 }
 
-export function activateSpeedBoost(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
+export function activateSpeedBoost(activeEffectsRef: any, player: any, broadcast: any) {
   const now = Date.now();
 
-  const speedBoostUntil = now + player.ability.duration;
+  const speedExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["speedBoost"] = speedBoostUntil;
+  activeEffectsRef.current["speed"] = speedExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'player_update',
+    type: 'speed',
     uid: player.uid,
-    updates: {
-      effects: {
-        speedBoost: speedBoostUntil,
-      },
-    },
+    duration: speedExpiresAt,
     lastUpdate: Date.now()
   }));
 }
 
-export function healPlayer(roomKey: string, player: any, setPlayer: any, broadcast: any) {
+export function healPlayer(player: any, setPlayer: any, broadcast: any) {
   const healAmount = player.ability.healAmount;
   const newHealth = Math.min(player.stats.health + healAmount, player.stats.maxHealth);
 
@@ -67,43 +55,39 @@ export function healPlayer(roomKey: string, player: any, setPlayer: any, broadca
   }));
 
   broadcast(JSON.stringify({
-    type: 'player_update',
+    type: 'player_health',
     uid: player.uid,
-    updates: {
-      stats: {
-        health: newHealth,
-      },
-    },
+    health: newHealth,
     lastUpdate: Date.now()
   }));
 }
 
-export function applyPoisonEffect(playerUid: string, roomKey: string, broadcast: any) {
-  broadcast(JSON.stringify({
-    type: 'player_update',
-    uid: playerUid,
-    updates: {
-      poisonNextAttack: true,
-    },
-    lastUpdate: Date.now()
-  }));
-}
-
-export function applySlow(activeEffectsRef: any, roomKey: string, player: any, broadcast: any) {
+export function applyPoisonEffect(activeEffectsRef: any, player: any, broadcast: any) {
   const now = Date.now();
 
-  const slowUntil = now + player.ability.duration;
+  const poisonedExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["slow"] = slowUntil;
+  activeEffectsRef.current["poison"] = poisonedExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'player_update',
+    type: 'poison',
     uid: player.uid,
-    updates: {
-      effects: {
-        slow: slowUntil,
-      },
-    },
+    duration: poisonedExpiresAt,
+    lastUpdate: Date.now()
+  }));
+}
+
+export function applySlow(activeEffectsRef: any, player: any, broadcast: any) {
+  const now = Date.now();
+
+  const slowExpiresAt = now + player.ability.duration;
+
+  activeEffectsRef.current["slow"] = slowExpiresAt;
+
+  broadcast(JSON.stringify({
+    type: 'slow',
+    uid: player.uid,
+    duration: slowExpiresAt,
     lastUpdate: Date.now()
   }));
 }

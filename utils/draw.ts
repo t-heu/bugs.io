@@ -1,14 +1,14 @@
+import insects from "../insects.json"
+import { ARENA_SIZE } from "@/utils/game-constants"
+import { insectDrawingComponents, InsectType } from "@/app/insects";
+
 type ViewportOffset = {
   x: number;
   y: number;
 };
 
-import insects from "../insects.json"
-import { ARENA_SIZE } from "@/utils/game-constants"
-import { insectDrawingComponents, InsectType } from "@/app/insects";
-
 // Helpers
-export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: { x: number; y: number }) => {
+export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, offset: ViewportOffset) => {
   const gridSize = 50
   const offsetX = offset.x % gridSize
   const offsetY = offset.y % gridSize
@@ -31,7 +31,7 @@ export const drawGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElemen
   }
 }
 
-export const drawArenaBoundary = (ctx: CanvasRenderingContext2D, offset: { x: number; y: number }) => {
+export const drawArenaBoundary = (ctx: CanvasRenderingContext2D, offset: ViewportOffset) => {
   ctx.strokeStyle = "rgba(255, 0, 0, 0.5)"
   ctx.lineWidth = 3
   ctx.strokeRect(-offset.x, -offset.y, ARENA_SIZE, ARENA_SIZE)
@@ -170,7 +170,7 @@ export const drawInsect = (
 export const drawCactus = (
   ctx: CanvasRenderingContext2D,
   cactus: any,
-  viewportOffset: { x: number; y: number }
+  viewportOffset: ViewportOffset
 ) => {
   if (!cactus || typeof cactus.x !== 'number' || typeof cactus.y !== 'number') return
 

@@ -2,9 +2,10 @@ import { Dispatch, SetStateAction } from 'react';
 
 import { generateFood } from "@/utils/food"
 import { ARENA_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-constants"
+import { Player } from '@/app/interfaces';
 
 export function handlePlayerAttack(
-  player: any,
+  player: Player,
   otherPlayers: any[],
   lastPoisonTickRef: any,
   broadcast: any,
@@ -13,19 +14,19 @@ export function handlePlayerAttack(
   const attackRange = 50;
   const damagedUIDs = new Set();
 
-  otherPlayers.forEach((targetPlayer) => {
+  otherPlayers.forEach((targetPlayer: Player) => {
     const dist = Math.hypot(
       targetPlayer.position.x - player.position.x,
       targetPlayer.position.y - player.position.y
     );
     if (dist > attackRange) return;
     if (damagedUIDs.has(targetPlayer.uid)) return;
-    if (targetPlayer.effects?.invincible && targetPlayer.effects.invincible > Date.now()) return;
+    if (targetPlayer.effects?.shieldExpiresAt && targetPlayer.effects.shieldExpiresAt > Date.now()) return;
 
     damagedUIDs.add(targetPlayer.uid);
 
     const playerAttack = player.stats.attack * (player.size / 30);
-    const isSpecialAttackActive = player.effects.specialAttack > Date.now();
+    const isSpecialAttackActive = player.effects.specialAttackExpiresAt > Date.now();
     const multiplier = isSpecialAttackActive ? player.ability.damageMultiplier : 1.5;
     const damageToTarget = playerAttack * multiplier;
 
@@ -38,14 +39,11 @@ export function handlePlayerAttack(
       lastUpdate: Date.now()
     }));
 
-    if (player.poisonNextAttack) {
+    if (player.effects.poisonedExpiresAt && player.effects.poisonedExpiresAt > Date.now()) {
       broadcast(JSON.stringify({
-        type: 'player_update',
+        type: 'poison',
         uid: player.uid,
-        updates: {
-          effects: { poisonedUntil: Date.now() + player.ability.duration },
-          poisonNextAttack: false
-        },
+        duration: Date.now() + player.ability.duration,
         lastUpdate: Date.now()
       }));
 
@@ -72,20 +70,21 @@ export function handlePlayerAttack(
         lastUpdate: Date.now()
       }));
     }
+    console.log(targetPlayer.position)
   });
 }
 
 export function applyPoisonDamageToTargets(
   nowEffect: any, 
   now: any, 
-  otherPlayers: any[], 
-  player: any,
+  otherPlayers: Player[], 
+  player: Player,
   lastPoisonTickRef: any,
   setOtherPlayers: Dispatch<SetStateAction<any[]>>,
   broadcast: any
 ) {
-  otherPlayers.forEach((target) => {
-    const isPoisoned = target.effects.poisonedUntil && target.effects.poisonedUntil > now;
+  otherPlayers.forEach((target: Player) => {
+    const isPoisoned = target.effects.poisonedExpiresAt && target.effects.poisonedExpiresAt > now;
     const lastTick = lastPoisonTickRef.current[target.uid] || 0;
     const tickElapsed = now - lastTick > 1000;
 
@@ -94,7 +93,7 @@ export function applyPoisonDamageToTargets(
     let poisonDamage = player.ability.poisonDamage || 0;
 
     const bonus = player.ability?.specialBonusDamage;
-    if (bonus && bonus.target === target.id && bonus.bonusDamage !== undefined) {
+    if (bonus && bonus.target === target.uid && bonus.bonusDamage !== undefined) {
       poisonDamage += bonus.bonusDamage || 0;
     }
 
@@ -126,7 +125,7 @@ export function updatePlayerPosition(
   joystickAngle: any,
   joystickDistance: any,
   keys: any,
-  player: any
+  player: Player
 ) {
   let dx = 0, dy = 0
 
@@ -153,7 +152,7 @@ export function updatePlayerPosition(
   return { newX, newY, dx, dy }
 }
 
-export function handleCactusCollision(x: number, y: number, cactusList: any[], player: any) {
+export function handleCactusCollision(x: number, y: number, cactusList: any[], player: Player) {
   let tookDamage = false;
   let newHealth = player.stats.health;
   const now = Date.now();
@@ -180,7 +179,7 @@ export function handleFoodCollision(
   x: number,
   y: number,
   foodList: any[] = [],  // Valor padrão para foodList
-  player: any,
+  player: Player,
   broadcast: (msg: string) => void,
   setFood: (newFood: any[]) => void,
   updatedPlayer: any
