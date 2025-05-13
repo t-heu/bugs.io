@@ -20,8 +20,7 @@ import {
 import { Player, GameRoom } from "@/app/interfaces"
 
 interface GameArenaProps {
-  setAssassin: React.Dispatch<React.SetStateAction<string>>;
-  onGameOver: (score: number) => void;
+  onGameOver: (score: number, msg: string) => void;
   roomKey: string;
   player: Player;
   setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
@@ -31,11 +30,10 @@ interface GameArenaProps {
 }
 
 export default function GameArena({ 
-  setAssassin, 
   onGameOver, 
   roomKey, 
   player, 
-  setPlayer, 
+  setPlayer,
   gameRoom,
   broadcast,
   disconnectedPeers
@@ -113,6 +111,12 @@ export default function GameArena({
         const nextUpdate = updatedSelf.lastUpdate ?? 0;
 
         if (nextUpdate > prevUpdate) {
+          // Suavizando a posição
+          const prevPos = prev?.position || { x: 0, y: 0 };
+          const updatedPos = updatedSelf.position || { x: 0, y: 0 };
+          const distance = Math.sqrt(Math.pow(updatedPos.x - prevPos.x, 2) + Math.pow(updatedPos.y - prevPos.y, 2));
+          const smoothPosition = distance > 100 ? updatedPos : { x: (prevPos.x + updatedPos.x) / 2, y: (prevPos.y + updatedPos.y) / 2 };
+
           return {
             ...prev,
             killer: updatedSelf.killer ?? prev.killer,
@@ -127,7 +131,7 @@ export default function GameArena({
             },
             ability: updatedSelf.ability ?? prev.ability,
             lastUpdate: nextUpdate,
-            position: prev.position, // mantém posição local
+            position: smoothPosition,
           };
         }
 
@@ -206,8 +210,7 @@ export default function GameArena({
     const { tookDamage, newHealth } = handleCactusCollision(newX, newY, cactus, player);
     if (tookDamage && !isInvincible) {
       if (newHealth === 0) {
-        setAssassin("Você foi morto por cactu!");
-        onGameOver(player.score);
+        onGameOver(player.score, "Você foi morto por cactu!");
       }
 
       updatedPlayer.stats.health = newHealth
@@ -227,9 +230,8 @@ export default function GameArena({
 
     applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
 
-    if (player.stats.health <= 0) {
-      setAssassin(`Você foi eliminado por ${player.killer || 'desconhecido'}!`);
-      onGameOver(player.score);
+    if (player.stats.health <= 0 && player.killer) {
+      onGameOver(player.score, `Você foi eliminado por ${player.killer}!`);
       setOtherPlayers(prev => prev.filter(p => p.uid !== player.uid));
 
       broadcast(JSON.stringify({
@@ -261,32 +263,30 @@ export default function GameArena({
   useEffect(() => {
     if (!player || isLooping.current) return;
 
+    isLooping.current = true;
+
     const loop = () => {
-      if (!player) {
-        cancelAnimationFrame(animationId.current!);
-        return;
-      }
+      if (!isLooping.current || !player) return;
+
       updateGame();
       renderGame();
       animationId.current = requestAnimationFrame(loop);
     };
 
-    isLooping.current = true;
     animationId.current = requestAnimationFrame(loop);
 
     return () => {
       if (animationId.current) {
         cancelAnimationFrame(animationId.current);
-        isLooping.current = false;
       }
+      isLooping.current = false;
     };
-  }, [player, updateGame, renderGame]);
+  }, [updateGame, renderGame, player]);
 
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você irá perder sua pontuação atual.");
     if (confirmExit) {
-      setAssassin('');
-      onGameOver(0);
+      onGameOver(0, 'Você saiu!');
     }
   };
 

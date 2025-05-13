@@ -36,13 +36,13 @@ import insects from "@/insects.json"
 
 export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOve
-  const [assassin, setAssassin] = useState('')
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [joinMode, setJoinMode] = useState<"none" | "host" | "guest">("none");
   const [roomInput, setRoomInput] = useState(""); // para digitar o código da sala
 
   const score = useRef<number>(0);
+  const assassin = useRef<string>('');
 
   const [isHost, setIsHost] = useState<null | boolean>(null);
   const [player, setPlayer] = useState<any>(null);
@@ -61,11 +61,7 @@ export default function Game() {
   } = useWebRTC(roomInput, isHost, userId);
 
   useEffect(() => {
-    if (isHost) {
-      monitorHostConnection(roomInput)
-    } else {
-      monitorGuestConnection(roomInput, userId)
-    }
+    isHost ? monitorHostConnection(roomInput) : monitorGuestConnection(roomInput, userId);
   }, [roomInput, player?.uid]);
 
   useEffect(() => {
@@ -110,35 +106,32 @@ export default function Game() {
   useEffect(() => {
     if (isClosed) {
       setConnectionStatus('Esperando...');
-      setAssassin('Conexão fechada com host!');
-      handleGameOver(0);
+      setHasJoined(false);
+      handleGameOver(0, 'Conexão fechada com host!');
     }
   }, [isClosed]);
 
   useEffect(() => {
-    if (isHost) {
-      // Lógica do host: O host apenas define a conexão e começa o jogo assim que ele criar a sala
-      if (gameRoom && !hasJoined) {
-        setConnectionStatus('Conectado!');
-        setGameState("playing");
-        setHasJoined(true);
-      }
-    } else if (connected && !isHost && player && !hasJoined) {
-      // Lógica do guest: O guest envia a mensagem de 'join' apenas uma vez
-      sendMessage(JSON.stringify({ type: 'join', player }));
+    if (hasJoined) return;
 
-      // Atualiza o estado de conexão
+    if (isHost && gameRoom) {
       setConnectionStatus('Conectado!');
-      setGameState("playing");
-
-      // Marca que o jogador já entrou para evitar repetição
+      setGameState('playing');
+      setHasJoined(true);
+    } else if (!isHost && connected && player) {
+      sendMessage(JSON.stringify({ type: 'join', player }));
+      setConnectionStatus('Conectado!');
+      setGameState('playing');
       setHasJoined(true);
     }
   }, [connected, isHost, player, gameRoom, sendMessage, hasJoined]);
 
+  function isValidName(name: string): boolean {
+    return !!name && /^[a-zA-Z\s]*$/.test(name);
+  }
+
   async function createHost(character: any) {
-    if (!name) return alert("Erro: Nome não fornecido");
-    if (!/^[a-zA-Z\s]*$/.test(name)) return alert("Erro: Nome inválido");
+    if (!isValidName(name)) return alert('Nome inválido');
 
     try {
       setLoading(true);
@@ -159,13 +152,11 @@ export default function Game() {
     } catch (error) {
       setLoading(false);
       setConnectionStatus((error as Error).message);
-      console.error("Erro ao criar jogo:", error);
     }
   }
   
   async function joinRoom(character: any) {
-    if (!name) return alert("Erro: Nome não fornecido");
-    if (!/^[a-zA-Z\s]*$/.test(name)) return alert("Erro: Nome inválido");
+    if (!isValidName(name)) return alert('Nome inválido');
     if (!roomInput.trim()) return alert('Insira o código da sala');
 
     try {
@@ -180,31 +171,17 @@ export default function Game() {
     } catch (error) {
       setLoading(false);
       setConnectionStatus((error as Error).message);
-      console.log("Erro ao entrar na sala:", error);
     }
-  }  
-
-  const handleGameOver = (finalScore: number) => {
-    setGameState("gameOver")
-    setLoading(false)
-    score.current = finalScore
   }
 
-  const restartGame = () => {
-    setGameState("selection")
-    setLoading(false)
-    setJoinMode(isHost ? "host" : "guest")
-  }
-
-  function createPlayer(name: string, character: any, scoreCurrent: number) {
+  function createPlayer(name: string, character: any, score: number) {
     const margin = 50;
-
-    const playerData = {
+    return {
       name,
       uid: userId,
       killer: '',
       size: 30,
-      score: scoreCurrent,
+      score,
       position: {
         x: Math.random() * (ARENA_SIZE - 2 * margin) + margin,
         y: Math.random() * (ARENA_SIZE - 2 * margin) + margin,
@@ -225,31 +202,35 @@ export default function Game() {
       },
       type: character.id,
       ability: character.ability || null,
-      lastUpdate: Date.now()
+      lastUpdate: Date.now(),
     };
-
-    return playerData
   }
   
   function createGame(name: string, playerData: any) {
     const roomKey = generateRandomWord(6);
-
-    const initialFood = generateInitialFood(FOOD_COUNT, ARENA_SIZE)
-    const cactusList = generateInitialCactus(CACTUS_COUNT, ARENA_SIZE)
-
-    const game = {
+    setGameRoom({
       gameInProgress: false,
       createdAt: Date.now(),
-      food: initialFood,
-      cactus: cactusList,
+      food: generateInitialFood(FOOD_COUNT, ARENA_SIZE),
+      cactus: generateInitialCactus(CACTUS_COUNT, ARENA_SIZE),
       players: [playerData],
       roomId: roomKey,
       host: name,
-    };
-    
-    setGameRoom(game)
+    });
+    return roomKey;
+  }
 
-    return roomKey
+  const handleGameOver = (finalScore: number, messageEndGame: string) => {
+    setGameState("gameOver")
+    setLoading(false)
+    score.current = finalScore
+    assassin.current = messageEndGame
+  }
+
+  const restartGame = () => {
+    setGameState("selection")
+    setLoading(false)
+    setJoinMode(isHost ? "host" : "guest")
   }
 
   return (
@@ -339,7 +320,6 @@ export default function Game() {
 
       {gameState === "playing" && player && roomInput && gameRoom && (
         <GameArena
-          setAssassin={setAssassin}
           onGameOver={handleGameOver}
           roomKey={roomInput}
           player={player}
@@ -354,7 +334,7 @@ export default function Game() {
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="bg-green-900/70 p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-3xl font-bold mb-4">Fim de Jogo</h2>
-            <p className="text-xl mb-6">{assassin ? assassin : 'Você saiu!'}</p>
+            <p className="text-xl mb-6">{assassin.current ? assassin.current : 'Você saiu!'}</p>
             <p className="text-xl mb-6">Sua pontuação: {score.current}</p>
 
             <div className="space-y-4">

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { database, ref, onChildAdded, push, set, get, update } from '@/api/firebase';
+import { database, ref, onChildAdded, push, set, get, update, onValue } from '@/api/firebase';
 
 const servers = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -16,6 +16,19 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) 
   const handleDisconnect = (peerId: string) => {
     setDisconnectedPeers(peerId)
   };
+
+  useEffect(() => {
+    const handleUnload = () => {
+      Object.values(connections.current).forEach(pc => {
+        if (pc.signalingState !== 'closed') pc.close();
+      });
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, []);
 
   const setupPeerConnection = (
     pc: RTCPeerConnection,
@@ -104,6 +117,7 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) 
       channel.onopen = () => {
         console.log('[GUEST] Canal aberto com host');
         setConnected(true);
+        setIsClosed(false);
       };
 
       channel.onmessage = (e) => {
@@ -120,26 +134,28 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) 
         }
 
         handleDisconnect('host');
+        delete connections.current['host'];
+        delete dataChannels.current['host'];
       };
 
       setupPeerConnection(pc, 'host', false);
-
+      
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
+      
       await update(ref(database, `bugsio/rooms/${roomKey}/offers/${uid}`), { offer });
-
+      
       const answerRef = ref(database, `bugsio/rooms/${roomKey}/answers/${uid}/answer`);
-      const checkAnswer = async () => {
-        const snap = await get(answerRef);
+
+      const unsubscribe = onValue(answerRef, async (snap) => {
         if (snap.exists()) {
           const answer = snap.val();
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        } else {
-          setTimeout(checkAnswer, 1000);
+
+          // Após aplicar a resposta, podemos parar de escutar
+          unsubscribe(); 
         }
-      };
-      checkAnswer();
+      });
     } catch (err) {
       //console.error('[createOffer] Erro ao criar oferta:', err);
       throw err; // Repropaga o erro se você quiser tratar ele mais acima

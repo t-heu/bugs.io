@@ -1,4 +1,4 @@
-import { database, ref, update, onDisconnect, set, onValue } from "@/api/firebase"
+import { database, ref, onDisconnect, set, onValue } from "@/api/firebase"
 
 export function monitorHostConnection(roomCode: string) {
   const roomRef = ref(database, `bugsio/rooms/${roomCode}`);

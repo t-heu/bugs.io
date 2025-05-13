@@ -70,7 +70,6 @@ export function handlePlayerAttack(
         lastUpdate: Date.now()
       }));
     }
-    console.log(targetPlayer.position)
   });
 }
 
@@ -178,37 +177,33 @@ export function handleCactusCollision(x: number, y: number, cactusList: any[], p
 export function handleFoodCollision(
   x: number,
   y: number,
-  foodList: any[] = [],  // Valor padrão para foodList
+  foodList: any[] = [],
   player: Player,
   broadcast: (msg: string) => void,
   setFood: (newFood: any[]) => void,
-  updatedPlayer: any
+  updatedPlayer: Player
 ) {
-  if (!foodList || foodList.length === 0) {
-    return; // Caso a lista de comida seja indefinida ou vazia
-  }
+  if (!foodList || foodList.length === 0) return;
 
   const updatedFood = [...foodList];
-  let newHealth_food = player.stats.health;
-  let newScore_food = player.score;
+  let newHealth = player.stats.health;
+  let newScore = player.score;
   let changed = false;
 
   updatedFood.forEach((food, index) => {
-    if (!food || typeof food.x !== 'number' || typeof food.y !== 'number') {
-      return; // Verifica se o item de comida é válido
-    }
+    if (!food || typeof food.x !== 'number' || typeof food.y !== 'number') return;
 
     const distance = Math.hypot(x - food.x, y - food.y);
     const collisionThreshold = (player.size + food.size) / 2;
 
     if (distance < collisionThreshold) {
-      const newFood = generateFood(ARENA_SIZE); // Suponho que essa função gere uma nova comida
+      const newFood = generateFood(ARENA_SIZE);
       updatedFood[index] = newFood;
-      newHealth_food = Math.min(player.stats.health + FOOD_VALUE_HEATH, player.stats.maxHealth);
-      newScore_food = player.score + FOOD_VALUE_SCORE;
+
+      newHealth = Math.min(newHealth + FOOD_VALUE_HEATH, player.stats.maxHealth);
+      newScore += FOOD_VALUE_SCORE;
       changed = true;
 
-      // Envia comida atualizada para todos os jogadores
       broadcast(JSON.stringify({
         type: 'food_update',
         index,
@@ -218,27 +213,28 @@ export function handleFoodCollision(
   });
 
   if (changed) {
-    // Atualiza o estado local da comida para o jogador atual
     setFood(updatedFood);
 
-    updatedPlayer.stats.health = newHealth_food
-    updatedPlayer.score = newScore_food
+    updatedPlayer.stats = {
+      ...updatedPlayer.stats,
+      health: newHealth,
+    };
+    updatedPlayer.score = newScore;
 
-    // Atualiza vida e score do jogador
     const now = Date.now();
 
     broadcast(JSON.stringify({
       type: 'player_health',
       uid: player.uid,
-      health: newHealth_food,
-      lastUpdate: now
+      health: newHealth,
+      lastUpdate: now,
     }));
 
     broadcast(JSON.stringify({
       type: 'player_score',
       uid: player.uid,
-      score: newScore_food,
-      lastUpdate: now
+      score: newScore,
+      lastUpdate: now,
     }));
   }
 }

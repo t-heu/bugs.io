@@ -1,4 +1,4 @@
-import insects from "../insects.json"
+import insects from "@/insects.json"
 import { ARENA_SIZE } from "@/utils/game-constants"
 import { insectDrawingComponents, InsectType } from "@/app/insects";
 

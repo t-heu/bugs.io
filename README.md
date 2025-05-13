@@ -42,3 +42,48 @@ Tier 2: 30–35 → requiredScore: 500–700
 Tier 3: 35–42 → requiredScore: 800–1000
 Tier 4: 42–46 → requiredScore: 1100–1300
 Tier 5: 46+ → requiredScore: 1400+
+
+## Checklist dos pontos principais que estão implementados no hook `useWebRTC`
+
+### ✅ Conexão WebRTC:
+
+* [x] Usa STUN server (`stun:stun.l.google.com:19302`)
+* [x] Cria `RTCPeerConnection` e `RTCDataChannel` corretamente
+* [x] Separa conexões e canais por peer ID (`connections.current`, `dataChannels.current`)
+
+---
+
+### ✅ Host:
+
+* [x] Escuta novas ofertas via Firebase (`onChildAdded` em `offers`)
+* [x] Cria `answer`, envia de volta via Firebase
+* [x] Aceita ICE candidates do guest
+* [x] Recebe canal via `ondatachannel`
+* [x] Reencaminha mensagens recebidas para outros peers
+
+---
+
+### ✅ Guest:
+
+* [x] Cria `offer`, envia via Firebase
+* [x] Cria canal manualmente com `createDataChannel`
+* [x] Espera `answer` e aplica via polling (`checkAnswer`)
+* [x] Aplica ICE candidates recebidos
+* [x] `onclose` do canal fecha e limpa conexão com host
+
+---
+
+### ✅ Desconexão:
+
+* [x] `handleUnload` fecha conexões ao sair da página
+* [x] `oniceconnectionstatechange` trata quedas ICE
+* [x] `channel.onclose` limpa tudo (guest)
+* [x] `handleDisconnect` atualiza estado (`disconnectedPeers`)
+
+---
+
+### ✅ API do hook:
+
+* [x] `sendMessage()` envia para todos os canais abertos
+* [x] `onMessage()` registra callback global
+* [x] Retorna estados úteis: `connected`, `disconnectedPeers`, `isClosed`
