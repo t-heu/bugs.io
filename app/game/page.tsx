@@ -58,7 +58,7 @@ export default function Game() {
     createOffer, 
     disconnectedPeers, 
     isClosed 
-  } = useWebRTC(roomInput, isHost, userId);
+  } = useWebRTC(roomInput, isHost, userId, setGameRoom);
 
   useEffect(() => {
     isHost ? monitorHostConnection(roomInput) : monitorGuestConnection(roomInput, userId);

@@ -5,7 +5,7 @@ const servers = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 
-export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) {
+export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, setGameRoom: any) {
   const connections = useRef<{ [id: string]: RTCPeerConnection }>({});
   const dataChannels = useRef<{ [id: string]: RTCDataChannel }>({});
   const onMessageCallback = useRef<(msg: string, from: string) => void>(() => {});
@@ -62,6 +62,23 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string) 
         channel.onopen = () => {
           console.log('[HOST] Canal aberto com', remoteId);
           setConnected(true);
+        };
+
+        channel.onclose = () => {
+          console.log('[HOST] Canal fechado com', remoteId);
+          setGameRoom((prev: any) => {
+            if (!prev) return prev;
+            
+            const updatedPlayers = prev.players.filter((p: any) => p.uid !== remoteId);
+            
+            return {
+              ...prev,
+              players: updatedPlayers,
+            };
+          });
+
+          delete dataChannels.current[remoteId];
+          delete connections.current[remoteId];
         };
 
         channel.onmessage = (e) => {
