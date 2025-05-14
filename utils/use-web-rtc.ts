@@ -126,6 +126,14 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
         throw new Error(`Sala não encontrada: ${roomKey}`);
       }
 
+      const roomData = snap.val();
+
+      // Verifica se já existem 6 jogadores
+      const players = roomData.offers ? Object.values(roomData.offers) : [];
+      if (players.length >= 5) {
+        throw new Error("Sala cheia. O número máximo de jogadores é 6.");
+      }
+
       const pc = new RTCPeerConnection(servers);
       const channel = pc.createDataChannel('data');
       connections.current['host'] = pc;
