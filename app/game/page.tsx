@@ -72,7 +72,7 @@ export default function Game() {
       if (!type) return;
   
       const handlers: Record<string, Function> = {
-        join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom, sendMessage),
+        join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom),
         loadRoom: (data: any) => handleFullLoadRoom(data, setGameRoom),
         player_exit: (data: any) => handleRemovePlayer(data, setGameRoom),
         food_update: (data: any) => handleFoodUpdate(data, setGameRoom),
@@ -89,19 +89,18 @@ export default function Game() {
   
       if (handlers[type]) {
         handlers[type](data, from);
-        // Após tratar a mensagem, envia o gameRoom atualizado (apenas se for host)
-        if (type !== 'player_position' && type !== 'loadRoom') {
-          setGameRoom((prev: any) => {
-            sendMessage(JSON.stringify({
-              type: "loadRoom",
-              ...prev
-            }));
-            return prev; // importante: não altera o estado, só envia o atual
-          });
-        }
       }
     });
   }, [onMessage, isHost]);
+
+  useEffect(() => {
+    if (!isHost || !gameRoom) return;
+
+    sendMessage(JSON.stringify({
+      type: "loadRoom",
+      ...gameRoom,
+    }));
+  }, [gameRoom]); // dispara sempre que o gameRoom muda
 
   useEffect(() => {
     if (isClosed) {

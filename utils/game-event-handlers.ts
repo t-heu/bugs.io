@@ -13,22 +13,20 @@ export function handleRemovePlayer(data: any, setGameRoom: any) {
   });
 }
 
-export function handleJoin(data: any, from: any, isHost: boolean | null, setGameRoom: any, sendMessage: any) {
+export function handleJoin(data: any, from: any, isHost: boolean | null, setGameRoom: any) {
   if (!isHost || !data.player) return;
 
   setGameRoom((prev: any) => {
     if (!prev) return prev;
 
-    // Remove o jogador antigo com o mesmo UID, se existir
+    // Remove jogador antigo com o mesmo UID
     const filteredPlayers = prev.players.filter((p: any) => p.uid !== data.player.uid);
+    const updatedPlayers = [...filteredPlayers, data.player];
 
-    const updatedGame = {
+    return {
       ...prev,
-      players: [...filteredPlayers, data.player],
+      players: updatedPlayers,
     };
-
-    sendMessage(JSON.stringify({ type: 'loadRoom', ...updatedGame }));
-    return updatedGame;
   });
 }
 

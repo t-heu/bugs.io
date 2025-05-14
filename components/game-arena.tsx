@@ -156,7 +156,21 @@ export default function GameArena({
       return !isDisconnected && !isDead && p.uid !== player.uid;
     });
 
-    setOtherPlayers(updatedOthers);
+    setOtherPlayers((prevOthers) =>
+      updatedOthers.map((p) => {
+        const existing = prevOthers.find((o) => o.uid === p.uid);
+        if (!existing) return p;
+
+        const alpha = 0.3; // fator de suavização, experimente valores entre 0.1 e 0.5
+        return {
+          ...p,
+          position: {
+            x: existing.position.x + alpha * (p.position.x - existing.position.x),
+            y: existing.position.y + alpha * (p.position.y - existing.position.y),
+          },
+        };
+      })
+    );
   };
 
   const renderGame = useCallback(() => {
