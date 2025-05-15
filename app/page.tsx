@@ -37,6 +37,12 @@ export default function Home() {
               Como Jogar
             </button>
           </Link>
+
+          <Link href="/changelog" className="w-full max-w-xs">
+            <p className="text-lg text-green-300 hover:text-green-500">
+              Changelogs
+            </p>
+          </Link>
         </div>
       </div>
 

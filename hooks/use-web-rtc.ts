@@ -1,25 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
-import { database, ref, onChildAdded, push, set, get, update, onValue } from '@/api/firebase';
+import { onChildAdded, onValue, push, ref, set, get, update, database } from '@/api/firebase';
 
+const MAX_PLAYERS = 6;
 const servers = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 
 export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, setGameRoom: any) {
-  const connections = useRef<{ [id: string]: RTCPeerConnection }>({});
+  const peerConnections = useRef<{ [id: string]: RTCPeerConnection }>({});
   const dataChannels = useRef<{ [id: string]: RTCDataChannel }>({});
-  const onMessageCallback = useRef<(msg: string, from: string) => void>(() => {});
+  const messageHandlerRef = useRef<(msg: string, from: string) => void>(() => {});
+
   const [connected, setConnected] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
   const [disconnectedPeers, setDisconnectedPeers] = useState<string | null>(null);
 
   const handleDisconnect = (peerId: string) => {
-    setDisconnectedPeers(peerId)
+    setDisconnectedPeers(peerId);
   };
 
   useEffect(() => {
     const handleUnload = () => {
-      Object.values(connections.current).forEach(pc => {
+      Object.values(peerConnections.current).forEach((pc) => {
         if (pc.signalingState !== 'closed') pc.close();
       });
     };
@@ -36,10 +38,9 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
     isHostPeer: boolean,
     remoteOffer?: RTCSessionDescriptionInit
   ) => {
-    // Adiciona o evento de mudança de estado de conexão ICE
-    pc.oniceconnectionstatechange = (event) => {
+    pc.oniceconnectionstatechange = () => {
       const state = pc.iceConnectionState;
-      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+      if (['failed', 'disconnected', 'closed'].includes(state)) {
         handleDisconnect(remoteId);
       }
     };
@@ -59,43 +60,8 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
         const channel = event.channel;
         dataChannels.current[remoteId] = channel;
 
-        channel.onopen = () => {
-          console.log('[HOST] Canal aberto com', remoteId);
-          setConnected(true);
-        };
-
-        channel.onclose = () => {
-          console.log('[HOST] Canal fechado com', remoteId);
-          setGameRoom((prev: any) => {
-            if (!prev) return prev;
-            
-            const updatedPlayers = prev.players.filter((p: any) => p.uid !== remoteId);
-            
-            return {
-              ...prev,
-              players: updatedPlayers,
-            };
-          });
-
-          delete dataChannels.current[remoteId];
-          delete connections.current[remoteId];
-        };
-
-        channel.onmessage = (e) => {
-          const msg = e.data;
-          const senderId = remoteId;
-        
-          // Chama o callback do próprio host (útil para logs ou lógica de jogo)
-          onMessageCallback.current(msg, senderId);
-        
-          // Retransmite a mensagem para todos os outros convidados
-          Object.entries(dataChannels.current).forEach(([id, ch]) => {
-            if (id !== senderId && ch.readyState === 'open') {
-              ch.send(msg);
-            }
-          });
-        };
-      }
+        setupDataChannelHandlers(channel, remoteId);
+      };
     }
 
     if (remoteOffer) {
@@ -106,7 +72,6 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
       });
     }
 
-    // Adiciona candidatos ICE
     const candidatesPath = isHostPeer
       ? `bugsio/rooms/${roomKey}/offers/${remoteId}/candidates`
       : `bugsio/rooms/${roomKey}/answers/${remoteId}/candidates`;
@@ -117,73 +82,83 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
     });
   };
 
+  const setupDataChannelHandlers = (channel: RTCDataChannel, peerId: string) => {
+    channel.onopen = () => {
+      console.log(`[CANAL ABERTO] com ${peerId}`);
+      setConnected(true);
+      if (peerId === 'host') setIsClosed(false);
+    };
+
+    channel.onclose = () => {
+      console.log(`[CANAL FECHADO] com ${peerId}`);
+      
+      if (peerId === 'host') {
+        setIsClosed(true)
+        setConnected(false);
+        handleDisconnect('host');
+      } else {
+        setGameRoom((prev: any) => {
+          if (!prev) return prev;
+          return { ...prev, players: prev.players.filter((p: any) => p.uid !== peerId) };
+        });
+      }
+      
+      delete dataChannels.current[peerId];
+      delete peerConnections.current[peerId];
+    };
+
+    channel.onmessage = (e) => {
+      const msg = e.data;
+      messageHandlerRef.current(msg, peerId);
+
+      if (isHost) {
+        Object.entries(dataChannels.current).forEach(([id, ch]) => {
+          if (id !== peerId && ch.readyState === 'open') {
+            ch.send(msg);
+          }
+        });
+      }
+    };
+  };
+
+  const validateRoomCapacity = async () => {
+    const roomRef = ref(database, `bugsio/rooms/${roomKey}`);
+    const snap = await get(roomRef);
+    if (!snap.exists()) throw new Error(`Sala não encontrada: ${roomKey}`);
+
+    const roomData = snap.val();
+    const players = roomData.offers ? Object.values(roomData.offers) : [];
+    if (players.length >= MAX_PLAYERS - 1) {
+      throw new Error('Sala cheia. O número máximo de jogadores é 6.');
+    }
+  };
+
   const createOffer = async () => {
     try {
-      const roomRef = ref(database, `bugsio/rooms/${roomKey}`);
-      const snap = await get(roomRef);
-
-      if (!snap.exists()) {
-        throw new Error(`Sala não encontrada: ${roomKey}`);
-      }
-
-      const roomData = snap.val();
-
-      // Verifica se já existem 6 jogadores
-      const players = roomData.offers ? Object.values(roomData.offers) : [];
-      if (players.length >= 5) {
-        throw new Error("Sala cheia. O número máximo de jogadores é 6.");
-      }
+      await validateRoomCapacity();
 
       const pc = new RTCPeerConnection(servers);
       const channel = pc.createDataChannel('data');
-      connections.current['host'] = pc;
+      peerConnections.current['host'] = pc;
       dataChannels.current['host'] = channel;
 
-      channel.onopen = () => {
-        console.log('[GUEST] Canal aberto com host');
-        setConnected(true);
-        setIsClosed(false);
-      };
-
-      channel.onmessage = (e) => {
-        onMessageCallback.current(e.data, 'host');
-      };
-
-      channel.onclose = () => {
-        console.log('[GUEST] Canal com host fechado');
-        setIsClosed(true);
-        setConnected(false);
-
-        if (pc && pc.signalingState !== 'closed') {
-          pc.close();
-        }
-
-        handleDisconnect('host');
-        delete connections.current['host'];
-        delete dataChannels.current['host'];
-      };
-
+      setupDataChannelHandlers(channel, 'host');
       setupPeerConnection(pc, 'host', false);
-      
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      
       await update(ref(database, `bugsio/rooms/${roomKey}/offers/${uid}`), { offer });
-      
-      const answerRef = ref(database, `bugsio/rooms/${roomKey}/answers/${uid}/answer`);
 
+      const answerRef = ref(database, `bugsio/rooms/${roomKey}/answers/${uid}/answer`);
       const unsubscribe = onValue(answerRef, async (snap) => {
         if (snap.exists()) {
           const answer = snap.val();
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-          // Após aplicar a resposta, podemos parar de escutar
-          unsubscribe(); 
+          unsubscribe();
         }
       });
     } catch (err) {
-      //console.error('[createOffer] Erro ao criar oferta:', err);
-      throw err; // Repropaga o erro se você quiser tratar ele mais acima
+      throw err;
     }
   };
 
@@ -191,16 +166,15 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
     if (!roomKey || isHost === null || !uid) return;
 
     if (isHost) {
-      console.log('[HOST] Escutando ofertas...');
       onChildAdded(ref(database, `bugsio/rooms/${roomKey}/offers`), async (snap) => {
         const guestId = snap.key!;
-        if (guestId === uid) return; // ignora ofertas do próprio host (caso ocorra)
+        if (guestId === uid) return;
 
         const { offer } = snap.val();
         if (!offer) return;
 
         const pc = new RTCPeerConnection(servers);
-        connections.current[guestId] = pc;
+        peerConnections.current[guestId] = pc;
 
         setupPeerConnection(pc, guestId, true, offer);
       });
@@ -208,7 +182,7 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
   }, [roomKey, isHost, uid]);
 
   const sendMessage = (msg: string) => {
-    Object.entries(dataChannels.current).forEach(([id, channel]) => {
+    Object.entries(dataChannels.current).forEach(([_, channel]) => {
       if (channel.readyState === 'open') {
         channel.send(msg);
       }
@@ -216,7 +190,7 @@ export function useWebRTC(roomKey: string, isHost: boolean | null, uid: string, 
   };
 
   const onMessage = (cb: (msg: string, from: string) => void) => {
-    onMessageCallback.current = cb;
+    messageHandlerRef.current = cb;
   };
 
   return { sendMessage, onMessage, connected, createOffer, disconnectedPeers, isClosed };

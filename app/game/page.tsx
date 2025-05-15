@@ -28,7 +28,7 @@ import {
   handleSpecialAttack,
   handleSpeedBoost
 } from '@/utils/game-event-handlers';
-import { useWebRTC } from '@/utils/use-web-rtc';
+import { useWebRTC } from '@/hooks/use-web-rtc';
 
 import { monitorHostConnection, monitorGuestConnection } from "@/utils/monitor-connection"
 
@@ -192,12 +192,11 @@ export default function Game() {
         maxHealth: character.stats.health,
       },
       effects: {
-        invincible: null,
-        speedBoost: null,
-        specialAttack: null,
-        slow: null,
-        poisonedUntil: null,
-        poisonNextAttack: false,
+        shieldExpiresAt: 0,
+        speedExpiresAt: 0,
+        specialAttackExpiresAt: 0,
+        slowExpiresAt: 0,
+        poisonedExpiresAt: 0
       },
       type: character.id,
       ability: character.ability || null,
