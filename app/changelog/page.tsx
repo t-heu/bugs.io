@@ -7,7 +7,7 @@ interface CardProps {
   children: ReactNode;
   className?: string;
 }
-export function Card({ children, className = '' }: CardProps) {
+function Card({ children, className = '' }: CardProps) {
   return (
     <div
       className={`bg-[#111] border border-gray-700 rounded-md p-6 shadow-sm ${className}`}
@@ -21,7 +21,7 @@ interface CardHeaderProps {
   children: ReactNode;
   className?: string;
 }
-export function CardHeader({ children, className = '' }: CardHeaderProps) {
+function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
     <header
       className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 ${className}`}
@@ -35,7 +35,7 @@ interface CardTitleProps {
   children: ReactNode;
   className?: string;
 }
-export function CardTitle({ children, className = '' }: CardTitleProps) {
+function CardTitle({ children, className = '' }: CardTitleProps) {
   return (
     <h2
       className={`text-xl font-semibold text-white flex items-center gap-2 ${className}`}
@@ -49,7 +49,7 @@ interface CardDescriptionProps {
   children: ReactNode;
   className?: string;
 }
-export function CardDescription({ children, className = '' }: CardDescriptionProps) {
+function CardDescription({ children, className = '' }: CardDescriptionProps) {
   return (
     <p className={`text-sm text-gray-400 ${className}`}>{children}</p>
   );
@@ -59,7 +59,7 @@ interface CardContentProps {
   children: ReactNode;
   className?: string;
 }
-export function CardContent({ children, className = '' }: CardContentProps) {
+function CardContent({ children, className = '' }: CardContentProps) {
   return (
     <div className={`pt-2 ${className}`}>
       {children}
@@ -71,7 +71,7 @@ interface BadgeProps {
   children: ReactNode;
   className?: string;
 }
-export function Badge({ children, className = '' }: BadgeProps) {
+function Badge({ children, className = '' }: BadgeProps) {
   return (
     <span
       className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full text-white select-none
