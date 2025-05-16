@@ -118,17 +118,17 @@ export default function ChangelogPage() {
   ]
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
-      <div className="container mx-auto py-10 px-4 max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
+      <div className="max-w-3xl mx-auto py-8">
         <Link href="/">
-          <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2 w-fit">
+          <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </button>
         </Link>
 
         <div className="space-y-2 text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Changelogs</h1>
+          <h1 className="text-4xl font-bold mt-6 mb-2 text-center">Changelogs</h1>
           <p className="text-white">Histórico de atualizações e melhorias do nosso produto</p>
         </div>
 

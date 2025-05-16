@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
 
-export function useAbilityLogic(player: any, setPlayer: any, broadcast: any) {
+export function useAbilityLogic(player: any, setPlayer: any, broadcast: any, activeEffectsRef: any) {
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0); // em milissegundos
   const abilityCooldownsRef = useRef<Record<string, number>>({});
-  const activeEffectsRef = useRef<any>({}); // ajusta o tipo conforme seu jogo
 
   function useAbility() {
     if (!player?.ability) return;

@@ -62,7 +62,7 @@ export default function GameArena({
 
   const isMobile = useMobile();
 
-  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, broadcast);
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, broadcast, activeEffectsRef);
 
   useKeyboardControls(player, setKeys, attackPressedRef, useAbility)
   useMobileJoystick({
