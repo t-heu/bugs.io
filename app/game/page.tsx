@@ -257,8 +257,8 @@ export default function Game() {
           )}
 
           {joinMode === "guest" && (
-            <div className="flex flex-col items-center gap-2">
-              <label htmlFor="roomKey" className="text-sm text-gray-300">Digite o código da sala</label>
+            <div className="max-w-xl mx-auto flex flex-col">
+              <label htmlFor="roomKey" className="text-center text-sm text-gray-300 mb-2">Digite o código da sala</label>
               <input 
                 id="roomKey"
                 value={roomInput}
@@ -271,7 +271,7 @@ export default function Game() {
 
           {(joinMode === "host" || joinMode === "guest") && (
             <>
-              <p className="text-center px-4 py-2 rounded-md text-green-300 mb-4 bg-[#111]">
+              <p className="max-w-xl mx-auto text-center px-4 py-2 rounded-md text-green-300 mb-4 bg-[#111]">
                  Status: {connectionStatus}
               </p>
               <CharacterSelection 
