@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { specialAttack, activateShield, activateSpeedBoost, applyPoisonEffect, healPlayer, applySlow } from "@/utils/ability"
 
-export function useAbilityLogic(player: any, setPlayer: any, broadcast: any, activeEffectsRef: any) {
+export function useAbilityLogic(player: any, setPlayer: any, exchangeGameRoomData: any, activeEffectsRef: any) {
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0); // em milissegundos
   const abilityCooldownsRef = useRef<Record<string, number>>({});
@@ -29,12 +29,12 @@ export function useAbilityLogic(player: any, setPlayer: any, broadcast: any, act
 
   function executeAbilityEffect(abilityName: string) {
     const abilityActions: Record<string, () => void> = {
-      "Special Attack": () => specialAttack(activeEffectsRef, player, broadcast),
-      "Hard Shell": () => activateShield(activeEffectsRef, player, broadcast),
-      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, player, broadcast),
-      "Regeneration": () => healPlayer(player, setPlayer, broadcast),
-      "Poison": () => applyPoisonEffect(player.uid, player, broadcast),
-      "Slow Strike": () => applySlow(activeEffectsRef, player, broadcast),
+      "Special Attack": () => specialAttack(activeEffectsRef, player, exchangeGameRoomData),
+      "Hard Shell": () => activateShield(activeEffectsRef, player, exchangeGameRoomData),
+      "Speed Boost": () => activateSpeedBoost(activeEffectsRef, player, exchangeGameRoomData),
+      "Regeneration": () => healPlayer(player, setPlayer, exchangeGameRoomData),
+      "Poison": () => applyPoisonEffect(player.uid, player, exchangeGameRoomData),
+      "Slow Strike": () => applySlow(activeEffectsRef, player, exchangeGameRoomData),
     };
 
     const action = abilityActions[abilityName];

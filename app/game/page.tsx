@@ -33,6 +33,7 @@ import { useWebRTC } from '@/hooks/use-web-rtc';
 import { monitorHostConnection, monitorGuestConnection } from "@/utils/monitor-connection"
 
 import insects from "@/insects.json"
+import { Player } from "../interfaces";
 
 export default function Game() {
   const [gameState, setGameState] = useState("selection") // selection, playing, gameOve
@@ -100,7 +101,7 @@ export default function Game() {
       type: "loadRoom",
       ...gameRoom,
     }));
-  }, [gameRoom]); // dispara sempre que o gameRoom muda
+  }, [gameRoom]);
 
   useEffect(() => {
     if (isClosed) {
@@ -126,7 +127,7 @@ export default function Game() {
   }, [connected, isHost, player, gameRoom, sendMessage, hasJoined]);
 
   function isValidName(name: string): boolean {
-    return !!name && /^[a-zA-Z\s]*$/.test(name);
+    return !!name && /^[a-zA-Z\s]*$/.test(name.trim());
   }
 
   async function createHost(character: any) {
@@ -204,7 +205,7 @@ export default function Game() {
     };
   }
   
-  function createGame(name: string, playerData: any) {
+  function createGame(name: string, playerData: Player) {
     const roomKey = generateRandomWord(6);
     setGameRoom({
       gameInProgress: false,
@@ -287,7 +288,7 @@ export default function Game() {
                     const newPlayer = createPlayer(name, character, player.score);
                     setGameRoom((prev: any) => {
                       if (!prev) return prev;
-
+                      
                       // Remove o jogador antigo com o mesmo UID, se existir
                       const filteredPlayers = prev.players.filter((p: any) => p.uid !== newPlayer.uid);
 
@@ -323,9 +324,9 @@ export default function Game() {
           player={player}
           setPlayer={setPlayer}
           gameRoom={gameRoom}
-          broadcast={sendMessage}
+          exchangeGameRoomData={sendMessage}
           disconnectedPeers={disconnectedPeers}
-          syncGameRoomAsHost={isHost ? setGameRoom : null}
+          updateRoomIfHost={isHost ? setGameRoom : null}
         />
       )}
 

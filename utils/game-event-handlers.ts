@@ -31,7 +31,17 @@ export function handleJoin(data: any, from: any, isHost: boolean | null, setGame
 }
 
 export function handleFullLoadRoom(data: any, setGameRoom: any) {
-  if (!data) return 
+  if (!data) return;
+
+  if (Array.isArray(data.players)) {
+    const seen = new Set<string>();
+    data.players = data.players.filter((player: any) => {
+      if (seen.has(player.uid)) return false;
+      seen.add(player.uid);
+      return true;
+    });
+  }
+
   setGameRoom(data);
 }
 

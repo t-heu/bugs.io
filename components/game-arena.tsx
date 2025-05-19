@@ -26,9 +26,9 @@ interface GameArenaProps {
   player: Player;
   setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
   gameRoom: GameRoom;
-  broadcast: any;
+  exchangeGameRoomData: any;
   disconnectedPeers: any
-  syncGameRoomAsHost: any | null
+  updateRoomIfHost: any | null
 }
 
 export default function GameArena({ 
@@ -37,9 +37,9 @@ export default function GameArena({
   player, 
   setPlayer,
   gameRoom,
-  broadcast,
+  exchangeGameRoomData,
   disconnectedPeers,
-  syncGameRoomAsHost
+  updateRoomIfHost
 }: GameArenaProps) {
   const canvasRef = useRef(null)
   const joystickRef = useRef(null)
@@ -64,8 +64,7 @@ export default function GameArena({
   const [otherPlayers, setOtherPlayers] = useState<Player[]>([])
 
   const isMobile = useMobile();
-
-  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, broadcast, activeEffectsRef);
+  const { useAbility, isCooldown, cooldownTime } = useAbilityLogic(player, setPlayer, exchangeGameRoomData, activeEffectsRef);
 
   useKeyboardControls(player, setKeys, attackPressedRef, useAbility)
   useMobileJoystick({
@@ -81,21 +80,15 @@ export default function GameArena({
     setJoystickDistance,
   });
 
+  // Sync player join
   useEffect(() => {
     if (!player || !gameRoom || hasJoinedRef.current) return;
-
     hasJoinedRef.current = true;
 
-    if (syncGameRoomAsHost) {
-      syncGameRoomAsHost((prevRoom: GameRoom) => {
-        if (!prevRoom) return prevRoom;
-
-        return {
-          ...prevRoom,
-          players: [...prevRoom.players, player],
-        };
-      });
-    }
+    updateRoomIfHost?.((room: GameRoom) => ({
+      ...room,
+      players: [...room.players, player],
+    }));
 
     setCactus(gameRoom.cactus || []);
   }, [player?.uid, gameRoom?.players?.length]);
@@ -104,61 +97,56 @@ export default function GameArena({
     if (gameRoom?.food) setFood(gameRoom.food);
   }, [gameRoom?.food]);
 
+  // Sync players
   useEffect(() => {
     if (!player || !gameRoom?.players) return;
-
     const currentPlayers = gameRoom.players;
-
-    // Atualiza o próprio player
-    attPlayer(currentPlayers);
-
-    // Atualiza os outros jogadores
-    updatePlayers(currentPlayers);
-
+    //console.log(currentPlayers)
+    updateSelf(currentPlayers);
+    updateOtherPlayers(currentPlayers);
   }, [gameRoom?.players, player?.uid, disconnectedPeers]);
 
-  const attPlayer = (currentPlayers: Player[]) => {
-    const updatedSelf = currentPlayers.find(p => p.uid === player.uid);
-    if (!updatedSelf) return;
+  // Atualiza o próprio jogador
+  const updateSelf = (players: Player[]) => {
+    const updated = players.find(p => p.uid === player.uid);
+    if (!updated) return;
 
     setPlayer(prev => {
-      const prevUpdate = prev?.lastUpdate ?? 0;
-      const nextUpdate = updatedSelf.lastUpdate ?? 0;
-      if (nextUpdate <= prevUpdate) return prev;
+      const outdated = (updated.lastUpdate ?? 0) <= (prev?.lastUpdate ?? 0);
+      if (outdated) return prev;
 
       const prevPos = prev?.position ?? { x: 0, y: 0 };
-      const updatedPos = updatedSelf.position ?? prevPos;
-      const distance = Math.hypot(updatedPos.x - prevPos.x, updatedPos.y - prevPos.y);
-      const smoothPosition = distance > 100
-        ? updatedPos
-        : {
-            x: (prevPos.x + updatedPos.x) / 2,
-            y: (prevPos.y + updatedPos.y) / 2,
-          };
+      const updatedPos = updated.position ?? prevPos;
+      const dist = Math.hypot(updatedPos.x - prevPos.x, updatedPos.y - prevPos.y);
 
       return {
         ...prev,
-        ...updatedSelf,
-        position: smoothPosition,
-        lastUpdate: nextUpdate,
+        ...updated,
+        position: dist > 100 ? updatedPos : {
+          x: (prevPos.x + updatedPos.x) / 2,
+          y: (prevPos.y + updatedPos.y) / 2,
+        },
       };
     });
   };
 
-  const updatePlayers = (currentPlayers: Player[]) => {
+  const updateOtherPlayers = (currentPlayers: Player[]) => {
     const alivePlayers = currentPlayers.filter(p => {
-      const isDisconnected = disconnectedPeers === p.uid; // Se for string
+      if (!player) return false;
+
+      const isDisconnected = disconnectedPeers === p.uid;
       const isDead = p.stats.health <= 0;
+      const isSelf = p.uid === player.uid;
 
       if (isDead) {
-        broadcast(JSON.stringify({
+        exchangeGameRoomData(JSON.stringify({
           type: 'player_exit',
           uid: p.uid,
           reason: 'dead',
         }));
       }
 
-      return !isDisconnected && !isDead && p.uid !== player.uid;
+      return !isDisconnected && !isDead && !isSelf;
     });
 
     setOtherPlayers(prevOthers =>
@@ -199,15 +187,13 @@ export default function GameArena({
   const updateGame = useCallback(() => {
     if (!canvasRef.current || !player) return;
 
-    const updatedPlayer = { 
-      ...player, 
-    };
-
+    const updatedPlayer = { ...player };
     const now = Date.now();
-    const nowEffect = now;
-    const isInvincible = activeEffectsRef.current["Hard Shell"] > nowEffect;
-    const hasSpeedBoost = activeEffectsRef.current["Speed Boost"] > nowEffect;
-    const hasSlow = activeEffectsRef.current["Slow Strike"] > nowEffect;
+    const effects = activeEffectsRef.current;
+
+    const isInvincible = effects["Hard Shell"] > now;
+    const hasSpeedBoost = effects["Speed Boost"] > now;
+    const hasSlow = effects["Slow Strike"] > now;
 
     let finalSpeed = player.stats.speed;
     if (hasSpeedBoost) finalSpeed *= player.ability.boost;
@@ -223,38 +209,32 @@ export default function GameArena({
     );
 
     setViewportOffset({ x: newX - VIEWPORT_SIZE / 2, y: newY - VIEWPORT_SIZE / 2 });
-    handleFoodCollision(newX, newY, food, player, broadcast, setFood, updatedPlayer, syncGameRoomAsHost);
+    handleFoodCollision(newX, newY, food, player, exchangeGameRoomData, setFood, updatedPlayer, updateRoomIfHost);
 
     const { tookDamage, newHealth } = handleCactusCollision(newX, newY, cactus, player);
     if (tookDamage && !isInvincible) {
+      updatedPlayer.stats.health = newHealth;
+
       if (newHealth === 0) {
-        onGameOver(player.score, "Você foi morto por cactu!");
+        handlePlayerDeath(
+          player,
+          "Você foi morto por cactu!",
+          setOtherPlayers,
+          exchangeGameRoomData,
+          onGameOver,
+          roomKey
+        );
+        return;
       }
 
-      updatedPlayer.stats.health = newHealth
+      updateRoomIfHost?.((room: GameRoom) => ({
+        ...room,
+        players: room.players.map(p =>
+          p.uid === player.uid ? { ...p, stats: { ...p.stats, health: newHealth } } : p
+        )
+      }));
 
-      if (syncGameRoomAsHost) {
-        syncGameRoomAsHost((prevRoom: GameRoom) => {
-          if (!prevRoom) return prevRoom;
-
-          return {
-            ...prevRoom,
-            players: prevRoom.players.map(p =>
-              p.uid === player.uid
-                ? {
-                    ...p,
-                    stats: {
-                      ...p.stats,
-                      health: newHealth,
-                    },
-                  }
-                : p
-            ),
-          };
-        });
-      }
-
-      broadcast(JSON.stringify({
+      exchangeGameRoomData(JSON.stringify({
         type: 'player_health',
         uid: player.uid,
         health: newHealth,
@@ -265,23 +245,23 @@ export default function GameArena({
     if (!isInvincible) {
       if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
         lastAttackTimeRef.current = now;
-        handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, broadcast, updatedPlayer, syncGameRoomAsHost);
+        handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, exchangeGameRoomData, updatedPlayer, updateRoomIfHost);
       }
   
-      applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
+      applyPoisonDamageToTargets(now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, exchangeGameRoomData);
 
-      if (hasSlow) applySlowToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
+      if (hasSlow) applySlowToTargets(now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, exchangeGameRoomData);
     }
 
-    if (player.stats.health <= 0 && player.killer) {
-      onGameOver(player.score, `Você foi eliminado por ${player.killer}!`);
-      setOtherPlayers(prev => prev.filter(p => p.uid !== player.uid));
-
-      broadcast(JSON.stringify({
-        type: 'player_exit',
-        uid: player.uid,
-        room: roomKey
-      }));
+    if (player.stats.health <= 0) {
+      handlePlayerDeath(
+        player,
+        `Você foi eliminado por ${player.killer}!`,
+        setOtherPlayers,
+        exchangeGameRoomData,
+        onGameOver,
+        roomKey
+      );
       return;
     }
 
@@ -289,25 +269,15 @@ export default function GameArena({
     updatedPlayer.position = newPosition
     setPlayer(updatedPlayer);
 
-    if (
-      Math.abs(player.position.x - newPosition.x) > 1 ||
-      Math.abs(player.position.y - newPosition.y) > 1
-    ) {
-      if (syncGameRoomAsHost) {
-        syncGameRoomAsHost((prevRoom: GameRoom) => {
-          if (!prevRoom) return prevRoom;
-
-          return {
-            ...prevRoom,
-            players: prevRoom.players.map(p =>
-              p.uid === player.uid
-                ? { ...p, position: { x: newX, y: newY } }
-                : p
-            )
-          };
-        });
-      }
-      broadcast(JSON.stringify({
+    const moved = Math.abs(player.position.x - newX) > 1 || Math.abs(player.position.y - newY) > 1;
+    if (moved) {
+      updateRoomIfHost?.((room: GameRoom) => ({
+        ...room,
+        players: room.players.map(p =>
+          p.uid === player.uid ? { ...p, position: newPosition } : p
+        )
+      }));
+      exchangeGameRoomData(JSON.stringify({
         type: 'player_position',
         uid: updatedPlayer.uid,
         position: updatedPlayer.position,
@@ -319,32 +289,44 @@ export default function GameArena({
   // Game loop
   useEffect(() => {
     if (!player || isLooping.current) return;
-
     isLooping.current = true;
 
     const loop = () => {
       if (!isLooping.current || !player) return;
-
       updateGame();
       renderGame();
       animationId.current = requestAnimationFrame(loop);
     };
 
     animationId.current = requestAnimationFrame(loop);
-
     return () => {
-      if (animationId.current) {
-        cancelAnimationFrame(animationId.current);
-      }
+      if (animationId.current) cancelAnimationFrame(animationId.current);
       isLooping.current = false;
     };
   }, [updateGame, renderGame, player]);
 
+  const handlePlayerDeath = (
+    player: Player,
+    reason: string,
+    setOtherPlayers: React.Dispatch<React.SetStateAction<Player[]>>,
+    exchangeGameRoomData: (data: string) => void,
+    onGameOver: (score: number, message: string) => void,
+    roomKey: string
+  ) => {
+    onGameOver(player.score, reason);
+
+    setOtherPlayers(prev => prev.filter(p => p.uid !== player.uid));
+
+    exchangeGameRoomData(JSON.stringify({
+      type: 'player_exit',
+      uid: player.uid,
+      room: roomKey,
+    }));
+  };
+
   const exitGame = () => {
     const confirmExit = window.confirm("Tem certeza que deseja sair da partida? Você irá perder sua pontuação atual.");
-    if (confirmExit) {
-      onGameOver(0, 'Você saiu!');
-    }
+    if (confirmExit) onGameOver(0, 'Você saiu!');
   };
 
   const handleCopy = () => navigator.clipboard.writeText(roomKey).then(() => alert('Copied!'))

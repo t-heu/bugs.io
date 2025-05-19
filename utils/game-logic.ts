@@ -8,9 +8,9 @@ export function handlePlayerAttack(
   player: Player,
   otherPlayers: any[],
   lastPoisonTickRef: any,
-  broadcast: any,
+  exchangeGameRoomData: any,
   updatedPlayer: any,
-  syncGameRoomAsHost: any
+  updateRoomIfHost: any
 ) {
   const attackRange = 50;
   const damagedUIDs = new Set();
@@ -33,28 +33,14 @@ export function handlePlayerAttack(
 
     const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
 
-    if (syncGameRoomAsHost) {
-      syncGameRoomAsHost((prevRoom: GameRoom) => {
-        if (!prevRoom) return prevRoom;
-
-        return {
-          ...prevRoom,
-          players: prevRoom.players.map(p =>
-            p.uid === targetPlayer.uid
-              ? {
-                  ...p,
-                  stats: {
-                    ...p.stats,
-                    health: newHealthTarget,
-                  },
-                }
-              : p
-          ),
-        };
-      });
-    }
+    updateRoomIfHost?.((room: GameRoom) => ({
+      ...room,
+      players: room.players.map(p =>
+        p.uid === targetPlayer.uid ? { ...p, stats: { ...p.stats, health: newHealthTarget } } : p
+      )
+    }));
     
-    broadcast(JSON.stringify({
+    exchangeGameRoomData(JSON.stringify({
       type: 'player_health',
       uid: targetPlayer.uid,
       health: newHealthTarget,
@@ -62,7 +48,7 @@ export function handlePlayerAttack(
     }));
 
     if (player.effects.poisonedExpiresAt && player.effects.poisonedExpiresAt > Date.now()) {
-      broadcast(JSON.stringify({
+      exchangeGameRoomData(JSON.stringify({
         type: 'Poison',
         uid: player.uid,
         duration: Date.now() + player.ability.duration,
@@ -75,7 +61,7 @@ export function handlePlayerAttack(
     if (targetPlayer.name && newHealthTarget === 0) {
       updatedPlayer.killer = `${player.name} - (${player.type})`;
 
-      broadcast(JSON.stringify({
+      exchangeGameRoomData(JSON.stringify({
         type: 'player_kill',
         uid: targetPlayer.uid,
         killer: `${player.name} - (${player.type})`,
@@ -85,7 +71,7 @@ export function handlePlayerAttack(
       const newScore = player.score + 15;
       updatedPlayer.score = newScore
 
-      broadcast(JSON.stringify({
+      exchangeGameRoomData(JSON.stringify({
         type: 'player_score',
         uid: player.uid,
         score: newScore,
@@ -96,13 +82,12 @@ export function handlePlayerAttack(
 }
 
 export function applySlowToTargets(
-  nowEffect: number,
   now: number,
   otherPlayers: Player[],
   player: Player,
   lastSlowTickRef: any,
   setOtherPlayers: Dispatch<SetStateAction<any[]>>,
-  broadcast: any
+  exchangeGameRoomData: any
 ) {
   otherPlayers.forEach((target: Player) => {
     //const isSlowed = target.effects?.slowExpiresAt && target.effects.slowExpiresAt > now;
@@ -127,7 +112,7 @@ export function applySlowToTargets(
       )
     );
 
-    broadcast(JSON.stringify({
+    exchangeGameRoomData(JSON.stringify({
       type: 'Slow Strike',
       uid: target.uid,
       newSpeed: Math.floor((target.stats.speed || target.stats.speed / slowAmount) * slowAmount),
@@ -135,18 +120,17 @@ export function applySlowToTargets(
       lastUpdate: Date.now()
     }));
 
-    lastSlowTickRef.current[target.uid] = nowEffect;
+    lastSlowTickRef.current[target.uid] = now;
   });
 }
 
-export function applyPoisonDamageToTargets(
-  nowEffect: any, 
+export function applyPoisonDamageToTargets( 
   now: any, 
   otherPlayers: Player[], 
   player: Player,
   lastPoisonTickRef: any,
   setOtherPlayers: Dispatch<SetStateAction<any[]>>,
-  broadcast: any
+  exchangeGameRoomData: any
 ) {
   otherPlayers.forEach((target: Player) => {
     const isPoisoned = target.effects?.poisonedExpiresAt && target.effects.poisonedExpiresAt > now;
@@ -164,7 +148,7 @@ export function applyPoisonDamageToTargets(
 
     const newHealth = Math.max(0, target.stats.health - poisonDamage);
 
-    broadcast(JSON.stringify({
+    exchangeGameRoomData(JSON.stringify({
       type: 'player_health',
       uid: target.uid,
       health: newHealth,
@@ -179,7 +163,7 @@ export function applyPoisonDamageToTargets(
       )
     );
 
-    lastPoisonTickRef.current[target.uid] = nowEffect;
+    lastPoisonTickRef.current[target.uid] = now;
   });
 }
 
@@ -245,10 +229,10 @@ export function handleFoodCollision(
   y: number,
   foodList: any[] = [],
   player: Player,
-  broadcast: (msg: string) => void,
+  exchangeGameRoomData: (msg: string) => void,
   setFood: (newFood: any[]) => void,
   updatedPlayer: Player,
-  syncGameRoomAsHost: any
+  updateRoomIfHost: any
 ) {
   if (!foodList || foodList.length === 0) return;
 
@@ -271,21 +255,12 @@ export function handleFoodCollision(
       newScore += FOOD_VALUE_SCORE;
       changed = true;
 
-      if (syncGameRoomAsHost) {
-        syncGameRoomAsHost((prev: GameRoom) => {
-          if (!prev) return prev;
+      updateRoomIfHost?.((room: GameRoom) => ({
+        ...room,
+        food: room.food.map((f, i) => (i === index ? newFood : f))
+      }));
 
-          const updatedFood = [...prev.food];
-          updatedFood[index] = newFood;
-
-          return {
-            ...prev,
-            food: updatedFood,
-          };
-        });
-      }
-
-      broadcast(JSON.stringify({
+      exchangeGameRoomData(JSON.stringify({
         type: 'food_update',
         index,
         newFood,
@@ -295,44 +270,26 @@ export function handleFoodCollision(
 
   if (changed) {
     setFood(updatedFood);
-
-    updatedPlayer.stats = {
-      ...updatedPlayer.stats,
-      health: newHealth,
-    };
+    updatedPlayer.stats.health = newHealth;
     updatedPlayer.score = newScore;
 
     const now = Date.now();
 
-    if (syncGameRoomAsHost) {
-      syncGameRoomAsHost((prevRoom: GameRoom) => {
-        if (!prevRoom) return prevRoom;
+    updateRoomIfHost?.((room: GameRoom) => ({
+      ...room,
+      players: room.players.map(p =>
+        p.uid === player.uid ? { ...p, stats: { ...p.stats, health: newHealth } } : p
+      )
+    }));
 
-        return {
-          ...prevRoom,
-          players: prevRoom.players.map(p =>
-            p.uid === player.uid
-              ? {
-                  ...p,
-                  stats: {
-                    ...p.stats,
-                    health: newHealth,
-                  },
-                }
-              : p
-          ),
-        };
-      });
-    }
-
-    broadcast(JSON.stringify({
+    exchangeGameRoomData(JSON.stringify({
       type: 'player_health',
       uid: player.uid,
       health: newHealth,
       lastUpdate: now,
     }));
 
-    broadcast(JSON.stringify({
+    exchangeGameRoomData(JSON.stringify({
       type: 'player_score',
       uid: player.uid,
       score: newScore,
