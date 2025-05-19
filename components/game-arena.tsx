@@ -14,7 +14,8 @@ import {
   handleFoodCollision, 
   updatePlayerPosition, 
   handlePlayerAttack, 
-  applyPoisonDamageToTargets 
+  applyPoisonDamageToTargets,
+  applySlowToTargets
 } from "@/utils/game-logic"
 
 import { Player, GameRoom } from "@/app/interfaces"
@@ -27,6 +28,7 @@ interface GameArenaProps {
   gameRoom: GameRoom;
   broadcast: any;
   disconnectedPeers: any
+  syncGameRoomAsHost: any | null
 }
 
 export default function GameArena({ 
@@ -36,7 +38,8 @@ export default function GameArena({
   setPlayer,
   gameRoom,
   broadcast,
-  disconnectedPeers
+  disconnectedPeers,
+  syncGameRoomAsHost
 }: GameArenaProps) {
   const canvasRef = useRef(null)
   const joystickRef = useRef(null)
@@ -83,6 +86,17 @@ export default function GameArena({
 
     hasJoinedRef.current = true;
 
+    if (syncGameRoomAsHost) {
+      syncGameRoomAsHost((prevRoom: GameRoom) => {
+        if (!prevRoom) return prevRoom;
+
+        return {
+          ...prevRoom,
+          players: [...prevRoom.players, player],
+        };
+      });
+    }
+
     setCactus(gameRoom.cactus || []);
   }, [player?.uid, gameRoom?.players?.length]);
 
@@ -94,7 +108,7 @@ export default function GameArena({
     if (!player || !gameRoom?.players) return;
 
     const currentPlayers = gameRoom.players;
-    //console.log(currentPlayers)
+
     // Atualiza o próprio player
     attPlayer(currentPlayers);
 
@@ -103,46 +117,37 @@ export default function GameArena({
 
   }, [gameRoom?.players, player?.uid, disconnectedPeers]);
 
-  const attPlayer = (currentPlayers: any[]) => {
+  const attPlayer = (currentPlayers: Player[]) => {
     const updatedSelf = currentPlayers.find(p => p.uid === player.uid);
-    if (updatedSelf) {
-      setPlayer((prev: any) => {
-        const prevUpdate = prev?.lastUpdate ?? 0;
-        const nextUpdate = updatedSelf.lastUpdate ?? 0;
+    if (!updatedSelf) return;
 
-        if (nextUpdate > prevUpdate) {
-          // Suavizando a posição
-          const prevPos = prev?.position || { x: 0, y: 0 };
-          const updatedPos = updatedSelf.position || { x: 0, y: 0 };
-          const distance = Math.sqrt(Math.pow(updatedPos.x - prevPos.x, 2) + Math.pow(updatedPos.y - prevPos.y, 2));
-          const smoothPosition = distance > 100 ? updatedPos : { x: (prevPos.x + updatedPos.x) / 2, y: (prevPos.y + updatedPos.y) / 2 };
+    setPlayer(prev => {
+      const prevUpdate = prev?.lastUpdate ?? 0;
+      const nextUpdate = updatedSelf.lastUpdate ?? 0;
+      if (nextUpdate <= prevUpdate) return prev;
 
-          return {
-            ...prev,
-            killer: updatedSelf.killer ?? prev.killer,
-            score: updatedSelf.score ?? prev.score,
-            stats: {
-              ...prev.stats,
-              ...(updatedSelf.stats || {}),
-            },
-            effects: {
-              ...prev.effects,
-              ...(updatedSelf.effects || {}),
-            },
-            ability: updatedSelf.ability ?? prev.ability,
-            lastUpdate: nextUpdate,
-            position: smoothPosition,
+      const prevPos = prev?.position ?? { x: 0, y: 0 };
+      const updatedPos = updatedSelf.position ?? prevPos;
+      const distance = Math.hypot(updatedPos.x - prevPos.x, updatedPos.y - prevPos.y);
+      const smoothPosition = distance > 100
+        ? updatedPos
+        : {
+            x: (prevPos.x + updatedPos.x) / 2,
+            y: (prevPos.y + updatedPos.y) / 2,
           };
-        }
 
-        return prev;
-      });
-    }
+      return {
+        ...prev,
+        ...updatedSelf,
+        position: smoothPosition,
+        lastUpdate: nextUpdate,
+      };
+    });
   };
 
-  const updatePlayers = (currentPlayers: any[]) => {
-    const updatedOthers = currentPlayers.filter(p => {
-      const isDisconnected = disconnectedPeers && p.uid === disconnectedPeers;
+  const updatePlayers = (currentPlayers: Player[]) => {
+    const alivePlayers = currentPlayers.filter(p => {
+      const isDisconnected = disconnectedPeers === p.uid; // Se for string
       const isDead = p.stats.health <= 0;
 
       if (isDead) {
@@ -156,12 +161,12 @@ export default function GameArena({
       return !isDisconnected && !isDead && p.uid !== player.uid;
     });
 
-    setOtherPlayers((prevOthers) =>
-      updatedOthers.map((p) => {
-        const existing = prevOthers.find((o) => o.uid === p.uid);
+    setOtherPlayers(prevOthers =>
+      alivePlayers.map(p => {
+        const existing = prevOthers.find(o => o.uid === p.uid);
         if (!existing) return p;
 
-        const alpha = 0.3; // fator de suavização, experimente valores entre 0.1 e 0.5
+        const alpha = Math.min(0.5, Math.max(0.1, p.stats.speed / 15));
         return {
           ...p,
           position: {
@@ -200,13 +205,12 @@ export default function GameArena({
 
     const now = Date.now();
     const nowEffect = now;
-    const isInvincible = activeEffectsRef.current["shield"] > nowEffect;
-    const hasSpeedBoost = activeEffectsRef.current["speed"] > nowEffect;
-    const hasSlow = activeEffectsRef.current["slow"] > nowEffect;
+    const isInvincible = activeEffectsRef.current["Hard Shell"] > nowEffect;
+    const hasSpeedBoost = activeEffectsRef.current["Speed Boost"] > nowEffect;
+    const hasSlow = activeEffectsRef.current["Slow Strike"] > nowEffect;
 
     let finalSpeed = player.stats.speed;
     if (hasSpeedBoost) finalSpeed *= player.ability.boost;
-    if (hasSlow) finalSpeed *= player.ability.slowAmount;
 
     const { newX, newY } = updatePlayerPosition(
       finalSpeed,
@@ -219,7 +223,7 @@ export default function GameArena({
     );
 
     setViewportOffset({ x: newX - VIEWPORT_SIZE / 2, y: newY - VIEWPORT_SIZE / 2 });
-    handleFoodCollision(newX, newY, food, player, broadcast, setFood, updatedPlayer);
+    handleFoodCollision(newX, newY, food, player, broadcast, setFood, updatedPlayer, syncGameRoomAsHost);
 
     const { tookDamage, newHealth } = handleCactusCollision(newX, newY, cactus, player);
     if (tookDamage && !isInvincible) {
@@ -229,6 +233,27 @@ export default function GameArena({
 
       updatedPlayer.stats.health = newHealth
 
+      if (syncGameRoomAsHost) {
+        syncGameRoomAsHost((prevRoom: GameRoom) => {
+          if (!prevRoom) return prevRoom;
+
+          return {
+            ...prevRoom,
+            players: prevRoom.players.map(p =>
+              p.uid === player.uid
+                ? {
+                    ...p,
+                    stats: {
+                      ...p.stats,
+                      health: newHealth,
+                    },
+                  }
+                : p
+            ),
+          };
+        });
+      }
+
       broadcast(JSON.stringify({
         type: 'player_health',
         uid: player.uid,
@@ -237,12 +262,16 @@ export default function GameArena({
       }));
     }
 
-    if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
-      lastAttackTimeRef.current = now;
-      handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, broadcast, updatedPlayer);
-    }
+    if (!isInvincible) {
+      if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
+        lastAttackTimeRef.current = now;
+        handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, broadcast, updatedPlayer, syncGameRoomAsHost);
+      }
+  
+      applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
 
-    applyPoisonDamageToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
+      if (hasSlow) applySlowToTargets(nowEffect, now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, broadcast);
+    }
 
     if (player.stats.health <= 0 && player.killer) {
       onGameOver(player.score, `Você foi eliminado por ${player.killer}!`);
@@ -264,6 +293,20 @@ export default function GameArena({
       Math.abs(player.position.x - newPosition.x) > 1 ||
       Math.abs(player.position.y - newPosition.y) > 1
     ) {
+      if (syncGameRoomAsHost) {
+        syncGameRoomAsHost((prevRoom: GameRoom) => {
+          if (!prevRoom) return prevRoom;
+
+          return {
+            ...prevRoom,
+            players: prevRoom.players.map(p =>
+              p.uid === player.uid
+                ? { ...p, position: { x: newX, y: newY } }
+                : p
+            )
+          };
+        });
+      }
       broadcast(JSON.stringify({
         type: 'player_position',
         uid: updatedPlayer.uid,
@@ -379,7 +422,7 @@ export default function GameArena({
           <div className="bg-green-900/70 p-2 rounded-lg">
             <p className="text-sm text-green-300 font-semibold">Pressione <span className="text-white">E</span> para ativar sua habilidade</p>
             <p className="text-sm text-green-300"><span className="font-medium">Habilidade:</span> {player.ability.name}</p>
-            <p className="text-sm text-green-300"><span className="font-medium">Descrição:</span> {player.ability.description}</p>
+            <p className="text-sm text-green-300"><span className="font-medium">Descrição:</span> {/*JSON.stringify(gameRoom.players)*/player.ability.description}</p>
           </div>
         </div>
       )}

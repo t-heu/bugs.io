@@ -3,10 +3,10 @@ export function specialAttack(activeEffectsRef: any, player: any, broadcast: any
 
   const specialAttackExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["special_attack"] = specialAttackExpiresAt;
+  activeEffectsRef.current["Special Attack"] = specialAttackExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'special_attack',
+    type: 'Special Attack',
     uid: player.uid,
     lastUpdate: Date.now(),
     duration: specialAttackExpiresAt,
@@ -17,10 +17,10 @@ export function activateShield(activeEffectsRef: any, player: any, broadcast: an
   const now = Date.now();
   const shieldExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["shield"] = shieldExpiresAt;
+  activeEffectsRef.current["Hard Shell"] = shieldExpiresAt;
 
    broadcast(JSON.stringify({
-    type: 'shield',
+    type: 'Hard Shell',
     uid: player.uid,
     duration: shieldExpiresAt,
     lastUpdate: Date.now()
@@ -32,10 +32,10 @@ export function activateSpeedBoost(activeEffectsRef: any, player: any, broadcast
 
   const speedExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["speed"] = speedExpiresAt;
+  activeEffectsRef.current["Speed Boost"] = speedExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'speed',
+    type: 'Speed Boost',
     uid: player.uid,
     duration: speedExpiresAt,
     lastUpdate: Date.now()
@@ -67,10 +67,10 @@ export function applyPoisonEffect(activeEffectsRef: any, player: any, broadcast:
 
   const poisonedExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["poison"] = poisonedExpiresAt;
+  activeEffectsRef.current["Poison"] = poisonedExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'poison',
+    type: 'Poison',
     uid: player.uid,
     duration: poisonedExpiresAt,
     lastUpdate: Date.now()
@@ -82,10 +82,10 @@ export function applySlow(activeEffectsRef: any, player: any, broadcast: any) {
 
   const slowExpiresAt = now + player.ability.duration;
 
-  activeEffectsRef.current["slow"] = slowExpiresAt;
+  activeEffectsRef.current["Slow Strike"] = slowExpiresAt;
 
   broadcast(JSON.stringify({
-    type: 'slow',
+    type: 'Slow Strike',
     uid: player.uid,
     duration: slowExpiresAt,
     lastUpdate: Date.now()

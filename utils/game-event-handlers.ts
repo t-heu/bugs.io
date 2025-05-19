@@ -71,7 +71,7 @@ function mergePlayerByUid(
 
 export function handlePlayerPosition(data: any, setGameRoom: any) {
   if (!data.uid || !data.position) return;
-
+  
   mergePlayerByUid(data.uid, (p) => ({
     ...p,
     position: {
@@ -163,10 +163,14 @@ export function handleSpeedBoost(data: any, setGameRoom: any) {
 }
 
 export function handleSlow(data: any, setGameRoom: any) {
-  const { uid, duration } = data;
-  if (!uid || typeof duration !== 'number') return;
-
-  applyEffectUntil(uid, "slowExpiresAt", duration, { current: {} }, setGameRoom);
+  const { uid, newSpeed, duration } = data;
+  if (!uid || !newSpeed || typeof duration !== 'number') return;
+  
+  mergePlayerByUid(uid, (p) => ({
+    ...p,
+    stats: { ...p.stats, speed: newSpeed },
+    lastUpdate: data.lastUpdate ?? Date.now(),
+  }), setGameRoom);
 }
 
 export function handlePoison(data: any, setGameRoom: any) {

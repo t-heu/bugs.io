@@ -70,7 +70,7 @@ export default function Game() {
       const type = data?.type;
       
       if (!type) return;
-  
+      
       const handlers: Record<string, Function> = {
         join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom),
         loadRoom: (data: any) => handleFullLoadRoom(data, setGameRoom),
@@ -80,11 +80,11 @@ export default function Game() {
         player_health: (data: any) => handlePlayerHealth(data, setGameRoom),
         player_score: (data: any) => handlePlayerScore(data, setGameRoom),
         player_kill: (data: any) => handlePlayerKill(data, setGameRoom),
-        poison: (data: any) => handlePoison(data, setGameRoom),
-        shield: (data: any) => handleShield(data, setGameRoom),
-        slow: (data: any) => handleSlow(data, setGameRoom),
-        special_attack: (data: any) => handleSpecialAttack(data, setGameRoom),
-        speed: (data: any) => handleSpeedBoost(data, setGameRoom)
+        Poison: (data: any) => handlePoison(data, setGameRoom),
+        "Hard Shell": (data: any) => handleShield(data, setGameRoom),
+        "Slow Strike": (data: any) => handleSlow(data, setGameRoom),
+        "Special Attack": (data: any) => handleSpecialAttack(data, setGameRoom),
+        "Speed Boost": (data: any) => handleSpeedBoost(data, setGameRoom)
       };
   
       if (handlers[type]) {
@@ -325,6 +325,7 @@ export default function Game() {
           gameRoom={gameRoom}
           broadcast={sendMessage}
           disconnectedPeers={disconnectedPeers}
+          syncGameRoomAsHost={isHost ? setGameRoom : null}
         />
       )}
 

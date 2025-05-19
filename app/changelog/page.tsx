@@ -85,6 +85,15 @@ function Badge({ children, className = '' }: BadgeProps) {
 export default function ChangelogPage() {
   const changelog = [
     {
+      version: "v2.1.1",
+      date: "18 de Maio, 2025",
+      description: "Correções de bugs",
+      changes: [
+        { type: "fix", text: 'Resolvido bug onde o jogador parecia se mover com hesitação ("movimento themido").' },
+        { type: "fix", text: "Corrigido problema onde o Host não atualizava imediatamente sua própria posição e vida após enviar atualização." }
+      ],
+    },
+    {
       version: "v2.1.0",
       date: "14 de Maio, 2025",
       description: "Correções de bugs e pequenas integrações",

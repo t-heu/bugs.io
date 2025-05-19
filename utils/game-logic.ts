@@ -2,14 +2,15 @@ import { Dispatch, SetStateAction } from 'react';
 
 import { generateFood } from "@/utils/food"
 import { ARENA_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-constants"
-import { Player } from '@/app/interfaces';
+import { Player, GameRoom } from '@/app/interfaces';
 
 export function handlePlayerAttack(
   player: Player,
   otherPlayers: any[],
   lastPoisonTickRef: any,
   broadcast: any,
-  updatedPlayer: any
+  updatedPlayer: any,
+  syncGameRoomAsHost: any
 ) {
   const attackRange = 50;
   const damagedUIDs = new Set();
@@ -31,6 +32,27 @@ export function handlePlayerAttack(
     const damageToTarget = playerAttack * multiplier;
 
     const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
+
+    if (syncGameRoomAsHost) {
+      syncGameRoomAsHost((prevRoom: GameRoom) => {
+        if (!prevRoom) return prevRoom;
+
+        return {
+          ...prevRoom,
+          players: prevRoom.players.map(p =>
+            p.uid === targetPlayer.uid
+              ? {
+                  ...p,
+                  stats: {
+                    ...p.stats,
+                    health: newHealthTarget,
+                  },
+                }
+              : p
+          ),
+        };
+      });
+    }
     
     broadcast(JSON.stringify({
       type: 'player_health',
@@ -41,7 +63,7 @@ export function handlePlayerAttack(
 
     if (player.effects.poisonedExpiresAt && player.effects.poisonedExpiresAt > Date.now()) {
       broadcast(JSON.stringify({
-        type: 'poison',
+        type: 'Poison',
         uid: player.uid,
         duration: Date.now() + player.ability.duration,
         lastUpdate: Date.now()
@@ -73,6 +95,50 @@ export function handlePlayerAttack(
   });
 }
 
+export function applySlowToTargets(
+  nowEffect: number,
+  now: number,
+  otherPlayers: Player[],
+  player: Player,
+  lastSlowTickRef: any,
+  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
+  broadcast: any
+) {
+  otherPlayers.forEach((target: Player) => {
+    //const isSlowed = target.effects?.slowExpiresAt && target.effects.slowExpiresAt > now;
+    const lastTick = lastSlowTickRef.current[target.uid] || 0;
+    const tickElapsed = now - lastTick > 500; // reaplica a cada 0.5s se necessário
+
+    if (!tickElapsed) return;
+
+    const slowAmount = player.ability.slowAmount || 0.5;
+
+    setOtherPlayers((prev) =>
+      prev.map((p) =>
+        p.uid === target.uid
+          ? {
+              ...p,
+              stats: {
+                ...p.stats,
+                speed: Math.max(1, Math.floor((p.baseSpeed || p.stats.speed / slowAmount) * slowAmount)) // mantém slow ativo
+              }
+            }
+          : p
+      )
+    );
+
+    broadcast(JSON.stringify({
+      type: 'Slow Strike',
+      uid: target.uid,
+      newSpeed: Math.floor((target.stats.speed || target.stats.speed / slowAmount) * slowAmount),
+      duration: Date.now() + player.ability.duration,
+      lastUpdate: Date.now()
+    }));
+
+    lastSlowTickRef.current[target.uid] = nowEffect;
+  });
+}
+
 export function applyPoisonDamageToTargets(
   nowEffect: any, 
   now: any, 
@@ -83,7 +149,7 @@ export function applyPoisonDamageToTargets(
   broadcast: any
 ) {
   otherPlayers.forEach((target: Player) => {
-    const isPoisoned = target.effects.poisonedExpiresAt && target.effects.poisonedExpiresAt > now;
+    const isPoisoned = target.effects?.poisonedExpiresAt && target.effects.poisonedExpiresAt > now;
     const lastTick = lastPoisonTickRef.current[target.uid] || 0;
     const tickElapsed = now - lastTick > 1000;
 
@@ -181,7 +247,8 @@ export function handleFoodCollision(
   player: Player,
   broadcast: (msg: string) => void,
   setFood: (newFood: any[]) => void,
-  updatedPlayer: Player
+  updatedPlayer: Player,
+  syncGameRoomAsHost: any
 ) {
   if (!foodList || foodList.length === 0) return;
 
@@ -204,6 +271,20 @@ export function handleFoodCollision(
       newScore += FOOD_VALUE_SCORE;
       changed = true;
 
+      if (syncGameRoomAsHost) {
+        syncGameRoomAsHost((prev: GameRoom) => {
+          if (!prev) return prev;
+
+          const updatedFood = [...prev.food];
+          updatedFood[index] = newFood;
+
+          return {
+            ...prev,
+            food: updatedFood,
+          };
+        });
+      }
+
       broadcast(JSON.stringify({
         type: 'food_update',
         index,
@@ -222,6 +303,27 @@ export function handleFoodCollision(
     updatedPlayer.score = newScore;
 
     const now = Date.now();
+
+    if (syncGameRoomAsHost) {
+      syncGameRoomAsHost((prevRoom: GameRoom) => {
+        if (!prevRoom) return prevRoom;
+
+        return {
+          ...prevRoom,
+          players: prevRoom.players.map(p =>
+            p.uid === player.uid
+              ? {
+                  ...p,
+                  stats: {
+                    ...p.stats,
+                    health: newHealth,
+                  },
+                }
+              : p
+          ),
+        };
+      });
+    }
 
     broadcast(JSON.stringify({
       type: 'player_health',

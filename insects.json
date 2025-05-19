@@ -257,9 +257,10 @@
       "stroke": "#37474F"
     },
     "ability": {
-      "name": "Lethal Strike",
+      "name": "Special Attack",
       "cooldown": 16,
       "damageMultiplier": 2.5,
+      "duration": 1000,
       "description": "Executa um ataque preciso que causa 2.5x o dano normal em um único alvo."
     }
   },
@@ -279,9 +280,10 @@
       "stroke": "#2E7D32"
     },
     "ability": {
-      "name": "Critical Slash",
+      "name": "Special Attack",
       "cooldown": 12,
-      "criticalMultiplier": 2.3,
+      "damageMultiplier": 2.3,
+      "duration": 1000,
       "description": "Prepara um golpe certeiro que causa 230% do dano normal no próximo ataque."
     }
   },
