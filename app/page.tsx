@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from "next/link"
 
-import AdBanner from "@/components/ad-banner"
 import CookieConsent from "@/components/cookie-consent-banner"
 
 export default function Home() {
@@ -17,7 +16,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
-      {hasConsented === true ? <AdBanner /> : 'ADS'}
+      {hasConsented === true ? 'ADS YES' : 'ADS'}
 
       <div className="max-w-3xl w-full text-center space-y-8">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tighter">Bugs</h1>

@@ -33,7 +33,7 @@ export function useAbilityLogic(player: any, setPlayer: any, exchangeGameRoomDat
       "Hard Shell": () => activateShield(activeEffectsRef, player, exchangeGameRoomData),
       "Speed Boost": () => activateSpeedBoost(activeEffectsRef, player, exchangeGameRoomData),
       "Regeneration": () => healPlayer(player, setPlayer, exchangeGameRoomData),
-      "Poison": () => applyPoisonEffect(player.uid, player, exchangeGameRoomData),
+      "Poison": () => applyPoisonEffect(activeEffectsRef, player, exchangeGameRoomData),
       "Slow Strike": () => applySlow(activeEffectsRef, player, exchangeGameRoomData),
     };
 

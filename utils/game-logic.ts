@@ -10,7 +10,8 @@ export function handlePlayerAttack(
   lastPoisonTickRef: any,
   exchangeGameRoomData: any,
   updatedPlayer: any,
-  updateRoomIfHost: any
+  updateRoomIfHost: any,
+  abilityEffects: { hasSpecialAttack?: boolean; hasPoisonCarrier?: boolean } = {}
 ) {
   const attackRange = 50;
   const damagedUIDs = new Set();
@@ -27,8 +28,7 @@ export function handlePlayerAttack(
     damagedUIDs.add(targetPlayer.uid);
 
     const playerAttack = player.stats.attack * (player.size / 30);
-    const isSpecialAttackActive = player.effects.specialAttackExpiresAt > Date.now();
-    const multiplier = isSpecialAttackActive ? player.ability.damageMultiplier : 1.5;
+    const multiplier = abilityEffects.hasSpecialAttack ? player.ability.damageMultiplier : 1.5;
     const damageToTarget = playerAttack * multiplier;
 
     const newHealthTarget = Math.max(0, targetPlayer.stats.health - damageToTarget);
@@ -47,10 +47,11 @@ export function handlePlayerAttack(
       lastUpdate: Date.now()
     }));
 
-    if (player.effects.poisonedExpiresAt && player.effects.poisonedExpiresAt > Date.now()) {
+    if (abilityEffects.hasPoisonCarrier) {
+      // Envenena o ALVO que acabou de ser atingido, não quem está atacando
       exchangeGameRoomData(JSON.stringify({
         type: 'Poison',
-        uid: player.uid,
+        uid: targetPlayer.uid,
         duration: Date.now() + player.ability.duration,
         lastUpdate: Date.now()
       }));

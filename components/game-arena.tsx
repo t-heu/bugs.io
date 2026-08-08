@@ -49,6 +49,10 @@ export default function GameArena({
   const lastAttackTimeRef = useRef<number>(0);
   const activeEffectsRef = useRef<{ [key: string]: number }>({});
   const lastPoisonTickRef = useRef<{ [uid: string]: number }>({});
+  
+  // Ref para controlar a taxa de atualização da rede (Tick Rate)
+  const lastNetworkUpdateTimeRef = useRef<number>(0);
+  
   const animationId = useRef<number | null>(null);
   const isLooping = useRef<boolean>(false);
   const hasJoinedRef = useRef(false);
@@ -101,11 +105,10 @@ export default function GameArena({
   useEffect(() => {
     if (!player || !gameRoom?.players) return;
     const currentPlayers = gameRoom.players;
-    //console.log(currentPlayers)
     updateSelf(currentPlayers);
     updateOtherPlayers(currentPlayers);
   }, [gameRoom?.players, player?.uid, disconnectedPeers]);
-
+/*
   // Atualiza o próprio jogador
   const updateSelf = (players: Player[]) => {
     const updated = players.find(p => p.uid === player.uid);
@@ -129,7 +132,7 @@ export default function GameArena({
       };
     });
   };
-
+/*
   const updateOtherPlayers = (currentPlayers: Player[]) => {
     const alivePlayers = currentPlayers.filter(p => {
       if (!player) return false;
@@ -164,6 +167,56 @@ export default function GameArena({
         };
       })
     );
+  };*/
+
+  // Atualiza o próprio jogador
+  const updateSelf = (players: Player[]) => {
+    const updated = players.find(p => p.uid === player.uid);
+    if (!updated) return;
+
+    setPlayer(prev => {
+      if (!prev) return updated;
+      
+      // Checa se o pacote da rede é mais recente
+      const outdated = (updated.lastUpdate ?? 0) <= (prev.lastUpdate ?? 0);
+      if (outdated) return prev;
+
+      return {
+        ...prev,
+        ...updated,
+        // REGRA DE OURO: O movimento é 100% seu, a rede não manda nele.
+        position: prev.position, 
+        stats: {
+          ...prev.stats,
+          // ACEITA O DANO: Você precisa receber a vida calculada e enviada pelo atacante
+          health: updated.stats.health 
+        }
+      };
+    });
+  };
+
+  const updateOtherPlayers = (currentPlayers: Player[]) => {
+    const alivePlayers = currentPlayers.filter(p => {
+      if (!player) return false;
+
+      const isDisconnected = disconnectedPeers === p.uid;
+      const isDead = p.stats.health <= 0;
+      const isSelf = p.uid === player.uid;
+
+      if (isDead) {
+        exchangeGameRoomData(JSON.stringify({
+          type: 'player_exit',
+          uid: p.uid,
+          reason: 'dead',
+        }));
+      }
+
+      return !isDisconnected && !isDead && !isSelf;
+    });
+
+    // Atualização direta sem "suavização fantasma". 
+    // Garante que se a rede mandou dano, a barra de vida cai na hora no seu Canvas!
+    setOtherPlayers(alivePlayers);
   };
 
   const renderGame = useCallback(() => {
@@ -194,6 +247,8 @@ export default function GameArena({
     const isInvincible = effects["Hard Shell"] > now;
     const hasSpeedBoost = effects["Speed Boost"] > now;
     const hasSlow = effects["Slow Strike"] > now;
+    const hasSpecialAttack = effects["Special Attack"] > now;
+    const hasPoisonCarrier = effects["Poison"] > now;
 
     let finalSpeed = player.stats.speed;
     if (hasSpeedBoost) finalSpeed *= player.ability.boost;
@@ -245,7 +300,15 @@ export default function GameArena({
     if (!isInvincible) {
       if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
         lastAttackTimeRef.current = now;
-        handlePlayerAttack(player, otherPlayers, lastPoisonTickRef, exchangeGameRoomData, updatedPlayer, updateRoomIfHost);
+        handlePlayerAttack(
+          player,
+          otherPlayers,
+          lastPoisonTickRef,
+          exchangeGameRoomData,
+          updatedPlayer,
+          updateRoomIfHost,
+          { hasSpecialAttack, hasPoisonCarrier }
+        );
       }
   
       applyPoisonDamageToTargets(now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, exchangeGameRoomData);
@@ -269,14 +332,21 @@ export default function GameArena({
     updatedPlayer.position = newPosition
     setPlayer(updatedPlayer);
 
-    const moved = Math.abs(player.position.x - newX) > 1 || Math.abs(player.position.y - newY) > 1;
-    if (moved) {
+    // FIX 1: O filtro checa qualquer tipo de movimento real em vez de exigir que seja maior que 1 pixel
+    const isMoving = player.position.x !== newX || player.position.y !== newY;
+    
+    // FIX 2: Controle de rede pelo TEMPO (Tick Rate) em vez da distância a cada frame
+    // 50ms = Envia posição no máximo 20 vezes por segundo, eliminando o lag
+    if (isMoving && (now - lastNetworkUpdateTimeRef.current > 30)) {
+      lastNetworkUpdateTimeRef.current = now;
+      
       updateRoomIfHost?.((room: GameRoom) => ({
         ...room,
         players: room.players.map(p =>
           p.uid === player.uid ? { ...p, position: newPosition } : p
         )
       }));
+      
       exchangeGameRoomData(JSON.stringify({
         type: 'player_position',
         uid: updatedPlayer.uid,
@@ -284,26 +354,40 @@ export default function GameArena({
         lastUpdate: Date.now()
       }));
     }
-  }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver]);
+  }, [player, cactus, food, otherPlayers, roomKey, setPlayer, onGameOver, isMobile, joystickActive, joystickAngle, joystickDistance, keys, exchangeGameRoomData, updateRoomIfHost]);
 
-  // Game loop
+
+  // FIX 3: Refs de Game Loop para blindar o Lifecycle do React contra quedas de FPS
+  const updateGameRef = useRef(updateGame);
+  const renderGameRef = useRef(renderGame);
+
   useEffect(() => {
-    if (!player || isLooping.current) return;
+    updateGameRef.current = updateGame;
+    renderGameRef.current = renderGame;
+  }, [updateGame, renderGame]);
+
+  // Game loop otimizado
+  useEffect(() => {
+    // Agora só depende do uid. O React não vai mais destruir e recriar esse loop inteiro a 60 frames por segundo
+    if (!player?.uid || isLooping.current) return;
     isLooping.current = true;
 
     const loop = () => {
-      if (!isLooping.current || !player) return;
-      updateGame();
-      renderGame();
+      if (!isLooping.current) return;
+      
+      updateGameRef.current();
+      renderGameRef.current();
+      
       animationId.current = requestAnimationFrame(loop);
     };
 
     animationId.current = requestAnimationFrame(loop);
+    
     return () => {
       if (animationId.current) cancelAnimationFrame(animationId.current);
       isLooping.current = false;
     };
-  }, [updateGame, renderGame, player]);
+  }, [player?.uid]);
 
   const handlePlayerDeath = (
     player: Player,

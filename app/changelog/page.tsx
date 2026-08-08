@@ -85,11 +85,21 @@ function Badge({ children, className = '' }: BadgeProps) {
 export default function ChangelogPage() {
   const changelog = [
     {
+      version: "v2.1.2",
+      date: "8 de Junho, 2025",
+      description: "Ajustes críticos de sincronização e combate",
+      changes: [
+        { type: "fix", text: "Removido o smoothing excessivo nas posições para garantir movimento fluido e sem atrasos visuais." },
+        { type: "fix", text: "Corrigido o sistema de dano onde jogadores ignoravam ataques recebidos da rede; agora o dano e a vida sincronizam instantaneamente." },
+        { type: "new", text: "Adicionada trava de limite máximo de 6 jogadores por sala com rejeição automática para evitar lag e sobrecarga no WebRTC." }
+      ],
+    },
+    {
       version: "v2.1.1",
       date: "18 de Maio, 2025",
       description: "Correções de bugs",
       changes: [
-        { type: "fix", text: 'Resolvido bug onde o jogador parecia se mover com hesitação ("movimento themido").' },
+        { type: "fix", text: 'Resolvido bug onde o jogador parecia se mover com hesitação ("movimento temido").' },
         { type: "fix", text: "Corrigido problema onde o Host não atualizava imediatamente sua própria posição e vida após enviar atualização." }
       ],
     },
@@ -143,18 +153,18 @@ export default function ChangelogPage() {
 
         <div className="space-y-8">
           {changelog.map((release, index) => (
-            <Card key={release.version} className="border-l-4 border-l-green-300">
+            <Card key={release.version} className="border-l-4 border-l-green-300 bg-green-950/40 border-green-800">
               <CardHeader>
                 <div>
-                  <CardTitle>
+                  <CardTitle className="text-white">
                     {release.version}
                     {index === 0 && (
                       <Badge className="ml-2 bg-green-600 hover:bg-green-700">Mais recente</Badge>
                     )}
                   </CardTitle>
-                  <CardDescription>{release.date}</CardDescription>
+                  <CardDescription className="text-green-300">{release.date}</CardDescription>
                 </div>
-                <p className="text-sm text-gray-400">{release.description}</p>
+                <p className="text-sm text-gray-300">{release.description}</p>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">

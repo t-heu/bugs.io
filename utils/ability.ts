@@ -64,17 +64,15 @@ export function healPlayer(player: any, setPlayer: any, exchangeGameRoomData: an
 
 export function applyPoisonEffect(activeEffectsRef: any, player: any, exchangeGameRoomData: any) {
   const now = Date.now();
+  const poisonCarrierExpiresAt = now + player.ability.duration;
 
-  const poisonedExpiresAt = now + player.ability.duration;
-
-  activeEffectsRef.current["Poison"] = poisonedExpiresAt;
-
-  exchangeGameRoomData(JSON.stringify({
-    type: 'Poison',
-    uid: player.uid,
-    duration: poisonedExpiresAt,
-    lastUpdate: Date.now()
-  }));
+  // Isso é um buff LOCAL: "meus próximos ataques envenenam quem eu acertar".
+  // Não pode ser transmitido como evento 'Poison' com o uid de quem ativou —
+  // esse tipo de evento marca o ALVO como envenenado (dano ao longo do tempo).
+  // Se transmitíssemos com o próprio uid, o jogador tomaria dano do seu
+  // próprio veneno assim que outro cliente processasse a mensagem.
+  // O efeito real é aplicado ao alvo em handlePlayerAttack, no momento do acerto.
+  activeEffectsRef.current["Poison"] = poisonCarrierExpiresAt;
 }
 
 export function applySlow(activeEffectsRef: any, player: any, exchangeGameRoomData: any) {

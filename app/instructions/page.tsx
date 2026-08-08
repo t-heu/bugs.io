@@ -1,7 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 import insects from "../../insects.json";
+import {InsectDrawing} from "@/app/insects/insect-drawing";
+import { insectDrawingComponents, InsectType } from "@/app/insects";
 
 export default function Instructions() {
   return (
@@ -25,23 +29,42 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Insetos</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              {insects.map((info, i) => (
-                <div key={i} className="bg-green-800/50 p-4 rounded-lg">
-                <h3 className="text-xl font-medium mb-2 text-green-300">{info.name}</h3>
-                <p className="mb-2">{info.description}</p>
-                  <ul className="list-disc list-inside text-sm">
-                    {info.attributes.map((att, i2) => (
-                      <li key={i2}>{att}</li>
-                    ))}
-                  </ul>
-                  {info.ability && (
-                    <>
-                      <p className="mt-2">Habilidade: {info.ability.name}</p>
-                      <p className="mt-2">Info.: {info.ability.description}</p>
-                    </>
-                  )}
-                </div>
-              ))}
+              {insects.map((info, i) => {
+                // Prepara a função de desenho para este inseto específico
+                const drawInsect = insectDrawingComponents[info.id as InsectType];
+
+                return (
+                  <div key={i} className="bg-green-800/50 p-4 rounded-lg flex flex-col items-center text-center">
+                    
+                    {/* Renderiza o desenho do inseto se ele existir */}
+                    <div className="mb-4 flex justify-center items-center h-24">
+                      {drawInsect && (
+                        <InsectDrawing 
+                          draw={drawInsect} 
+                          fillColor="#22c55e" 
+                          strokeColor="#15803d" 
+                        />
+                      )}
+                    </div>
+
+                    <h3 className="text-xl font-medium mb-2 text-green-300">{info.name}</h3>
+                    <p className="mb-4 text-sm">{info.description}</p>
+                    
+                    <ul className="list-disc list-inside text-sm text-left w-full mb-4 space-y-1">
+                      {info.attributes.map((att, i2) => (
+                        <li key={i2}>{att}</li>
+                      ))}
+                    </ul>
+                    
+                    {info.ability && (
+                      <div className="mt-auto bg-green-900/60 p-2 rounded w-full text-left text-sm">
+                        <p className="font-semibold text-green-400">Hab.: {info.ability.name}</p>
+                        <p className="text-xs mt-1 text-gray-300">{info.ability.description}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

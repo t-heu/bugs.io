@@ -1,5 +1,4 @@
 import "@/app/globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata = {
   title: "Bugs - Batalha de Insetos",
@@ -20,9 +19,7 @@ export default function RootLayout({ children }: {
         />
       </head>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   )

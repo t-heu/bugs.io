@@ -73,7 +73,37 @@ export default function Game() {
       if (!type) return;
       
       const handlers: Record<string, Function> = {
-        join: (data: any, from: any) => handleJoin(data, from, isHost, setGameRoom),
+        join: (data: any, from: any) => {
+          if (isHost) {
+            // 1. O Host olha o estado atual da sala secretamente
+            let isFull = false;
+            setGameRoom((prev: any) => {
+              // Verifica se a sala já atingiu o limite de 6
+              if (prev && prev.players.length >= 6) {
+                isFull = true;
+              }
+              return prev; // Não altera o estado
+            });
+
+            // 2. Resolve a entrada ou recusa fora do ciclo do React
+            setTimeout(() => {
+              if (isFull) {
+                // Manda uma mensagem de volta avisando que lotou
+                sendMessage(JSON.stringify({ 
+                  type: 'room_full', 
+                  targetUid: data.player.uid 
+                }));
+              } else {
+                // Se tiver vaga, prossegue normalmente
+                handleJoin(data, from, isHost, setGameRoom);
+              }
+            }, 10);
+          } else {
+            // Se for um Guest comum recebendo a mensagem, processa normal
+            handleJoin(data, from, isHost, setGameRoom);
+          }
+        },
+
         loadRoom: (data: any) => handleFullLoadRoom(data, setGameRoom),
         player_exit: (data: any) => handleRemovePlayer(data, setGameRoom),
         food_update: (data: any) => handleFoodUpdate(data, setGameRoom),
