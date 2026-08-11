@@ -16,7 +16,9 @@ export interface Player {
     speedExpiresAt: number
     specialAttackExpiresAt: number
     slowExpiresAt: number
+    slowAmount: number
     poisonedExpiresAt: number
+    poisonDamagePerTick: number
   },
   type: string
   ability: any | null

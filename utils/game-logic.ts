@@ -1,5 +1,3 @@
-import { Dispatch, SetStateAction } from 'react';
-
 import { generateFood } from "@/utils/food"
 import { ARENA_SIZE, FOOD_VALUE_HEATH, FOOD_VALUE_SCORE } from "@/utils/game-constants"
 import { Player, GameRoom } from '@/app/interfaces';
@@ -11,7 +9,7 @@ export function handlePlayerAttack(
   exchangeGameRoomData: any,
   updatedPlayer: any,
   updateRoomIfHost: any,
-  abilityEffects: { hasSpecialAttack?: boolean; hasPoisonCarrier?: boolean } = {}
+  abilityEffects: { hasSpecialAttack?: boolean; hasPoisonCarrier?: boolean; hasSlowCarrier?: boolean } = {}
 ) {
   const attackRange = 50;
   const damagedUIDs = new Set();
@@ -48,15 +46,38 @@ export function handlePlayerAttack(
     }));
 
     if (abilityEffects.hasPoisonCarrier) {
-      // Envenena o ALVO que acabou de ser atingido, não quem está atacando
+      // Bônus contra um tipo específico de inseto (ex: Vespa Esmeralda vs barata) —
+      // compara o TIPO do personagem (targetPlayer.type, ex: "cockroach"),
+      // não o uid da sessão (que nunca ia bater com o valor do insects.json).
+      const bonus = player.ability?.specialBonusDamage;
+      const bonusDamage = bonus && bonus.target === targetPlayer.type ? (bonus.bonusDamage || 0) : 0;
+      const poisonDamagePerTick = (player.ability.poisonDamage || 0) + bonusDamage;
+
+      // Envenena o ALVO que acabou de ser atingido, não quem está atacando,
+      // e já manda quanto de dano por tick — assim quem toma o dano é sempre
+      // a própria vítima tickando o valor certo, e não cada cliente conectado
+      // calculando com o próprio poisonDamage (que causava dano duplicado/errado).
       exchangeGameRoomData(JSON.stringify({
         type: 'Poison',
         uid: targetPlayer.uid,
         duration: Date.now() + player.ability.duration,
+        poisonDamagePerTick,
         lastUpdate: Date.now()
       }));
 
       lastPoisonTickRef.current[targetPlayer.uid] = Date.now();
+    }
+
+    if (abilityEffects.hasSlowCarrier) {
+      // Slow Strike agora só afeta quem foi realmente atingido pelo ataque,
+      // não todo mundo visível no mapa.
+      exchangeGameRoomData(JSON.stringify({
+        type: 'Slow Strike',
+        uid: targetPlayer.uid,
+        slowAmount: player.ability.slowAmount || 0.35,
+        duration: Date.now() + player.ability.duration,
+        lastUpdate: Date.now()
+      }));
     }
 
     if (targetPlayer.name && newHealthTarget === 0) {
@@ -82,90 +103,28 @@ export function handlePlayerAttack(
   });
 }
 
-export function applySlowToTargets(
+// Cada jogador cuida do próprio tick de veneno (não depende de nenhum outro
+// cliente estar olhando pra ele). O dano por tick já vem gravado no efeito
+// (poisonDamagePerTick), definido por quem aplicou o veneno no momento do
+// acerto — então o valor certo é usado sempre, e o dano só é aplicado uma vez
+// por segundo, não uma vez por segundo POR CLIENTE conectado.
+export function applySelfPoisonTick(
   now: number,
-  otherPlayers: Player[],
   player: Player,
-  lastSlowTickRef: any,
-  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
-  exchangeGameRoomData: any
-) {
-  otherPlayers.forEach((target: Player) => {
-    //const isSlowed = target.effects?.slowExpiresAt && target.effects.slowExpiresAt > now;
-    const lastTick = lastSlowTickRef.current[target.uid] || 0;
-    const tickElapsed = now - lastTick > 500; // reaplica a cada 0.5s se necessário
+  lastPoisonSelfTickRef: any
+): { ticked: boolean; newHealth: number } {
+  const isPoisoned = player.effects?.poisonedExpiresAt && player.effects.poisonedExpiresAt > now;
+  if (!isPoisoned) return { ticked: false, newHealth: player.stats.health };
 
-    if (!tickElapsed) return;
+  const lastTick = lastPoisonSelfTickRef.current[player.uid] || 0;
+  if (now - lastTick <= 1000) return { ticked: false, newHealth: player.stats.health };
 
-    const slowAmount = player.ability.slowAmount || 0.5;
+  lastPoisonSelfTickRef.current[player.uid] = now;
 
-    setOtherPlayers((prev) =>
-      prev.map((p) =>
-        p.uid === target.uid
-          ? {
-              ...p,
-              stats: {
-                ...p.stats,
-                speed: Math.max(1, Math.floor((p.baseSpeed || p.stats.speed / slowAmount) * slowAmount)) // mantém slow ativo
-              }
-            }
-          : p
-      )
-    );
+  const damage = player.effects.poisonDamagePerTick || 0;
+  if (damage <= 0) return { ticked: false, newHealth: player.stats.health };
 
-    exchangeGameRoomData(JSON.stringify({
-      type: 'Slow Strike',
-      uid: target.uid,
-      newSpeed: Math.floor((target.stats.speed || target.stats.speed / slowAmount) * slowAmount),
-      duration: Date.now() + player.ability.duration,
-      lastUpdate: Date.now()
-    }));
-
-    lastSlowTickRef.current[target.uid] = now;
-  });
-}
-
-export function applyPoisonDamageToTargets( 
-  now: any, 
-  otherPlayers: Player[], 
-  player: Player,
-  lastPoisonTickRef: any,
-  setOtherPlayers: Dispatch<SetStateAction<any[]>>,
-  exchangeGameRoomData: any
-) {
-  otherPlayers.forEach((target: Player) => {
-    const isPoisoned = target.effects?.poisonedExpiresAt && target.effects.poisonedExpiresAt > now;
-    const lastTick = lastPoisonTickRef.current[target.uid] || 0;
-    const tickElapsed = now - lastTick > 1000;
-
-    if (!isPoisoned || !tickElapsed) return;
-
-    let poisonDamage = player.ability.poisonDamage || 0;
-
-    const bonus = player.ability?.specialBonusDamage;
-    if (bonus && bonus.target === target.uid && bonus.bonusDamage !== undefined) {
-      poisonDamage += bonus.bonusDamage || 0;
-    }
-
-    const newHealth = Math.max(0, target.stats.health - poisonDamage);
-
-    exchangeGameRoomData(JSON.stringify({
-      type: 'player_health',
-      uid: target.uid,
-      health: newHealth,
-      lastUpdate: Date.now()
-    }));
-
-    setOtherPlayers((prev) =>
-      prev.map((p) =>
-        p.uid === target.uid
-          ? { ...p, stats: { ...p.stats, health: newHealth } }
-          : p
-      )
-    );
-
-    lastPoisonTickRef.current[target.uid] = now;
-  });
+  return { ticked: true, newHealth: Math.max(0, player.stats.health - damage) };
 }
 
 export function updatePlayerPosition(

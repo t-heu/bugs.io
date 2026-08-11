@@ -74,28 +74,44 @@ export default function Game() {
       
       const handlers: Record<string, Function> = {
         join: (data: any, from: any) => {
+          if (!data.player) return;
+
           if (isHost) {
-            // 1. O Host olha o estado atual da sala secretamente
+            // 1. Espia o estado atual e já calcula o resultado da entrada
+            // (sala cheia ou sala com o novo jogador), sem disparar nenhum
+            // efeito de rede aqui dentro — só decide o que vai acontecer.
             let isFull = false;
+            let mergedRoom: any = null;
+
             setGameRoom((prev: any) => {
-              // Verifica se a sala já atingiu o limite de 6
-              if (prev && prev.players.length >= 6) {
+              if (!prev) return prev;
+
+              if (prev.players.length >= 6) {
                 isFull = true;
+                return prev;
               }
-              return prev; // Não altera o estado
+
+              const filteredPlayers = prev.players.filter((p: any) => p.uid !== data.player.uid);
+              mergedRoom = { ...prev, players: [...filteredPlayers, data.player] };
+              return mergedRoom;
             });
 
-            // 2. Resolve a entrada ou recusa fora do ciclo do React
+            // 2. Só agora, fora do ciclo do React, manda as mensagens de rede.
             setTimeout(() => {
               if (isFull) {
-                // Manda uma mensagem de volta avisando que lotou
                 sendMessage(JSON.stringify({ 
                   type: 'room_full', 
                   targetUid: data.player.uid 
                 }));
-              } else {
-                // Se tiver vaga, prossegue normalmente
-                handleJoin(data, from, isHost, setGameRoom);
+                return;
+              }
+
+              if (mergedRoom) {
+                // Manda o estado completo da sala pra todo mundo UMA VEZ,
+                // só quando alguém entra. Isso substitui o broadcast que
+                // rodava a cada mudança de gameRoom (quase a cada frame) e
+                // era a principal causa da lag.
+                sendMessage(JSON.stringify({ type: "loadRoom", ...mergedRoom }));
               }
             }, 10);
           } else {
@@ -124,14 +140,13 @@ export default function Game() {
     });
   }, [onMessage, isHost]);
 
-  useEffect(() => {
-    if (!isHost || !gameRoom) return;
-
-    sendMessage(JSON.stringify({
-      type: "loadRoom",
-      ...gameRoom,
-    }));
-  }, [gameRoom]);
+  // Obs: removido o broadcast automático de loadRoom a cada mudança de
+  // gameRoom (rodava quase a cada frame enquanto alguém se movia, mandando
+  // a sala inteira — comida, cactos e todos os players — pra todo mundo).
+  // Isso era a principal causa da lag. Agora o estado completo só é
+  // enviado uma vez, no momento em que alguém entra na sala (veja o
+  // handler de 'join' acima). O resto do jogo se mantém sincronizado
+  // pelas mensagens incrementais (player_position, player_health etc).
 
   useEffect(() => {
     if (isClosed) {
@@ -227,7 +242,9 @@ export default function Game() {
         speedExpiresAt: 0,
         specialAttackExpiresAt: 0,
         slowExpiresAt: 0,
-        poisonedExpiresAt: 0
+        slowAmount: 0,
+        poisonedExpiresAt: 0,
+        poisonDamagePerTick: 0
       },
       type: character.id,
       ability: character.ability || null,

@@ -173,19 +173,44 @@ export function handleSpeedBoost(data: any, setGameRoom: any) {
 }
 
 export function handleSlow(data: any, setGameRoom: any) {
-  const { uid, newSpeed, duration } = data;
-  if (!uid || !newSpeed || typeof duration !== 'number') return;
-  
+  const { uid, slowAmount, duration } = data;
+  if (!uid || typeof duration !== 'number') return;
+
+  const now = Date.now();
+  const until = now + duration;
+
+  // Guarda a % de redução no effects e deixa a velocidade base intacta —
+  // quem calcula a velocidade final (game-arena.tsx) aplica o multiplicador
+  // só enquanto slowExpiresAt estiver no futuro, então o efeito "acaba"
+  // sozinho quando o tempo passa, sem precisar de nada pra "desfazer".
   mergePlayerByUid(uid, (p) => ({
     ...p,
-    stats: { ...p.stats, speed: newSpeed },
-    lastUpdate: data.lastUpdate ?? Date.now(),
+    effects: {
+      ...p.effects,
+      slowExpiresAt: until,
+      slowAmount: slowAmount ?? p.effects?.slowAmount ?? 0.35,
+    },
+    lastUpdate: data.lastUpdate ?? now,
   }), setGameRoom);
 }
 
 export function handlePoison(data: any, setGameRoom: any) {
-  const { uid, duration } = data;
+  const { uid, duration, poisonDamagePerTick } = data;
   if (!uid || typeof duration !== 'number') return;
 
-  applyEffectUntil(uid, "poisonedExpiresAt", duration, { current: {} }, setGameRoom);
+  const now = Date.now();
+  const until = now + duration;
+
+  // Guarda também o dano por tick (definido por quem aplicou o veneno no
+  // acerto) — a própria vítima usa esse valor pra tickar o dano nela mesma,
+  // em vez de cada cliente conectado calcular com o próprio poisonDamage.
+  mergePlayerByUid(uid, (p) => ({
+    ...p,
+    effects: {
+      ...p.effects,
+      poisonedExpiresAt: until,
+      poisonDamagePerTick: poisonDamagePerTick ?? p.effects?.poisonDamagePerTick ?? 0,
+    },
+    lastUpdate: data.lastUpdate ?? now,
+  }), setGameRoom);
 }

@@ -14,8 +14,7 @@ import {
   handleFoodCollision, 
   updatePlayerPosition, 
   handlePlayerAttack, 
-  applyPoisonDamageToTargets,
-  applySlowToTargets
+  applySelfPoisonTick
 } from "@/utils/game-logic"
 
 import { Player, GameRoom } from "@/app/interfaces"
@@ -49,6 +48,7 @@ export default function GameArena({
   const lastAttackTimeRef = useRef<number>(0);
   const activeEffectsRef = useRef<{ [key: string]: number }>({});
   const lastPoisonTickRef = useRef<{ [uid: string]: number }>({});
+  const lastPoisonSelfTickRef = useRef<{ [uid: string]: number }>({});
   
   // Ref para controlar a taxa de atualização da rede (Tick Rate)
   const lastNetworkUpdateTimeRef = useRef<number>(0);
@@ -246,12 +246,18 @@ export default function GameArena({
 
     const isInvincible = effects["Hard Shell"] > now;
     const hasSpeedBoost = effects["Speed Boost"] > now;
-    const hasSlow = effects["Slow Strike"] > now;
+    const hasSlowCarrier = effects["Slow Strike"] > now; // eu ativei Slow Strike (afeta quem EU acertar)
     const hasSpecialAttack = effects["Special Attack"] > now;
-    const hasPoisonCarrier = effects["Poison"] > now;
+    const hasPoisonCarrier = effects["Poison"] > now; // eu ativei Poison (afeta quem EU acertar)
+
+    // Efeito que OUTRO jogador aplicou em mim — expira sozinho quando o tempo
+    // passa (nunca mexemos em player.stats.speed de verdade), sem precisar de
+    // nenhum código de "restaurar velocidade" depois.
+    const isSlowed = !!player.effects?.slowExpiresAt && player.effects.slowExpiresAt > now;
 
     let finalSpeed = player.stats.speed;
     if (hasSpeedBoost) finalSpeed *= player.ability.boost;
+    if (isSlowed) finalSpeed *= 1 - (player.effects.slowAmount || 0);
 
     const { newX, newY } = updatePlayerPosition(
       finalSpeed,
@@ -297,23 +303,56 @@ export default function GameArena({
       }));
     }
 
-    if (!isInvincible) {
-      if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
-        lastAttackTimeRef.current = now;
-        handlePlayerAttack(
-          player,
-          otherPlayers,
-          lastPoisonTickRef,
-          exchangeGameRoomData,
-          updatedPlayer,
-          updateRoomIfHost,
-          { hasSpecialAttack, hasPoisonCarrier }
-        );
-      }
-  
-      applyPoisonDamageToTargets(now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, exchangeGameRoomData);
+    // O ataque não é mais bloqueado pelo Hard Shell — a habilidade promete
+    // "invulnerável a danos", nada sobre ficar impedido de atacar.
+    if (attackPressedRef.current && now - lastAttackTimeRef.current > 500) {
+      lastAttackTimeRef.current = now;
+      handlePlayerAttack(
+        player,
+        otherPlayers,
+        lastPoisonTickRef,
+        exchangeGameRoomData,
+        updatedPlayer,
+        updateRoomIfHost,
+        { hasSpecialAttack, hasPoisonCarrier, hasSlowCarrier }
+      );
+    }
 
-      if (hasSlow) applySlowToTargets(now, otherPlayers, player, lastPoisonTickRef, setOtherPlayers, exchangeGameRoomData);
+    // Veneno tickando em mim mesmo (se alguém me envenenou). Isso continua
+    // respeitando o Hard Shell — "invulnerável a danos" inclui o veneno.
+    // Cada jogador cuida do próprio tick, então o dano não se multiplica
+    // pelo número de clientes conectados.
+    if (!isInvincible) {
+      const { ticked: poisonTicked, newHealth: healthAfterPoison } = applySelfPoisonTick(now, updatedPlayer, lastPoisonSelfTickRef);
+      if (poisonTicked) {
+        updatedPlayer.stats.health = healthAfterPoison;
+
+        if (healthAfterPoison === 0) {
+          handlePlayerDeath(
+            player,
+            "Você morreu envenenado!",
+            setOtherPlayers,
+            exchangeGameRoomData,
+            onGameOver,
+            roomKey
+          );
+          return;
+        }
+
+        updateRoomIfHost?.((room: GameRoom) => ({
+          ...room,
+          players: room.players.map(p =>
+            p.uid === player.uid ? { ...p, stats: { ...p.stats, health: healthAfterPoison } } : p
+          )
+        }));
+
+        exchangeGameRoomData(JSON.stringify({
+          type: 'player_health',
+          uid: player.uid,
+          health: healthAfterPoison,
+          lastUpdate: Date.now()
+        }));
+      }
     }
 
     if (player.stats.health <= 0) {

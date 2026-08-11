@@ -4,13 +4,14 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 import insects from "../../insects.json";
-import {InsectDrawing} from "@/app/insects/insect-drawing";
+import { InsectDrawing } from "@/app/insects/insect-drawing";
 import { insectDrawingComponents, InsectType } from "@/app/insects";
 
 export default function Instructions() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-950 text-white p-4">
-      <div className="max-w-3xl mx-auto py-8">
+      {/* Ajustado para max-w-6xl para acomodar melhor 4 colunas no desktop */}
+      <div className="max-w-6xl mx-auto py-8">
         <Link href="/">
           <button className="flex items-center text-green-300 hover:text-white hover:bg-green-800 rounded-md px-4 py-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -28,7 +29,8 @@ export default function Instructions() {
 
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Insetos</h2>
-            <div className="grid md:grid-cols-3 gap-4">
+            {/* Breakpoints responsivos: 1 col no mobile, 2 em telas P, 3 em M e 4 em G/Desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {insects.map((info, i) => {
                 // Prepara a função de desenho para este inseto específico
                 const drawInsect = insectDrawingComponents[info.id as InsectType];
@@ -78,11 +80,11 @@ export default function Instructions() {
           <section className="bg-green-900/50 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Dicas</h2>
             <ul className="list-disc list-inside space-y-2">
-            <li>Coma folinhas espalhadas para recuperar vida durante as batalhas e ganhar pontos.</li>
-            <li>Cada inseto possui habilidades únicas — escolha com sabedoria e use-as estrategicamente.</li>
-            <li>Evite confrontos desvantajosos e sempre tenha uma rota de fuga em mente.</li>
-            <li>Colabore com outros insetos do mesmo tipo para enfrentar inimigos mais poderosos</li>
-            <li>Atenção aos cactos pela arena — eles causam dano ao encostar!</li>
+              <li>Coma folinhas espalhadas para recuperar vida durante as batalhas e ganhar pontos.</li>
+              <li>Cada inseto possui habilidades únicas — escolha com sabedoria e use-as estrategicamente.</li>
+              <li>Evite confrontos desvantajosos e sempre tenha uma rota de fuga em mente.</li>
+              <li>Colabore com outros insetos do mesmo tipo para enfrentar inimigos mais poderosos</li>
+              <li>Atenção aos cactos pela arena — eles causam dano ao encostar!</li>
             </ul>
           </section>
         </div>
